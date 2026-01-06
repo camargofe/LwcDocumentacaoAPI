@@ -11,9 +11,9 @@
       --bv-blue: #002f6c;
       --bv-border: #e1e5eb;
       --bv-bg: #f5f7fa;
-      --text-muted: #6b7280;
       --code-bg: #0f172a;
       --code-text: #e5e7eb;
+      --text-muted: #6b7280;
     }
 
     html, body {
@@ -21,32 +21,30 @@
       padding: 0;
       height: 100%;
       font-family: Arial, sans-serif;
-      background-color: var(--bv-bg);
+      background: var(--bv-bg);
     }
 
+    /* ===== LAYOUT 3 COLUNAS ===== */
     .layout {
-      display: flex;
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr) 420px;
       height: 100vh;
       width: 100vw;
     }
 
     /* ===== SIDEBAR ===== */
     .sidebar {
-      width: 300px;
       background: #fff;
       border-right: 1px solid var(--bv-border);
       padding: 20px 16px;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
+      overflow-y: auto;
     }
 
     .sidebar h3 {
       font-size: 14px;
       color: var(--bv-blue);
-      margin-bottom: 12px;
       text-transform: uppercase;
-      letter-spacing: .5px;
+      margin-bottom: 12px;
     }
 
     .sidebar ul {
@@ -60,9 +58,7 @@
       padding: 8px 10px;
       border-radius: 6px;
       cursor: pointer;
-      color: #333;
       margin-bottom: 4px;
-      transition: background .15s, color .15s;
     }
 
     .sidebar li:hover,
@@ -73,96 +69,69 @@
     }
 
     .sidebar-footer {
+      margin-top: 24px;
       font-size: 12px;
       border-top: 1px solid var(--bv-border);
       padding-top: 12px;
-      margin-top: auto;
       color: var(--text-muted);
     }
 
-    /* ===== CONTENT ===== */
+    /* ===== CONTEÚDO CENTRAL ===== */
     .content {
-      flex: 1;
-      overflow-y: auto;
       background: #fff;
+      overflow-y: auto;
     }
 
     .swagger-ui {
       padding: 24px;
     }
 
-    /* ===== SUMMARY + DESCRIÇÃO LATERAL ===== */
-    .opblock-summary {
-      display: grid !important;
-      grid-template-columns: 1fr 420px;
-      gap: 16px;
-      align-items: flex-start;
+    /* ===== PAINEL DE CÓDIGO ===== */
+    .code-panel {
+      background: #0b1220;
+      border-left: 1px solid var(--bv-border);
+      padding: 16px;
+      overflow-y: auto;
     }
 
-    .opblock-summary-description {
-      display: none !important;
+    .code-panel h4 {
+      color: #fff;
+      font-size: 13px;
+      margin: 0 0 8px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
     }
 
-    .summary-code-box {
+    .code-block {
       background: var(--code-bg);
       color: var(--code-text);
       border-radius: 8px;
       padding: 12px;
+      margin-bottom: 16px;
       font-family: Consolas, monospace;
       font-size: 12px;
       line-height: 1.4;
-      max-height: 140px;
-      overflow: auto;
       white-space: pre-wrap;
-    }
-
-    /* ===== BODY DO ENDPOINT EM 2 COLUNAS ===== */
-    .opblock-body {
-      display: grid !important;
-      grid-template-columns: minmax(0, 1fr) 460px;
-      gap: 24px;
-      align-items: start;
-    }
-
-    /* Conteúdo funcional à esquerda */
-    .opblock-body > .opblock-section:not(.responses-wrapper):not(.request-body) {
-      grid-column: 1;
-    }
-
-    /* Código / exemplos / responses à direita */
-    .responses-wrapper,
-    .request-body,
-    .opblock-body pre,
-    .opblock-body .highlight-code,
-    .opblock-body .example {
-      grid-column: 2;
-    }
-
-    /* Estilo das caixas de código */
-    .opblock-body pre,
-    .opblock-body .highlight-code {
-      background: var(--code-bg) !important;
-      color: var(--code-text) !important;
-      border-radius: 8px;
-      padding: 12px;
-      max-height: 420px;
+      max-height: 320px;
       overflow: auto;
-      font-size: 12px;
+      position: relative;
     }
 
-    /* Mobile: volta para 1 coluna */
-    @media (max-width: 1200px) {
-      .opblock-summary,
-      .opblock-body {
-        grid-template-columns: 1fr;
-      }
+    .code-block button {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 11px;
+      cursor: pointer;
+    }
 
-      .responses-wrapper,
-      .request-body,
-      .opblock-body pre,
-      .opblock-body .highlight-code,
-      .opblock-body .example {
-        grid-column: 1;
+    /* Mobile: oculta painel direito */
+    @media (max-width: 1200px) {
+      .layout {
+        grid-template-columns: 260px 1fr;
+      }
+      .code-panel {
+        display: none;
       }
     }
   </style>
@@ -171,14 +140,11 @@
 <body>
 <div class="layout">
 
-  <!-- ===== SIDEBAR ===== -->
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <h3>Documentação</h3>
-
     <ul id="sidebar-static"></ul>
-
     <hr />
-
     <ul id="sidebar-dynamic"></ul>
 
     <div class="sidebar-footer">
@@ -187,10 +153,16 @@
     </div>
   </aside>
 
-  <!-- ===== CONTENT ===== -->
+  <!-- CONTEÚDO -->
   <main class="content">
     <div id="swagger-ui"></div>
   </main>
+
+  <!-- PAINEL DE CÓDIGO -->
+  <aside class="code-panel" id="code-panel">
+    <h4>Código</h4>
+    <div id="code-content"></div>
+  </aside>
 
 </div>
 
@@ -204,7 +176,6 @@
     "Idempotência",
     "Releases",
     "Operacional",
-    "Fluxos de tentativas no envio de pagamentos",
     "Políticas",
     "Antifraude",
     "Autenticação e Segurança"
@@ -219,9 +190,7 @@
   setTimeout(() => {
     buildStaticSidebar();
     buildDynamicSidebar();
-    enhanceSummaries();
-    bindOpblockClicks();
-    enhanceOpblockLayout();
+    bindSwaggerInteractions();
   }, 2000);
 
   function buildStaticSidebar() {
@@ -231,15 +200,11 @@
     STATIC_SECTIONS.forEach(title => {
       const li = document.createElement("li");
       li.textContent = title;
-
       li.onclick = () => {
         const el = findSectionByText(title);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-          setActive(li);
-        }
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+        setActive(li);
       };
-
       ul.appendChild(li);
     });
   }
@@ -254,57 +219,43 @@
 
       const li = document.createElement("li");
       li.textContent = title.textContent.trim();
-
       li.onclick = () => {
-        section.scrollIntoView({ behavior: "smooth", block: "start" });
+        section.scrollIntoView({ behavior: "smooth" });
         setActive(li);
       };
-
       ul.appendChild(li);
     });
   }
 
-  function setActive(activeLi) {
+  function bindSwaggerInteractions() {
+    document.querySelectorAll(".opblock-summary").forEach(summary => {
+      summary.addEventListener("click", () => {
+        setTimeout(extractCodeBlocks, 300);
+      });
+    });
+  }
+
+  function extractCodeBlocks() {
+    const panel = document.getElementById("code-content");
+    panel.innerHTML = "";
+
+    document.querySelectorAll(".opblock-body pre").forEach(pre => {
+      const block = document.createElement("div");
+      block.className = "code-block";
+      block.textContent = pre.textContent;
+      panel.appendChild(block);
+    });
+  }
+
+  function setActive(li) {
     document.querySelectorAll(".sidebar li")
-      .forEach(li => li.classList.remove("active"));
-    activeLi.classList.add("active");
+      .forEach(i => i.classList.remove("active"));
+    li.classList.add("active");
   }
 
   function findSectionByText(text) {
     return Array.from(document.querySelectorAll("h1,h2,h3"))
       .find(el => el.textContent.trim().startsWith(text));
-  }
-
-  function enhanceSummaries() {
-    document.querySelectorAll(".opblock-summary").forEach(summary => {
-      if (summary.querySelector(".summary-code-box")) return;
-
-      const desc = summary.querySelector(".opblock-summary-description");
-      if (!desc || !desc.textContent.trim()) return;
-
-      const box = document.createElement("div");
-      box.className = "summary-code-box";
-      box.textContent = desc.textContent.trim();
-
-      summary.appendChild(box);
-    });
-  }
-
-  function bindOpblockClicks() {
-    document.querySelectorAll(".opblock-summary").forEach(summary => {
-      summary.addEventListener("click", () => {
-        requestAnimationFrame(() => {
-          enhanceSummaries();
-          enhanceOpblockLayout();
-        });
-      });
-    });
-  }
-
-  function enhanceOpblockLayout() {
-    document.querySelectorAll(".opblock-body").forEach(body => {
-      body.classList.add("two-columns");
-    });
   }
 </script>
 </body>
