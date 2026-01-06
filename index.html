@@ -2,102 +2,289 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>PIX API - Banco BV</title>
 
 <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" />
 
 <style>
-html, body {
-  margin: 0;
-  height: 100%;
-  font-family: Arial, sans-serif;
-  background: #f5f7fa;
-}
+  :root{
+    --sidebar-width: 300px;
+    --right-width: 520px;
+    --gutter: 8px;
+    --brand: #002f6c;
+    --muted: #6b7280;
+    --bg: #f5f7fa;
+  }
 
-/* ===== LAYOUT ===== */
-.layout {
-  display: grid;
-  grid-template-columns: 300px 1fr 520px;
-  height: 100vh;
-}
+  html, body {
+    margin: 0;
+    height: 100%;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: var(--bg);
+    color: #0b1220;
+    -webkit-font-smoothing:antialiased;
+  }
 
-/* ===== SIDEBAR ===== */
-.sidebar {
-  background: #ffffff;
-  border-right: 1px solid #ddd;
-  padding: 16px;
-  overflow-y: auto;
-}
-
-.sidebar h3 {
-  font-size: 14px;
-  color: #002f6c;
-  margin-bottom: 10px;
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebar li {
-  font-size: 13px;
-  padding: 6px 8px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.sidebar li:hover {
-  background: rgba(0,47,108,.1);
-}
-
-/* ===== CONTEÚDO CENTRAL ===== */
-.content {
-  background: #ffffff;
-  overflow-y: auto;
-}
-
-.swagger-ui {
-  padding: 20px;
-}
-
-/* ===== PAINEL DIREITO ===== */
-.code-panel {
-  background: #0b1220;
-  border-left: 1px solid #ddd;
-  padding: 16px;
-  overflow: hidden; /* sem scroll */
-  color: #fff;
-}
-
-/* Header GET /path */
-.code-panel .endpoint-header {
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: 12px;
-}
-
-/* Responses */
-.code-panel .responses-wrapper {
-  background: transparent;
-}
-
-/* Código */
-.code-panel pre {
-  background: #020617 !important;
-  border-radius: 6px;
-}
-
-/* Mobile */
-@media (max-width: 1200px) {
+  /* ===== LAYOUT ===== */
   .layout {
-    grid-template-columns: 260px 1fr;
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr var(--right-width);
+    height: 100vh;
+    gap: 0;
+    overflow: hidden;
   }
+
+  /* Resizer handle between center and code panel */
+  .resizer {
+    width: 6px;
+    cursor: col-resize;
+    background: linear-gradient(180deg, rgba(255,255,255,0), rgba(0,0,0,0.03));
+    z-index: 40;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    background: #ffffff;
+    border-right: 1px solid #e6e9ee;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .sidebar .header {
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+
+  .sidebar h3 {
+    font-size: 15px;
+    color: var(--brand);
+    margin: 0;
+    letter-spacing: -0.2px;
+  }
+
+  .sidebar .search {
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+
+  .sidebar input[type="search"] {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #e6e9ee;
+    background: #fbfdff;
+    font-size: 13px;
+  }
+
+  .tag-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tag-item {
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .12s, transform .06s;
+    font-size: 13px;
+    color: #0b1220;
+  }
+
+  .tag-item .left {
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+
+  .tag-item:hover { background: rgba(0,47,108,0.06); transform: translateY(-1px); }
+  .tag-item.active { background: linear-gradient(90deg,#e9f1ff, #fbfdff); border: 1px solid rgba(0,47,108,0.06); box-shadow: 0 1px 0 rgba(0,0,0,0.02) inset; }
+
+  .tag-count {
+    background: rgba(0,47,108,0.08);
+    color: var(--brand);
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+
+  .tag-meta {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 6px;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Small device collapse */
+  .sidebar .collapse-toggle {
+    display:none;
+    background: transparent;
+    border: none;
+    color: var(--brand);
+    font-weight: 600;
+  }
+
+  /* ===== CONTEÚDO CENTRAL ===== */
+  .content {
+    background: #ffffff;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .swagger-ui {
+    padding: 18px;
+  }
+
+  /* Floating control to toggle sidebar on small screens */
+  .mobile-controls {
+    display:none;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 80;
+  }
+
+  .mobile-btn {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 12px;
+    border: 1px solid #e6e9ee;
+    box-shadow: 0 6px 20px rgba(16,24,40,0.06);
+    cursor: pointer;
+  }
+
+  /* ===== PAINEL DIREITO ===== */
   .code-panel {
-    display: none;
+    background: #0b1220;
+    border-left: 1px solid rgba(255,255,255,0.03);
+    padding: 16px;
+    overflow: auto;
+    color: #fff;
+    display:flex;
+    flex-direction: column;
+    gap: 12px;
   }
-}
+
+  .code-panel .endpoint-header {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display:flex;
+    justify-content:space-between;
+    gap: 12px;
+    align-items:center;
+  }
+
+  .method-pill {
+    display:inline-block;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-weight:700;
+    font-size: 12px;
+    color: #fff;
+  }
+
+  .method-pill.get { background: #16a34a; }
+  .method-pill.post { background: #0ea5e9; }
+  .method-pill.put { background: #f59e0b; color:#0b1220; }
+  .method-pill.delete { background: #ef4444; }
+  .method-pill.default { background: rgba(255,255,255,0.06); }
+
+  .path-text { color: rgba(255,255,255,0.9); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-size:13px; }
+
+  .right-body {
+    display:flex;
+    gap:10px;
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .code-panel .controls {
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+
+  .btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.04);
+    color: #fff;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor:pointer;
+    font-size: 13px;
+  }
+
+  .btn.primary {
+    background: linear-gradient(90deg,#0ea5e9,#2dd4bf);
+    color: #06202a;
+    font-weight:700;
+    border: none;
+  }
+
+  .responses-wrapper pre {
+    background: #020617 !important;
+    border-radius: 6px;
+    padding: 12px;
+    overflow: auto;
+  }
+
+  .panel-empty {
+    color: rgba(255,255,255,0.6);
+    font-size: 13px;
+    padding: 10px 4px;
+  }
+
+  /* Responsive behavior */
+  @media (max-width: 1200px) {
+    .layout {
+      grid-template-columns: 260px 1fr;
+    }
+    .code-panel { display: none; }
+    .resizer { display: none; }
+    .mobile-controls { display:block; }
+    .sidebar .collapse-toggle { display:inline-block; }
+  }
+
+  @media (max-width: 880px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 76%;
+      max-width: 380px;
+      transform: translateX(-120%);
+      transition: transform .22s ease;
+      z-index: 90;
+      box-shadow: 8px 0 32px rgba(2,6,23,0.12);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .content { padding-top: 62px; }
+  }
 </style>
 </head>
 
@@ -105,94 +292,449 @@ html, body {
 <div class="layout">
 
   <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <h3>Documentação</h3>
-    <ul id="sidebar-menu"></ul>
-    <hr />
-    <small>
-      Open Banking<br />
-      <strong>openbanking@bv.com.br</strong>
-    </small>
+  <aside class="sidebar" id="sidebar">
+    <div class="header">
+      <div>
+        <h3>Documentação</h3>
+        <div style="font-size:12px;color:var(--muted)">PIX API - Banco BV</div>
+      </div>
+      <button class="collapse-toggle" id="close-sidebar" aria-label="Fechar sidebar">Fechar</button>
+    </div>
+
+    <div class="search">
+      <input id="sidebar-search" type="search" placeholder="Buscar tag, caminho ou operação..." aria-label="Buscar documentação">
+    </div>
+
+    <ul id="sidebar-menu" class="tag-list" aria-live="polite" aria-label="Lista de tags">
+      <!-- Tags inserted here -->
+    </ul>
+
+    <div class="tag-meta" id="tag-meta">
+      Selecione uma tag para navegar rapidamente para os endpoints relacionados.
+    </div>
+
+    <div class="sidebar-footer">
+      Open Banking · <strong>openbanking@bv.com.br</strong>
+    </div>
   </aside>
 
   <!-- CONTEÚDO -->
-  <main class="content">
-    <div id="swagger-ui"></div>
+  <main class="content" id="content">
+    <div class="mobile-controls" id="mobile-controls">
+      <button class="mobile-btn" id="mobile-open-sidebar" aria-label="Abrir sidebar">Menu</button>
+    </div>
+
+    <div id="swagger-ui" class="swagger-ui"></div>
   </main>
 
+  <!-- Resizer between content and right panel -->
+  <div class="resizer" id="resizer" title="Arraste para redimensionar painel direito" aria-hidden="false"></div>
+
   <!-- PAINEL DIREITO -->
-  <aside class="code-panel">
-    <div id="code-view"></div>
+  <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true">
+    <div id="code-view">
+      <div class="panel-empty">Abra uma operação (clicando em um endpoint) para ver exemplos de respostas e códigos aqui.</div>
+    </div>
   </aside>
 
 </div>
 
+<!-- External scripts -->
 <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
 <script>
+/*
+  Melhorias implementadas:
+  - Sidebar com busca, contagem de endpoints por tag, destaque do tag ativo
+  - Resizer para ajustar largura do painel direito
+  - Painel direito atualizado automaticamente ao abrir endpoints (com botões copiar)
+  - Usa MutationObserver + IntersectionObserver para detectar mudança na UI do Swagger
+  - Mobile friendly: toggle sidebar
+  Observação: o Swagger UI é carregado diretamente e o código observa o DOM para montar a sidebar.
+*/
+
+const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
+
+/* Create Swagger UI */
 SwaggerUIBundle({
-  url: "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml",
+  url: SWAGGER_URL,
   dom_id: "#swagger-ui",
-  layout: "BaseLayout"
+  layout: "BaseLayout",
+  deepLinking: true,
+  presets: [SwaggerUIBundle.presets.apis]
 });
 
-setTimeout(init, 2000);
+/* Utility */
+function $qs(selector, scope=document) { return scope.querySelector(selector); }
+function $qsa(selector, scope=document) { return Array.from(scope.querySelectorAll(selector)); }
 
-function init() {
-  buildSidebar();
-  bindEndpointClicks();
+/* Wait until opblock-tag elements are present (injected by Swagger UI) */
+function waitForSwaggerReady(timeout = 8000) {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    const check = () => {
+      if ($qsa('.opblock-tag').length > 0) return resolve();
+      if (Date.now() - start > timeout) return reject(new Error('Timeout waiting Swagger UI'));
+      requestAnimationFrame(check);
+    };
+    check();
+  });
 }
 
-/* Sidebar dinâmico */
+/* Build enhanced sidebar from DOM tags */
 function buildSidebar() {
   const menu = document.getElementById("sidebar-menu");
   menu.innerHTML = "";
 
-  document.querySelectorAll(".opblock-tag").forEach(tag => {
-    const title = tag.querySelector("h3 span");
-    if (!title) return;
+  const tags = $qsa(".opblock-tag");
+  tags.forEach(tagEl => {
+    const titleSpan = tagEl.querySelector("h3 span");
+    const titleText = titleSpan ? titleSpan.textContent.trim() : 'Sem nome';
+
+    // Count operations inside this tag
+    const operations = tagEl.querySelectorAll(".opblock-summary");
+    const count = operations.length;
 
     const li = document.createElement("li");
-    li.textContent = title.textContent.trim();
-    li.onclick = () => tag.scrollIntoView({ behavior: "smooth" });
+    li.className = "tag-item";
+    li.tabIndex = 0;
+    li.title = titleText;
+    li.dataset.tag = titleText;
+
+    const left = document.createElement("div");
+    left.className = "left";
+    left.innerHTML = `<strong>${titleText}</strong>`;
+    const right = document.createElement("div");
+    right.style.display = "flex";
+    right.style.alignItems = "center";
+    right.innerHTML = `<span class="tag-count">${count}</span>`;
+
+    li.appendChild(left);
+    li.appendChild(right);
+
+    li.onclick = () => {
+      // Scroll the tag element into view and open the first opblock
+      tagEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Expand the first opblock-summary inside tag
+      const firstSummary = tagEl.querySelector(".opblock-summary");
+      if (firstSummary) {
+        // If already open, toggle; else click to open
+        if (!firstSummary.parentElement.classList.contains('is-open')) {
+          firstSummary.click();
+        } else {
+          // ensure update of right panel
+          updateRightPanel();
+        }
+      }
+      setActiveTag(titleText);
+    };
+
+    // keyboard accessible
+    li.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); li.click(); }
+    };
+
     menu.appendChild(li);
   });
-}
 
-/* Clique nos endpoints */
-function bindEndpointClicks() {
-  document.querySelectorAll(".opblock-summary").forEach(summary => {
-    summary.addEventListener("click", () => {
-      setTimeout(updateRightPanel, 200);
+  // Search behavior
+  const search = document.getElementById("sidebar-search");
+  search.oninput = () => {
+    const q = search.value.trim().toLowerCase();
+    const items = Array.from(menu.children);
+    items.forEach(item => {
+      const tag = item.dataset.tag.toLowerCase();
+      if (!q || tag.includes(q)) {
+        item.style.display = "";
+      } else {
+        item.style.display = "none";
+      }
     });
-  });
+  };
 }
 
-/* Atualiza painel direito */
+/* Highlight active tag based on which opblock is mostly visible in center column */
+let tagToElementMap = new Map();
+function wireActiveTagHighlighting() {
+  const tagEls = $qsa('.opblock-tag');
+  tagToElementMap.clear();
+  tagEls.forEach(tag => {
+    const title = tag.querySelector('h3 span')?.textContent?.trim();
+    if (title) tagToElementMap.set(title, tag);
+  });
+
+  const options = {
+    root: document.querySelector('.content'),
+    rootMargin: '0px 0px -60% 0px', // consider element active when top crosses about 40% down
+    threshold: [0, 0.1, 0.4, 0.6, 1.0]
+  };
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const tag = entry.target;
+      if (entry.isIntersecting) {
+        const name = tag.querySelector('h3 span')?.textContent?.trim();
+        if (name) setActiveTag(name);
+      }
+    });
+  }, options);
+
+  tagEls.forEach(t => observer.observe(t));
+}
+
+function setActiveTag(name) {
+  const menu = document.getElementById("sidebar-menu");
+  Array.from(menu.children).forEach(li => {
+    if (li.dataset.tag === name) li.classList.add('active');
+    else li.classList.remove('active');
+  });
+  const meta = document.getElementById('tag-meta');
+  meta.textContent = `Exibindo endpoints para: ${name}`;
+}
+
+/* Update right panel when an opblock is opened */
 function updateRightPanel() {
   const panel = document.getElementById("code-view");
   panel.innerHTML = "";
 
   const open = document.querySelector(".opblock.is-open");
-  if (!open) return;
+  if (!open) {
+    panel.innerHTML = '<div class="panel-empty">Abra uma operação (clicando em um endpoint) para ver exemplos de respostas e códigos aqui.</div>';
+    return;
+  }
 
-  /* Cabeçalho */
-  const method = open.querySelector(".opblock-summary-method")?.textContent || "";
-  const path = open.querySelector(".opblock-summary-path")?.textContent || "";
+  // Extract method and path
+  const methodText = open.querySelector(".opblock-summary-method")?.textContent?.trim() || "";
+  const pathText = open.querySelector(".opblock-summary-path")?.textContent?.trim() || "";
 
+  // Header
   const header = document.createElement("div");
   header.className = "endpoint-header";
-  header.textContent = `${method} ${path}`;
 
-  /* Responses */
-  const responses = open.querySelector(".responses-wrapper");
-  if (!responses) return;
+  const left = document.createElement("div");
+  const methodSpan = document.createElement("span");
+  methodSpan.className = "method-pill " + (methodText ? methodText.toLowerCase() : 'default');
+  methodSpan.textContent = methodText || "OP";
+  const pathSpan = document.createElement("div");
+  pathSpan.className = "path-text";
+  pathSpan.textContent = pathText;
 
-  const responsesClone = responses.cloneNode(true);
+  left.appendChild(methodSpan);
+  left.appendChild(document.createTextNode(" "));
+  left.appendChild(pathSpan);
+
+  // Controls
+  const controls = document.createElement("div");
+  controls.className = "controls";
+
+  const copyAllBtn = document.createElement("button");
+  copyAllBtn.className = "btn";
+  copyAllBtn.title = "Copiar conteúdo de resposta mostrado";
+  copyAllBtn.textContent = "Copiar";
+
+  const openInSwaggerBtn = document.createElement("button");
+  openInSwaggerBtn.className = "btn";
+  openInSwaggerBtn.textContent = "Abrir no Swagger";
+  openInSwaggerBtn.onclick = () => {
+    // scroll to the open opblock in the main content view
+    open.scrollIntoView({ behavior: "smooth", block: "center" });
+    // briefly highlight
+    open.style.boxShadow = "0 6px 18px rgba(0,47,108,0.12)";
+    setTimeout(()=> open.style.boxShadow = "", 900);
+  };
+
+  controls.appendChild(copyAllBtn);
+  controls.appendChild(openInSwaggerBtn);
+
+  header.appendChild(left);
+  header.appendChild(controls);
 
   panel.appendChild(header);
-  panel.appendChild(responsesClone);
+
+  // Clone Responses area
+  const responses = open.querySelector(".responses-wrapper");
+  if (responses) {
+    const clone = responses.cloneNode(true);
+
+    // Remove interactive elements that don't make sense in the side panel like "Try it out"
+    clone.querySelectorAll('.execute, .try-out, .btn.execute, .responses-request, .model').forEach(n => n.remove());
+
+    // Ensure code blocks are visible
+    clone.querySelectorAll('pre, code').forEach(el => {
+      el.style.whiteSpace = 'pre';
+      el.style.wordBreak = 'break-word';
+      el.classList.add('hljs');
+    });
+
+    // Append to panel
+    const rightBody = document.createElement("div");
+    rightBody.className = "right-body";
+    rightBody.appendChild(clone);
+    panel.appendChild(rightBody);
+
+    // Highlight any code blocks using highlight.js
+    rightBody.querySelectorAll('pre code').forEach(block => {
+      try {
+        hljs.highlightElement(block);
+      } catch(e) { /* ignore */ }
+    });
+
+    // Implement copy button: copy the concatenated text content of code blocks or responses
+    copyAllBtn.onclick = async () => {
+      let text = "";
+      // prefer pre>code blocks
+      const codes = rightBody.querySelectorAll('pre code');
+      if (codes.length > 0) {
+        text = Array.from(codes).map(c => c.innerText).join("\n\n---\n\n");
+      } else {
+        text = rightBody.innerText;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        copyAllBtn.textContent = "Copiado ✓";
+        setTimeout(()=> copyAllBtn.textContent = "Copiar", 1400);
+      } catch(err) {
+        copyAllBtn.textContent = "Erro";
+        setTimeout(()=> copyAllBtn.textContent = "Copiar", 1400);
+      }
+    };
+  } else {
+    const msg = document.createElement("div");
+    msg.className = "panel-empty";
+    msg.textContent = "Nenhuma resposta de exemplo encontrada para este endpoint.";
+    panel.appendChild(msg);
+  }
 }
+
+/* Bind clicks on opblock summary to update right panel. Also observe DOM changes. */
+function bindEndpointClicks() {
+  // Delegate: many opblocks can be created later; use event delegation on content
+  const content = document.getElementById('swagger-ui');
+  content.addEventListener('click', (e) => {
+    const summary = e.target.closest('.opblock-summary');
+    if (summary) {
+      // small delay to allow Swagger to toggle the .is-open class and render the responses
+      setTimeout(updateRightPanel, 260);
+    }
+  });
+
+  // Use a MutationObserver to watch for when an opblock gets the is-open class (e.g. opened programmatically)
+  const mo = new MutationObserver(mutations => {
+    for (const m of mutations) {
+      if (m.type === 'attributes' && m.attributeName === 'class') {
+        if (m.target.classList && m.target.classList.contains('opblock') && m.target.classList.contains('is-open')) {
+          setTimeout(updateRightPanel, 80);
+        }
+      }
+      // Also watch for new opblocks added to rebuild sidebar if necessary
+      if (m.addedNodes && m.addedNodes.length) {
+        buildSidebar();
+        wireActiveTagHighlighting();
+      }
+    }
+  });
+
+  // Observe the main container for added opblocks or class changes
+  const container = document.querySelector('.swagger-ui');
+  if (container) mo.observe(container, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+}
+
+/* Resizer for right panel */
+function initResizer() {
+  const layout = document.querySelector('.layout');
+  const resizer = document.getElementById('resizer');
+  const sidebar = document.getElementById('sidebar');
+  const codePanel = document.getElementById('code-panel');
+
+  let dragging = false;
+  let startX = 0;
+  let startRightWidth = parseInt(getComputedStyle(codePanel).width, 10);
+
+  const onDown = (e) => {
+    dragging = true;
+    startX = e.clientX || e.touches[0].clientX;
+    startRightWidth = parseInt(getComputedStyle(codePanel).width, 10);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const onMove = (e) => {
+    if (!dragging) return;
+    const currentX = e.clientX || (e.touches && e.touches[0].clientX);
+    const dx = startX - currentX;
+    let newRightWidth = startRightWidth + dx;
+    // clamp widths (min 260, max 70% of width)
+    const containerWidth = layout.clientWidth;
+    newRightWidth = Math.max(260, Math.min(newRightWidth, Math.floor(containerWidth * 0.75)));
+    const sidebarWidth = parseInt(getComputedStyle(sidebar).width, 10);
+    // update grid template columns
+    layout.style.gridTemplateColumns = `${sidebarWidth}px 1fr ${newRightWidth}px`;
+  };
+
+  const onUp = () => {
+    dragging = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+
+  resizer.addEventListener('mousedown', onDown);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+
+  // Touch support
+  resizer.addEventListener('touchstart', onDown, {passive:true});
+  window.addEventListener('touchmove', onMove, {passive:true});
+  window.addEventListener('touchend', onUp);
+}
+
+/* Mobile sidebar toggle */
+function initMobileControls() {
+  const openBtn = document.getElementById('mobile-open-sidebar');
+  const closeBtn = document.getElementById('close-sidebar');
+  const sidebar = document.getElementById('sidebar');
+
+  openBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+  });
+  closeBtn.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+  });
+}
+
+/* Top-level init workflow */
+(async function init() {
+  try {
+    // wait until Swagger UI inserts opblock tags
+    await waitForSwaggerReady();
+
+    // Build sidebar and wire interactions
+    buildSidebar();
+    wireActiveTagHighlighting();
+    bindEndpointClicks();
+    initResizer();
+    initMobileControls();
+
+    // If a tag or opblock already open, update right panel
+    setTimeout(updateRightPanel, 200);
+
+    // Also attach a MutationObserver to recreate sidebar if Swagger re-renders (e.g. after navigation)
+    const uiRoot = document.querySelector('.swagger-ui');
+    if (uiRoot) {
+      const mo = new MutationObserver(() => {
+        // slight debounce to avoid thrashing
+        clearTimeout(window._swagger_rebuild_timeout);
+        window._swagger_rebuild_timeout = setTimeout(() => {
+          buildSidebar();
+          wireActiveTagHighlighting();
+        }, 220);
+      });
+      mo.observe(uiRoot, { childList: true, subtree: true });
+    }
+  } catch (err) {
+    console.warn("Não foi possível inicializar a interface melhorada:", err);
+  }
+})();
 </script>
 
 </body>
