@@ -23,7 +23,7 @@ html, body {
 
 /* ===== SIDEBAR ===== */
 .sidebar {
-  background: #fff;
+  background: #ffffff;
   border-right: 1px solid #ddd;
   padding: 16px;
   overflow-y: auto;
@@ -32,11 +32,29 @@ html, body {
 .sidebar h3 {
   font-size: 14px;
   color: #002f6c;
+  margin-bottom: 10px;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar li {
+  font-size: 13px;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.sidebar li:hover {
+  background: rgba(0,47,108,.1);
 }
 
 /* ===== CONTEÚDO CENTRAL ===== */
 .content {
-  background: #fff;
+  background: #ffffff;
   overflow-y: auto;
 }
 
@@ -49,40 +67,26 @@ html, body {
   background: #0b1220;
   border-left: 1px solid #ddd;
   padding: 16px;
-  overflow: hidden; /* SEM SCROLL */
+  overflow: hidden; /* sem scroll */
+  color: #fff;
 }
 
-/* Wrapper clonado */
-.code-panel .swagger-ui {
-  padding: 0;
-  background: transparent;
-}
-
-/* Cabeçalho GET /path */
-.code-panel .opblock-summary {
-  pointer-events: none;
+/* Header GET /path */
+.code-panel .endpoint-header {
+  font-size: 14px;
+  font-weight: bold;
   margin-bottom: 12px;
 }
 
 /* Responses */
 .code-panel .responses-wrapper {
-  margin-top: 12px;
+  background: transparent;
 }
 
 /* Código */
 .code-panel pre {
   background: #020617 !important;
-  max-width: 100%;
-  overflow: hidden; /* SEM SCROLL */
-}
-
-/* Remove tudo que não é response */
-.code-panel .opblock-description-wrapper,
-.code-panel .parameters,
-.code-panel .scheme-container,
-.code-panel .try-out,
-.code-panel table {
-  display: none !important;
+  border-radius: 6px;
 }
 
 /* Mobile */
@@ -116,7 +120,7 @@ html, body {
     <div id="swagger-ui"></div>
   </main>
 
-  <!-- PAINEL DE CÓDIGO -->
+  <!-- PAINEL DIREITO -->
   <aside class="code-panel">
     <div id="code-view"></div>
   </aside>
@@ -132,35 +136,62 @@ SwaggerUIBundle({
   layout: "BaseLayout"
 });
 
-setTimeout(bindEvents, 2000);
+setTimeout(init, 2000);
 
-function bindEvents() {
-  document.querySelectorAll(".opblock-summary").forEach(el => {
-    el.addEventListener("click", () => {
-      setTimeout(renderCodePanel, 200);
+function init() {
+  buildSidebar();
+  bindEndpointClicks();
+}
+
+/* Sidebar dinâmico */
+function buildSidebar() {
+  const menu = document.getElementById("sidebar-menu");
+  menu.innerHTML = "";
+
+  document.querySelectorAll(".opblock-tag").forEach(tag => {
+    const title = tag.querySelector("h3 span");
+    if (!title) return;
+
+    const li = document.createElement("li");
+    li.textContent = title.textContent.trim();
+    li.onclick = () => tag.scrollIntoView({ behavior: "smooth" });
+    menu.appendChild(li);
+  });
+}
+
+/* Clique nos endpoints */
+function bindEndpointClicks() {
+  document.querySelectorAll(".opblock-summary").forEach(summary => {
+    summary.addEventListener("click", () => {
+      setTimeout(updateRightPanel, 200);
     });
   });
 }
 
-function renderCodePanel() {
+/* Atualiza painel direito */
+function updateRightPanel() {
   const panel = document.getElementById("code-view");
   panel.innerHTML = "";
 
   const open = document.querySelector(".opblock.is-open");
   if (!open) return;
 
-  const summary = open.querySelector(".opblock-summary")?.cloneNode(true);
-  const responses = open.querySelector(".responses-wrapper")?.cloneNode(true);
+  /* Cabeçalho */
+  const method = open.querySelector(".opblock-summary-method")?.textContent || "";
+  const path = open.querySelector(".opblock-summary-path")?.textContent || "";
 
-  if (!summary || !responses) return;
+  const header = document.createElement("div");
+  header.className = "endpoint-header";
+  header.textContent = `${method} ${path}`;
 
-  const wrapper = document.createElement("div");
-  wrapper.className = "swagger-ui";
+  /* Responses */
+  const responses = open.querySelector(".responses-wrapper");
+  if (!responses) return;
 
-  wrapper.appendChild(summary);
-  wrapper.appendChild(responses);
+  const responsesClone = responses.cloneNode(true);
 
-  panel.appendChild(wrapper);
+  panel.appendChild(header);
+  panel.appendChild(responsesClone);
 }
 </script>
 
