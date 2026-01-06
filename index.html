@@ -16,26 +16,31 @@
         margin: 0;
         padding: 0;
         height: 100%;
+        font-family: Arial, sans-serif;
       }
 
+      /* Layout geral */
       .layout {
         display: flex;
         height: 100vh;
         width: 100%;
       }
 
+      /* SIDEBAR */
       .sidebar {
-        width: 300px;
-        background-color: #f4f6f9;
-        border-right: 1px solid #ddd;
-        padding: 16px;
+        width: 320px;
+        background-color: #ffffff;
+        border-right: 1px solid #e1e1e1;
+        padding: 20px;
         box-sizing: border-box;
         overflow-y: auto;
       }
 
       .sidebar h3 {
-        margin-top: 0;
+        margin: 0 0 16px 0;
         font-size: 18px;
+        font-weight: 600;
+        color: #1f2933;
       }
 
       .sidebar ul {
@@ -45,19 +50,70 @@
       }
 
       .sidebar li {
-        margin: 10px 0;
-        cursor: pointer;
+        padding: 8px 4px;
         font-size: 14px;
-        color: #0070d2;
+        color: #2563eb;
+        cursor: pointer;
+        border-radius: 4px;
       }
 
       .sidebar li:hover {
-        text-decoration: underline;
+        background-color: #f1f5f9;
       }
 
+      /* Conteúdo Swagger */
       .content {
         flex: 1;
         overflow-y: auto;
+        padding: 0;
+      }
+
+      /* ============================= */
+      /* AJUSTES DO SWAGGER UI */
+      /* ============================= */
+
+      /* Cada operação em duas colunas */
+      .swagger-ui .opblock {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+      }
+
+      /* Lado esquerdo: endpoint */
+      .swagger-ui .opblock-summary {
+        width: 50%;
+      }
+
+      /* Lado direito: descrição / retorno */
+      .swagger-ui .opblock-description-wrapper,
+      .swagger-ui .responses-wrapper {
+        width: 50%;
+        padding: 16px;
+        box-sizing: border-box;
+      }
+
+      /* Caixa de código */
+      .swagger-ui .opblock-summary-description,
+      .swagger-ui .responses-wrapper {
+        background-color: #0f172a;
+        color: #e5e7eb;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        padding: 16px;
+        overflow-x: auto;
+      }
+
+      /* Remove fundo branco interno */
+      .swagger-ui .responses-wrapper table {
+        background: transparent;
+        color: inherit;
+      }
+
+      .swagger-ui .responses-wrapper td,
+      .swagger-ui .responses-wrapper th {
+        color: inherit;
       }
     </style>
   </head>
@@ -75,50 +131,30 @@
           <li>Operacional</li>
           <li>Fluxos de tentativas no envio de pagamentos</li>
           <li>Location</li>
-          <li>Gerenciamento de cobranças para pagamento imediato</li>
-          <li>Gerenciamento de cobranças com vencimento</li>
-          <li>Gerenciamento de cobranças com vencimento em lote</li>
-          <li>Notificação</li>
-          <li>Gerenciamento de Pix recebidos</li>
-          <li>Gerenciamento de Pix enviados</li>
+          <li>Gerenciamento de cobranças</li>
+          <li>Pix Recebidos</li>
+          <li>Pix Enviados</li>
           <li>DICT</li>
-          <li>Notificação de Infração</li>
           <li>QRCode</li>
-          <li>
-            Reúne endpoints (locations) que retornam o Payload JSON que representa
-            uma Cobrança
-          </li>
-          <li>Solicitação de Devolução Especial</li>
-          <li>Pix Saque e Pix Troco</li>
-          <li>Participantes SPI</li>
-          <li>Gerenciamento de Notificações - Webhook</li>
+          <li>Webhook</li>
           <li>Iniciação de Pagamento</li>
-          <li>Políticas</li>
-          <li>Antifraude</li>
-          <li>Agendamentos</li>
-          <li>Pix Automático</li>
-          <li>Recuperação de Valores</li>
-          <li>Autenticação e Segurança</li>
-          <li>Iniciação Open Finance - ITP</li>
-          <li>API docs by Redocly</li>
-          <li>Pix - Pagamentos instantâneos (0.3.84)</li>
-          <li>Download OpenAPI specification</li>
-          <li>Open Banking: openbanking@bv.com.br</li>
+          <li>Segurança</li>
         </ul>
       </aside>
 
-      <!-- CONTEÚDO (Swagger intacto) -->
+      <!-- SWAGGER -->
       <main class="content">
         <div id="swagger-ui"></div>
       </main>
     </div>
 
-    <!-- Swagger UI JS (INALTERADO) -->
+    <!-- Swagger JS (inalterado) -->
     <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
     <script>
       SwaggerUIBundle({
         url: "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml",
-        dom_id: "#swagger-ui"
+        dom_id: "#swagger-ui",
+        layout: "BaseLayout"
       });
     </script>
   </body>
