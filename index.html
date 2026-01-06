@@ -55,10 +55,6 @@
       margin: 0;
     }
 
-    .sidebar ul + hr {
-      margin: 16px 0;
-    }
-
     .sidebar li {
       font-size: 13px;
       padding: 8px 10px;
@@ -95,7 +91,7 @@
       padding: 24px;
     }
 
-    /* ===== SUMMARY + CODE BOX ===== */
+    /* ===== SUMMARY + DESCRIÇÃO LATERAL ===== */
     .opblock-summary {
       display: grid !important;
       grid-template-columns: 1fr 420px;
@@ -118,6 +114,56 @@
       max-height: 140px;
       overflow: auto;
       white-space: pre-wrap;
+    }
+
+    /* ===== BODY DO ENDPOINT EM 2 COLUNAS ===== */
+    .opblock-body {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) 460px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* Conteúdo funcional à esquerda */
+    .opblock-body > .opblock-section:not(.responses-wrapper):not(.request-body) {
+      grid-column: 1;
+    }
+
+    /* Código / exemplos / responses à direita */
+    .responses-wrapper,
+    .request-body,
+    .opblock-body pre,
+    .opblock-body .highlight-code,
+    .opblock-body .example {
+      grid-column: 2;
+    }
+
+    /* Estilo das caixas de código */
+    .opblock-body pre,
+    .opblock-body .highlight-code {
+      background: var(--code-bg) !important;
+      color: var(--code-text) !important;
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 420px;
+      overflow: auto;
+      font-size: 12px;
+    }
+
+    /* Mobile: volta para 1 coluna */
+    @media (max-width: 1200px) {
+      .opblock-summary,
+      .opblock-body {
+        grid-template-columns: 1fr;
+      }
+
+      .responses-wrapper,
+      .request-body,
+      .opblock-body pre,
+      .opblock-body .highlight-code,
+      .opblock-body .example {
+        grid-column: 1;
+      }
     }
   </style>
 </head>
@@ -175,6 +221,7 @@
     buildDynamicSidebar();
     enhanceSummaries();
     bindOpblockClicks();
+    enhanceOpblockLayout();
   }, 2000);
 
   function buildStaticSidebar() {
@@ -218,10 +265,8 @@
   }
 
   function setActive(activeLi) {
-    document
-      .querySelectorAll(".sidebar li")
+    document.querySelectorAll(".sidebar li")
       .forEach(li => li.classList.remove("active"));
-
     activeLi.classList.add("active");
   }
 
@@ -248,8 +293,17 @@
   function bindOpblockClicks() {
     document.querySelectorAll(".opblock-summary").forEach(summary => {
       summary.addEventListener("click", () => {
-        requestAnimationFrame(enhanceSummaries);
+        requestAnimationFrame(() => {
+          enhanceSummaries();
+          enhanceOpblockLayout();
+        });
       });
+    });
+  }
+
+  function enhanceOpblockLayout() {
+    document.querySelectorAll(".opblock-body").forEach(body => {
+      body.classList.add("two-columns");
     });
   }
 </script>
