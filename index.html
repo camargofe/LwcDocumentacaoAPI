@@ -7,12 +7,20 @@
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
 
   <style>
+    :root {
+      --bv-blue: #002f6c;
+      --bv-border: #e1e5eb;
+      --bv-bg: #f5f7fa;
+      --code-bg: #0f172a;
+      --code-text: #e5e7eb;
+    }
+
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
       font-family: Arial, sans-serif;
-      background-color: #f5f7fa;
+      background-color: var(--bv-bg);
     }
 
     .layout {
@@ -21,110 +29,178 @@
       width: 100vw;
     }
 
+    /* SIDEBAR */
     .sidebar {
-      width: 300px;
-      background-color: #ffffff;
-      border-right: 1px solid #ddd;
-      padding: 20px;
-      overflow-y: auto;
+      width: 280px;
+      background: #fff;
+      border-right: 1px solid var(--bv-border);
+      padding: 20px 16px;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
     }
 
     .sidebar h3 {
       font-size: 14px;
-      margin-bottom: 10px;
-      color: #002f6c;
+      color: var(--bv-blue);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
     }
 
     .sidebar ul {
       list-style: none;
       padding: 0;
       margin: 0;
+      flex: 1;
+      overflow-y: auto;
     }
 
     .sidebar li {
       font-size: 13px;
-      margin-bottom: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
       cursor: pointer;
-      color: #333;
     }
 
-    .sidebar li:hover {
-      text-decoration: underline;
-      color: #002f6c;
+    .sidebar li:hover,
+    .sidebar li.active {
+      background: rgba(0,47,108,.1);
+      color: var(--bv-blue);
+      font-weight: bold;
     }
 
+    .sidebar-footer {
+      font-size: 12px;
+      border-top: 1px solid var(--bv-border);
+      padding-top: 12px;
+      color: #6b7280;
+    }
+
+    /* CONTENT */
     .content {
       flex: 1;
       overflow-y: auto;
-      background-color: #ffffff;
+      background: #fff;
     }
 
     .swagger-ui {
-      padding: 20px;
+      padding: 24px;
+    }
+
+    /* ===== SUMMARY + CODE BOX ===== */
+    .opblock-summary {
+      display: grid !important;
+      grid-template-columns: 1fr 420px;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .opblock-summary-description {
+      display: none !important;
+    }
+
+    .summary-code-box {
+      background: var(--code-bg);
+      color: var(--code-text);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      max-height: 140px;
+      overflow: auto;
+      white-space: pre-wrap;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+    }
+
+    .summary-code-box::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+
+    .summary-code-box::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,.25);
+      border-radius: 4px;
     }
   </style>
 </head>
 
 <body>
-  <div class="layout">
+<div class="layout">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <h3>Documentação</h3>
-      <ul id="sidebar-menu"></ul>
+  <aside class="sidebar">
+    <h3>Documentação</h3>
+    <ul id="sidebar-menu"></ul>
 
-      <hr />
+    <div class="sidebar-footer">
+      Open Banking<br />
+      <strong>openbanking@bv.com.br</strong>
+    </div>
+  </aside>
 
-      <p style="font-size:12px;">
-        Open Banking:<br />
-        <strong>openbanking@bv.com.br</strong>
-      </p>
-    </aside>
+  <main class="content">
+    <div id="swagger-ui"></div>
+  </main>
 
-    <!-- SWAGGER -->
-    <main class="content">
-      <div id="swagger-ui"></div>
-    </main>
+</div>
 
-  </div>
+<script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
 
-  <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+<script>
+  SwaggerUIBundle({
+    url: "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml",
+    dom_id: "#swagger-ui",
+    layout: "BaseLayout"
+  });
 
-  <script>
-    SwaggerUIBundle({
-      url: "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml",
-      dom_id: "#swagger-ui",
-      layout: "BaseLayout"
+  const observer = new MutationObserver(() => {
+    buildSidebar();
+    enhanceSummaries();
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  function buildSidebar() {
+    const menu = document.getElementById("sidebar-menu");
+    const sections = document.querySelectorAll(".opblock-tag");
+    if (!menu || !sections.length) return;
+
+    menu.innerHTML = "";
+
+    sections.forEach(section => {
+      const title = section.querySelector(".opblock-tag-section h3 span");
+      if (!title) return;
+
+      const li = document.createElement("li");
+      li.textContent = title.textContent.trim();
+
+      li.onclick = () => {
+        document.querySelectorAll(".sidebar li")
+          .forEach(i => i.classList.remove("active"));
+
+        li.classList.add("active");
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      };
+
+      menu.appendChild(li);
     });
+  }
 
-    // Aguarda o Swagger renderizar
-    setTimeout(buildSidebar, 1500);
+  function enhanceSummaries() {
+    document.querySelectorAll(".opblock-summary").forEach(summary => {
+      if (summary.querySelector(".summary-code-box")) return;
 
-    function buildSidebar() {
-      const menu = document.getElementById("sidebar-menu");
-      if (!menu) return;
+      const desc = summary.querySelector(".opblock-summary-description");
+      if (!desc || !desc.textContent.trim()) return;
 
-      const sections = document.querySelectorAll(".opblock-tag");
-      menu.innerHTML = "";
+      const box = document.createElement("div");
+      box.className = "summary-code-box";
+      box.textContent = desc.textContent.trim();
 
-      sections.forEach(section => {
-        const title = section.querySelector(".opblock-tag-section h3 span");
-        if (!title) return;
-
-        const li = document.createElement("li");
-        li.textContent = title.textContent.trim();
-
-        li.onclick = () => {
-          section.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-          });
-        };
-
-        menu.appendChild(li);
-      });
-    }
-  </script>
+      summary.appendChild(box);
+    });
+  }
+</script>
 </body>
 </html>
