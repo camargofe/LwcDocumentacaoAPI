@@ -4,8 +4,11 @@
   <meta charset="UTF-8" />
   <title>PIX API - Banco BV</title>
 
-  <!-- Redoc -->
-  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+  <!-- Swagger UI -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/swagger-ui-dist/swagger-ui.css"
+  />
 
   <style>
     html, body {
@@ -48,21 +51,20 @@
     .sidebar li {
       margin-bottom: 8px;
       font-size: 13px;
-      cursor: pointer;
       color: #333;
+      cursor: default;
     }
 
-    .sidebar li:hover {
-      color: #002f6c;
-      text-decoration: underline;
-    }
-
-    /* CONTEÚDO PRINCIPAL */
+    /* CONTEÚDO */
     .content {
       flex: 1;
-      height: 100vh;
-      overflow: hidden; /* ESSENCIAL PARA O REDOC */
+      overflow-y: auto;
       background-color: #ffffff;
+    }
+
+    /* Ajustes Swagger */
+    .swagger-ui {
+      padding: 20px;
     }
   </style>
 </head>
@@ -102,32 +104,20 @@
 
       <h3>Outros</h3>
       <ul>
-        <li>Reúne endpoints (locations) que retornam o Payload JSON</li>
         <li>Solicitação de Devolução Especial</li>
         <li>Pix Saque e Pix Troco</li>
         <li>Participantes SPI</li>
-        <li>Gerenciamento de Notificações - Webhook</li>
+        <li>Webhook</li>
         <li>Iniciação de Pagamento</li>
-        <li>Políticas</li>
-        <li>Antifraude</li>
-        <li>Agendamentos</li>
         <li>Pix Automático</li>
         <li>Recuperação de Valores</li>
         <li>Autenticação e Segurança</li>
-        <li>Iniciação Open Finance - ITP</li>
-      </ul>
-
-      <h3>Sobre</h3>
-      <ul>
-        <li>API docs by Redocly</li>
-        <li>Pix - Pagamentos instantâneos (0.3.84)</li>
-        <li>Download OpenAPI specification</li>
       </ul>
 
       <hr />
 
       <p style="font-size:12px;">
-        Open Banking: <br />
+        Open Banking:<br />
         <strong>openbanking@bv.com.br</strong>
       </p>
 
@@ -137,27 +127,21 @@
       </p>
     </aside>
 
-    <!-- REDOC -->
+    <!-- SWAGGER UI -->
     <main class="content">
-      <redoc
-        spec-url="./pix.yaml"
-        hide-hostname
-        expand-responses="200,201"
-        theme='{
-          "colors": {
-            "primary": { "main": "#002f6c" }
-          },
-          "sidebar": {
-            "backgroundColor": "#ffffff"
-          },
-          "typography": {
-            "fontFamily": "Arial, sans-serif",
-            "fontSize": "14px"
-          }
-        }'
-      ></redoc>
+      <div id="swagger-ui"></div>
     </main>
 
   </div>
+
+  <!-- Swagger JS -->
+  <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+  <script>
+    SwaggerUIBundle({
+      url: "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml",
+      dom_id: "#swagger-ui",
+      layout: "BaseLayout"
+    });
+  </script>
 </body>
 </html>
