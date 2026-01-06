@@ -27,7 +27,6 @@
     -webkit-font-smoothing:antialiased;
   }
 
-  /* GRID LAYOUT - three columns */
   .layout {
     display: grid;
     grid-template-columns: var(--sidebar-width) 1fr var(--right-width);
@@ -35,7 +34,7 @@
     height: 100vh;
   }
 
-  /* ---------------- SIDEBAR ---------------- */
+  /* SIDEBAR */
   .sidebar{
     background: #fff;
     border-right:1px solid #e6e9ee;
@@ -46,28 +45,9 @@
     overflow:auto;
   }
 
-  .site-brand {
-    display:flex;
-    gap:12px;
-    align-items:center;
-  }
-
-  .brand-title{
-    font-weight:700;
-    color:var(--brand);
-    font-size:16px;
-    margin:0;
-  }
-
-  .brand-sub{
-    font-size:12px;
-    color:var(--muted);
-    margin-top:2px;
-  }
-
-  .search {
-    margin-top:6px;
-  }
+  .site-brand { display:flex; gap:12px; align-items:center; }
+  .brand-title{ font-weight:700; color:var(--brand); font-size:16px; margin:0; }
+  .brand-sub{ font-size:12px; color:var(--muted); margin-top:2px; }
 
   .search input{
     width:100%;
@@ -89,24 +69,11 @@
   }
   .tag:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(10,20,40,0.04); border-color: rgba(11,59,102,0.06); }
 
-  .tag-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:8px;
-    cursor:pointer;
-  }
-
+  .tag-header{ display:flex; justify-content:space-between; align-items:center; gap:8px; cursor:pointer; }
   .tag-title { font-size:14px; color:var(--brand); font-weight:600; }
   .tag-count { background: rgba(11,59,102,0.06); color:var(--brand); padding:3px 8px; border-radius:999px; font-size:12px; }
 
-  .tag-ops {
-    margin-top:8px;
-    display:none;
-    flex-direction:column;
-    gap:6px;
-  }
-
+  .tag-ops { margin-top:8px; display:none; flex-direction:column; gap:6px; }
   .tag.open .tag-ops { display:flex; }
 
   .op-item {
@@ -121,7 +88,6 @@
     background:transparent;
     border:1px solid transparent;
   }
-
   .op-item:hover { background: rgba(11,59,102,0.04); transform: translateY(-1px); border-color: rgba(11,59,102,0.03); }
 
   .op-method {
@@ -142,11 +108,11 @@
 
   .sidebar-footer { margin-top:auto; font-size:12px; color:var(--muted); }
 
-  /* ---------------- CONTENT ---------------- */
+  /* CONTENT */
   .content { background:#fff; overflow:auto; position:relative; }
   .swagger-ui { padding:20px; }
 
-  /* ---------------- RIGHT PANEL ---------------- */
+  /* RIGHT PANEL */
   .code-panel{
     background: var(--panel-bg);
     color:#fff;
@@ -178,18 +144,12 @@
 
   .panel-empty { color: rgba(255,255,255,0.6); font-size:13px; padding:8px; }
 
-  /* small spinner */
-  .spinner {
-    border: 3px solid rgba(255,255,255,0.06);
-    border-top: 3px solid rgba(255,255,255,0.18);
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    animation: spin .9s linear infinite;
-  }
+  .spinner { border: 3px solid rgba(255,255,255,0.06); border-top: 3px solid rgba(255,255,255,0.18); width: 30px; height: 30px; border-radius: 50%; animation: spin .9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Responsive adjustments */
+  /* hide left opblock body only when force-open cloning (kept for safety) */
+  .opblock[data-clone-open="true"] .opblock-body { display:none !important; }
+
   @media (max-width:1200px){
     .layout { grid-template-columns:260px 1fr; }
     .code-panel { display:none; }
@@ -210,7 +170,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="site-brand">
       <div>
-        <h1 class="brand-title">PIX API</h1>
+        <div class="brand-title">PIX API</div>
         <div class="brand-sub">PIX API - Banco BV</div>
       </div>
     </div>
@@ -235,7 +195,7 @@
   <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true">
     <div class="endpoint-header">
       <div class="endpoint-info">
-        <div id="code-method" class="op-method method-pill default" style="display:none"></div>
+        <div id="code-method" class="op-method" style="display:none"></div>
         <div class="endpoint-title" id="code-title">Abra um endpoint</div>
       </div>
       <div class="controls">
@@ -257,21 +217,17 @@
 
 <script>
 /*
-  Improvements in this version:
-  - Sidebar now contains tags AND submenus (operations) and supports expand/collapse.
-  - Performance optimizations:
-    - Build sidebar as soon as Swagger renders tags using MutationObserver (no fixed timeout).
-    - Debounced rebuilds on changes.
-    - Lazy-load highlight.js only when first code example is shown.
-    - Minimize repeated DOM queries; use delegation and caches where practical.
-  - Keep existing behavior: user clicks summary (native Swagger) or clicks submenu (programmatically clicks summary),
-    and the right panel displays cloned responses/examples.
-  - Right panel shows spinner while content is being rendered/cloned to improve UX.
+  Fixes and improvements:
+  - Sidebar now reliably expands/collapses tags and clicking submenu items triggers the corresponding opblock.
+  - Use a dataset-based mapping (data-sidebar-id) so sidebar actions find the correct opblock regardless of re-renders.
+  - Use event delegation on the sidebar for better performance and reliability.
+  - Keep behavior: don't block Swagger's native expansion; rely on its rendering and MutationObserver to clone examples.
+  - Small debounce and spinner UX improvements.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 
-/* Initialize Swagger UI (no blocking) */
+/* Initialize Swagger UI */
 SwaggerUIBundle({
   url: SWAGGER_URL,
   dom_id: "#swagger-ui",
@@ -280,42 +236,27 @@ SwaggerUIBundle({
   presets: [SwaggerUIBundle.presets.apis]
 });
 
-/* Utilities */
-const $ = (s, ctx = document) => ctx.querySelector(s);
-const $$ = (s, ctx = document) => Array.from((ctx || document).querySelectorAll(s));
-const debounce = (fn, wait = 120) => {
-  let t;
-  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
-};
+/* Helpers */
+const $ = (s, ctx=document) => ctx.querySelector(s);
+const $$ = (s, ctx=document) => Array.from(ctx.querySelectorAll(s));
+const debounce = (fn, t=120) => { let id; return (...a) => { clearTimeout(id); id = setTimeout(()=>fn(...a), t); }; };
 
 let hljsLoaded = false;
 let hljsLoading = false;
 
-/* Lazy-load highlight.js on demand */
 function ensureHljs() {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     if (hljsLoaded) return resolve(window.hljs);
     if (hljsLoading) {
-      // wait until loaded
-      const interval = setInterval(() => {
-        if (hljsLoaded) { clearInterval(interval); resolve(window.hljs); }
-      }, 80);
+      const i = setInterval(() => { if (hljsLoaded) { clearInterval(i); resolve(window.hljs); } }, 80);
       return;
     }
     hljsLoading = true;
-    const script = document.createElement('script');
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js";
-    script.onload = () => {
-      hljsLoaded = true;
-      hljsLoading = false;
-      resolve(window.hljs);
-    };
-    script.onerror = () => {
-      hljsLoading = false;
-      resolve(null);
-    };
-    document.head.appendChild(script);
-    // optional CSS for dark style (only once)
+    const s = document.createElement('script');
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js";
+    s.onload = () => { hljsLoaded = true; hljsLoading = false; resolve(window.hljs); };
+    s.onerror = () => { hljsLoading = false; resolve(null); };
+    document.head.appendChild(s);
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css';
@@ -323,37 +264,46 @@ function ensureHljs() {
   });
 }
 
-/* Wait for Swagger UI to render opblock-tag elements using MutationObserver (faster & more robust) */
+/* Wait for swagger to render tag structure */
 function waitForSwaggerReady(timeout = 12000) {
   return new Promise((resolve, reject) => {
-    const start = Date.now();
     const root = document.getElementById('swagger-ui');
     if (!root) return reject(new Error('swagger-ui container not found'));
+    const start = Date.now();
 
-    const observer = new MutationObserver(() => {
-      if ($$('.opblock-tag').length > 0) {
-        observer.disconnect();
-        resolve();
-      } else if (Date.now() - start > timeout) {
-        observer.disconnect();
-        reject(new Error('Timeout waiting for Swagger UI to render'));
-      }
+    const obs = new MutationObserver(() => {
+      if ($$('.opblock-tag').length > 0) { obs.disconnect(); resolve(); }
+      else if (Date.now() - start > timeout) { obs.disconnect(); reject(new Error('Timeout waiting for Swagger UI')); }
     });
 
-    observer.observe(root, { childList: true, subtree: true });
-
-    // Also do an immediate check in case it's already rendered
-    if ($$('.opblock-tag').length > 0) {
-      observer.disconnect();
-      resolve();
-    }
+    obs.observe(root, { childList: true, subtree: true });
+    if ($$('.opblock-tag').length > 0) { obs.disconnect(); resolve(); }
   });
 }
 
-/* Build sidebar: tags with collapsible submenus of operations */
+/* Assign stable sidebar IDs to opblocks (so we can map sidebar items to DOM opblocks even after re-renders) */
+function assignSidebarIds() {
+  const opblocks = $$('.opblock');
+  opblocks.forEach((op, i) => {
+    if (!op.dataset.sidebarId) op.dataset.sidebarId = `sb-${i}-${hashString(op.querySelector('.opblock-summary-path')?.textContent || Math.random().toString(36).slice(2,8))}`;
+  });
+}
+
+/* simple hash for stability */
+function hashString(s) {
+  let h = 2166136261 >>> 0;
+  for (let i=0;i<s.length;i++) {
+    h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  }
+  return (h >>> 0).toString(36);
+}
+
+/* Build sidebar (tags + submenus) */
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
   menu.innerHTML = '';
+
+  assignSidebarIds();
 
   const tags = $$('.opblock-tag');
   tags.forEach(tagEl => {
@@ -361,17 +311,15 @@ function buildSidebar() {
     const tagName = titleSpan ? titleSpan.textContent.trim() : 'Sem nome';
     const opblocks = tagEl.querySelectorAll('.opblock');
 
-    // Tag container
     const li = document.createElement('li');
     li.className = 'tag';
-    li.setAttribute('data-tag', tagName);
+    li.dataset.tag = tagName;
 
-    // Header (click toggles)
     const header = document.createElement('div');
     header.className = 'tag-header';
-    header.setAttribute('role', 'button');
-    header.setAttribute('aria-expanded', 'false');
     header.tabIndex = 0;
+    header.setAttribute('role','button');
+    header.setAttribute('aria-expanded','false');
 
     const tleft = document.createElement('div');
     tleft.className = 'tag-title';
@@ -384,21 +332,21 @@ function buildSidebar() {
     header.appendChild(tleft);
     header.appendChild(tright);
 
-    // operations submenu
     const ops = document.createElement('div');
     ops.className = 'tag-ops';
 
     opblocks.forEach(op => {
       const summary = op.querySelector('.opblock-summary');
       if (!summary) return;
-
       const method = summary.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
       const path = summary.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
+      const id = op.dataset.sidebarId;
 
       const opBtn = document.createElement('button');
       opBtn.className = 'op-item';
       opBtn.type = 'button';
       opBtn.title = `${method} ${path}`;
+      opBtn.dataset.opId = id;
 
       const mspan = document.createElement('div');
       mspan.className = `op-method ${method.toLowerCase()}`;
@@ -410,32 +358,8 @@ function buildSidebar() {
 
       opBtn.appendChild(mspan);
       opBtn.appendChild(pspan);
-
-      // When clicking submenu, scroll to the op and trigger the same behavior as user clicking summary
-      opBtn.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        // smooth scroll and then click the summary (programmatic click)
-        summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // give a tiny delay to allow scroll to settle
-        setTimeout(() => {
-          // Programmatic click - Swagger will toggle .is-open; our observer picks that up and clones examples
-          summary.click();
-          // update active tag visually
-          setActiveTag(tagName);
-        }, 180);
-      });
-
       ops.appendChild(opBtn);
     });
-
-    // toggle behavior for tag header
-    const toggleTag = () => {
-      const isOpen = li.classList.toggle('open');
-      header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    };
-
-    header.addEventListener('click', toggleTag);
-    header.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleTag(); } });
 
     li.appendChild(header);
     li.appendChild(ops);
@@ -443,131 +367,146 @@ function buildSidebar() {
   });
 }
 
-/* highlight active tag based on viewport using IntersectionObserver (keeps sidebar in sync) */
-function wireActiveTagHighlighting() {
-  const tags = $$('.opblock-tag');
-  if (!tags.length) return;
+/* Toggle tag open/close (delegated) and handle submenu clicks */
+function attachSidebarDelegation() {
+  const menu = document.getElementById('sidebar-menu');
 
-  const options = { root: document.querySelector('.content'), rootMargin: '0px 0px -60% 0px', threshold: [0.1, 0.4] };
-  const obs = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const name = entry.target.querySelector('h3 span')?.textContent?.trim();
-        if (name) setActiveTag(name);
+  // Click delegation
+  menu.addEventListener('click', (ev) => {
+    const header = ev.target.closest('.tag-header');
+    if (header) {
+      const tag = header.closest('.tag');
+      const isOpen = tag.classList.toggle('open');
+      header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      return;
+    }
+
+    const opBtn = ev.target.closest('.op-item');
+    if (opBtn) {
+      ev.preventDefault();
+      const opId = opBtn.dataset.opId;
+      if (!opId) return;
+      // find opblock by data attribute
+      const opblock = document.querySelector(`.opblock[data-sidebar-id="${opId}"]`);
+      if (!opblock) {
+        // try to rebuild IDs then try again
+        assignSidebarIds();
+        const opblock2 = document.querySelector(`.opblock[data-sidebar-id="${opId}"]`);
+        if (opblock2) return triggerOpenOnOpblock(opblock2);
+        return;
       }
-    });
-  }, options);
+      triggerOpenOnOpblock(opblock);
+    }
+  });
 
-  tags.forEach(t => obs.observe(t));
+  // keyboard accessibility (Enter/Space)
+  menu.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    const header = ev.target.closest('.tag-header');
+    if (header) {
+      ev.preventDefault();
+      const tag = header.closest('.tag');
+      const isOpen = tag.classList.toggle('open');
+      header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      return;
+    }
+    const opBtn = ev.target.closest('.op-item');
+    if (opBtn) {
+      ev.preventDefault();
+      opBtn.click();
+    }
+  });
 }
 
-function setActiveTag(name) {
-  const all = document.querySelectorAll('#sidebar-menu .tag');
-  all.forEach(li => li.classList.toggle('active', li.getAttribute('data-tag') === name));
-  const meta = document.getElementById('tag-meta');
-  meta.textContent = name ? `Exibindo endpoints para: ${name}` : 'Selecione uma tag para navegar rapidamente.';
+/* when user clicks submenu, scroll and trigger the corresponding opblock summary click */
+function triggerOpenOnOpblock(opblock) {
+  const summary = opblock.querySelector('.opblock-summary');
+  if (!summary) return;
+  // Scroll into view and programmatically click the summary.
+  summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  // Slight delay for smooth scroll
+  setTimeout(() => {
+    // Use both dispatchEvent and click for robustness
+    try {
+      summary.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+    } catch(e) {
+      // fallback
+      try { summary.click(); } catch(e2) {}
+    }
+    // If Swagger renders slowly, MutationObserver picks up and clones responses.
+  }, 160);
 }
 
-/* Find responses/examples inside an opblock robustly */
+/* find responses wrapper */
 function findResponsesWrapper(opblockEl) {
   if (!opblockEl) return null;
-  // common places
   let node = opblockEl.querySelector('.responses-wrapper');
   if (node) return node;
   node = opblockEl.querySelector('.opblock-body .responses-wrapper');
   if (node) return node;
   node = opblockEl.querySelector('.opblock-section .responses-wrapper');
   if (node) return node;
-
-  // fallback: look for <pre> elements inside opblock
   const pre = opblockEl.querySelector('pre');
-  if (pre) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'responses-wrapper';
-    wrapper.appendChild(pre.cloneNode(true));
-    return wrapper;
-  }
-
+  if (pre) { const wrap = document.createElement('div'); wrap.className = 'responses-wrapper'; wrap.appendChild(pre.cloneNode(true)); return wrap; }
   return null;
 }
 
-/* Show spinner in right panel */
-function showSpinner(show = true) {
-  const s = document.getElementById('panel-spinner');
-  s.style.display = show ? '' : 'none';
-}
+/* spinner helper */
+function showSpinner(show=true) { $('#panel-spinner').style.display = show ? '' : 'none'; }
 
-/* Update right panel: clone the responses for the opblock into the panel */
+/* clone responses into right panel */
 async function updateRightPanelFor(opblockEl) {
   const panel = document.getElementById('code-view');
   panel.innerHTML = '';
-
   if (!opblockEl) {
     panel.innerHTML = '<div class="panel-empty">Abra uma operação para ver exemplos de respostas e códigos aqui.</div>';
     return;
   }
 
-  // header
   const method = opblockEl.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
   const path = opblockEl.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
-  const title = document.getElementById('code-title');
-  title.textContent = `${method} ${path}`;
+  document.getElementById('code-title').textContent = `${method} ${path}`;
+  const codeMethodEl = document.getElementById('code-method');
+  if (method) { codeMethodEl.textContent = method; codeMethodEl.className = `op-method ${method.toLowerCase()}`; codeMethodEl.style.display = ''; }
+  else { codeMethodEl.style.display = 'none'; }
 
-  // show spinner while we try to find/clone the responses
   showSpinner(true);
-
-  // Wait briefly to allow Swagger to render the response area if it was just opened
+  // short wait to let Swagger render responses if they were just opened
   await new Promise(r => setTimeout(r, 180));
 
   let responses = findResponsesWrapper(opblockEl);
-
-  // If not found and the opblock is NOT open, it's possible the user clicked programmatically and content is still rendering;
-  // attempt one last retry after small delay
-  if (!responses && !opblockEl.classList.contains('is-open')) {
-    await new Promise(r => setTimeout(r, 160));
+  // one more short retry when not found and opblock is open
+  if (!responses && opblockEl.classList.contains('is-open')) {
+    await new Promise(r => setTimeout(r, 140));
     responses = findResponsesWrapper(opblockEl);
   }
-
   showSpinner(false);
 
   if (!responses) {
-    // Nothing rendered - show helpful message and attempt to show inline pre blocks if any
-    const inlinePre = opblockEl.querySelectorAll('pre');
-    if (inlinePre && inlinePre.length) {
-      inlinePre.forEach(p => panel.appendChild(p.cloneNode(true)));
-      await ensureHljs().then((hljs) => {
-        panel.querySelectorAll('pre code').forEach(b => { try { hljs?.highlightElement(b); } catch(e){} });
-      });
+    // attempt to show inline <pre> nodes
+    const pres = opblockEl.querySelectorAll('pre');
+    if (pres && pres.length) {
+      pres.forEach(p => panel.appendChild(p.cloneNode(true)));
+      await ensureHljs().then(hljs => { panel.querySelectorAll('pre code').forEach(b=>{ try{ hljs?.highlightElement(b); }catch(e){} }); });
       return;
     }
-
     panel.innerHTML = '<div class="panel-empty">Nenhuma resposta de exemplo encontrada para este endpoint.</div>';
     return;
   }
 
-  // Clone and sanitize clone
   const clone = responses.cloneNode(true);
-  // remove interactive controls that are not useful in the side panel
   clone.querySelectorAll('.try-out, .execute, .btn, .model, .responses-request, .parameters').forEach(n => n.remove());
-
-  // normalize code blocks
-  clone.querySelectorAll('pre, code').forEach(el => {
-    el.style.whiteSpace = 'pre';
-    el.style.wordBreak = 'break-word';
-    el.classList.add('hljs');
-  });
+  clone.querySelectorAll('pre, code').forEach(el => { el.style.whiteSpace='pre'; el.style.wordBreak='break-word'; el.classList.add('hljs'); });
 
   panel.appendChild(clone);
 
-  // lazy highlight
-  await ensureHljs().then((hljs) => {
-    panel.querySelectorAll('pre code').forEach(block => {
-      try { hljs?.highlightElement(block); } catch(e) {}
-    });
+  await ensureHljs().then(hljs => {
+    panel.querySelectorAll('pre code').forEach(block => { try { hljs?.highlightElement(block); } catch(e){} });
   });
 }
 
-/* Observe opblock opens and also rebuild sidebar when Swagger re-renders content */
+/* Observe swagger UI to react to opblock open events and re-renders */
 function attachObservers() {
   const uiRoot = document.getElementById('swagger-ui');
   if (!uiRoot) return;
@@ -575,36 +514,51 @@ function attachObservers() {
   const mo = new MutationObserver((mutations) => {
     let rebuild = false;
     for (const m of mutations) {
-      // If opblock classes changed (opened), handle that
       if (m.type === 'attributes' && m.attributeName === 'class' && m.target.classList && m.target.classList.contains('opblock')) {
         const el = m.target;
         if (el.classList.contains('is-open')) {
-          // When opblock becomes open, clone its responses into the right panel
-          // small delay so content is rendered
+          // small delay so Swagger renders
           setTimeout(() => updateRightPanelFor(el), 120);
         }
       }
-
-      // New nodes added (Swagger re-render) -> rebuild sidebar (debounced)
       if (m.addedNodes && m.addedNodes.length) rebuild = true;
     }
-
-    if (rebuild) {
-      debouncedBuildSidebar();
-    }
+    if (rebuild) debouncedBuild();
   });
 
   mo.observe(uiRoot, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 }
 
-/* Debounced sidebar builder */
-const debouncedBuildSidebar = debounce(() => {
+/* Rebuild sidebar, debounced */
+const debouncedBuild = debounce(() => {
   buildSidebar();
-  wireActiveTagHighlighting();
-}, 180);
+  setTimeout(assignSidebarIds, 40); // ensure ids persisted
+}, 160);
 
-/* Setup click delegation for swagger container - capture user's manual clicks too (keyboard accessible) */
-function bindUserClicks() {
+/* Sidebar search */
+function initSidebarSearch() {
+  const input = document.getElementById('sidebar-search');
+  input.addEventListener('input', debounce(() => {
+    const q = input.value.trim().toLowerCase();
+    const tags = document.querySelectorAll('#sidebar-menu .tag');
+    tags.forEach(tag => {
+      const tagName = tag.dataset.tag || '';
+      const ops = tag.querySelectorAll('.op-item');
+      let anyOpMatch = false;
+      ops.forEach(op => {
+        const t = op.title.toLowerCase();
+        const match = !q || t.includes(q) || tagName.toLowerCase().includes(q);
+        op.style.display = match ? '' : 'none';
+        if (match) anyOpMatch = true;
+      });
+      tag.style.display = (anyOpMatch || (!q || tagName.toLowerCase().includes(q))) ? '' : 'none';
+      if (anyOpMatch) tag.classList.add('open');
+    });
+  }, 160));
+}
+
+/* Wire up click/keyboard on the swagger container (user opens opblocks normally) */
+function bindSwaggerUserClicks() {
   const container = document.getElementById('swagger-ui');
   if (!container) return;
 
@@ -613,7 +567,7 @@ function bindUserClicks() {
     if (!summary) return;
     const opblock = summary.closest('.opblock');
     if (!opblock) return;
-    // Delay slightly for Swagger to toggle is-open and render examples
+    // wait slightly to let Swagger toggle is-open and render examples then update right panel
     setTimeout(() => updateRightPanelFor(opblock), 220);
   });
 
@@ -627,58 +581,31 @@ function bindUserClicks() {
   });
 }
 
-/* Sidebar search: filter tags & operations */
-function initSidebarSearch() {
-  const input = document.getElementById('sidebar-search');
-  input.addEventListener('input', debounce(() => {
-    const q = input.value.trim().toLowerCase();
-    const tags = document.querySelectorAll('#sidebar-menu .tag');
-    tags.forEach(tag => {
-      const tagName = tag.getAttribute('data-tag') || '';
-      const opItems = tag.querySelectorAll('.op-item');
-      let tagMatch = !q || tagName.toLowerCase().includes(q);
-      let anyOpMatch = false;
-      opItems.forEach(op => {
-        const text = op.title.toLowerCase();
-        const match = !q || text.includes(q);
-        op.style.display = match ? '' : 'none';
-        if (match) anyOpMatch = true;
-      });
-      // Show the tag if tag name matches or any op matches
-      tag.style.display = (tagMatch || anyOpMatch) ? '' : 'none';
-      // expand if any op matched (helpful UX)
-      if (anyOpMatch && !tag.classList.contains('open')) tag.classList.add('open');
-      if (!anyOpMatch && !tagMatch) tag.classList.remove('open');
-    });
-  }, 180));
-}
-
-/* Entry point: wait for Swagger UI, then wire everything */
+/* Initialize after swagger renders */
 (async function init() {
   try {
     await waitForSwaggerReady();
-
-    // initial build and wiring
+    // initial setup
+    assignSidebarIds();
     buildSidebar();
-    wireActiveTagHighlighting();
     attachObservers();
-    bindUserClicks();
+    bindSwaggerUserClicks();
+    attachSidebarDelegation();
     initSidebarSearch();
-
-    // If some opblock already open, show it in right panel
+    // show open opblock if present
     setTimeout(() => {
-      const opened = document.querySelector('.opblock.is-open');
-      if (opened) updateRightPanelFor(opened);
+      const open = document.querySelector('.opblock.is-open');
+      if (open) updateRightPanelFor(open);
     }, 300);
 
-    // Rebuild sidebar if Swagger re-renders later
+    // watch for later re-renders to rebuild sidebar (debounced)
     const uiRoot = document.getElementById('swagger-ui');
     if (uiRoot) {
-      const mo = new MutationObserver(debouncedBuildSidebar);
+      const mo = new MutationObserver(debouncedBuild);
       mo.observe(uiRoot, { childList: true, subtree: true });
     }
   } catch (err) {
-    console.warn('Erro ao inicializar a UI aprimorada:', err);
+    console.warn('Erro ao inicializar UI aprimorada:', err);
   }
 })();
 </script>
