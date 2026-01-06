@@ -31,18 +31,10 @@
   /* ===== LAYOUT ===== */
   .layout {
     display: grid;
-    grid-template-columns: var(--sidebar-width) 1fr var(--right-width);
+    grid-template-columns: var(--sidebar-width) 1fr;
     height: 100vh;
     gap: 0;
     overflow: hidden;
-  }
-
-  /* Resizer handle between center and code panel */
-  .resizer {
-    width: 6px;
-    cursor: col-resize;
-    background: linear-gradient(180deg, rgba(255,255,255,0), rgba(0,0,0,0.03));
-    z-index: 40;
   }
 
   /* ===== SIDEBAR ===== */
@@ -134,15 +126,6 @@
     color: var(--muted);
   }
 
-  /* Small device collapse */
-  .sidebar .collapse-toggle {
-    display:none;
-    background: transparent;
-    border: none;
-    color: var(--brand);
-    font-weight: 600;
-  }
-
   /* ===== CONTEÚDO CENTRAL ===== */
   .content {
     background: #ffffff;
@@ -175,17 +158,31 @@
     cursor: pointer;
   }
 
-  /* ===== PAINEL DIREITO ===== */
+  /* ===== PAINEL DIREITO (OVERLAY) =====
+     Changed to overlay so cloned responses open on the right overlaying the content (not expanding UI on the left) */
   .code-panel {
-    background: #0b1220;
-    border-left: 1px solid rgba(255,255,255,0.03);
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    bottom: 20px;
+    width: var(--right-width);
+    max-width: calc(100% - 64px);
+    background: linear-gradient(180deg,#071021,#071422);
+    border-radius: 10px;
     padding: 16px;
     overflow: auto;
     color: #fff;
     display:flex;
     flex-direction: column;
     gap: 12px;
+    box-shadow: 0 10px 40px rgba(2,6,23,0.4);
+    z-index: 80;
+    border: 1px solid rgba(255,255,255,0.04);
+    transform: translateY(0);
+    transition: transform .18s ease, opacity .18s ease;
   }
+
+  .code-panel.hidden { opacity: 0; pointer-events: none; transform: translateY(6px); }
 
   .code-panel .endpoint-header {
     font-size: 14px;
@@ -212,7 +209,7 @@
   .method-pill.delete { background: #ef4444; }
   .method-pill.default { background: rgba(255,255,255,0.06); }
 
-  .path-text { color: rgba(255,255,255,0.9); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-size:13px; }
+  .path-text { color: rgba(255,255,255,0.95); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-size:13px; }
 
   .right-body {
     display:flex;
@@ -257,15 +254,20 @@
     padding: 10px 4px;
   }
 
+  .code-panel .panel-close {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    font-size: 14px;
+  }
+
   /* Responsive behavior */
   @media (max-width: 1200px) {
     .layout {
       grid-template-columns: 260px 1fr;
     }
-    .code-panel { display: none; }
-    .resizer { display: none; }
     .mobile-controls { display:block; }
-    .sidebar .collapse-toggle { display:inline-block; }
   }
 
   @media (max-width: 880px) {
@@ -284,6 +286,14 @@
     }
     .sidebar.open { transform: translateX(0); }
     .content { padding-top: 62px; }
+    .code-panel {
+      left: 8px;
+      right: 8px;
+      top: 70px;
+      bottom: 16px;
+      width: auto;
+      max-width: calc(100% - 32px);
+    }
   }
 </style>
 </head>
@@ -327,11 +337,20 @@
     <div id="swagger-ui" class="swagger-ui"></div>
   </main>
 
-  <!-- Resizer between content and right panel -->
-  <div class="resizer" id="resizer" title="Arraste para redimensionar painel direito" aria-hidden="false"></div>
+  <!-- PAINEL DIREITO (overlay) -->
+  <aside class="code-panel hidden" id="code-panel" aria-live="polite" aria-atomic="true">
+    <div class="endpoint-header">
+      <div id="code-header-left">
+        <span id="code-method" class="method-pill default">OP</span>
+        <span id="code-path" class="path-text" style="margin-left:8px">/caminho/exemplo</span>
+      </div>
+      <div class="controls">
+        <button class="btn" id="code-copy">Copiar</button>
+        <button class="btn" id="code-open-in-swagger">Ir ao endpoint</button>
+        <button class="panel-close" id="code-close" title="Fechar painel">✕</button>
+      </div>
+    </div>
 
-  <!-- PAINEL DIREITO -->
-  <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true">
     <div id="code-view">
       <div class="panel-empty">Abra uma operação (clicando em um endpoint) para ver exemplos de respostas e códigos aqui.</div>
     </div>
@@ -345,13 +364,12 @@
 
 <script>
 /*
-  Melhorias implementadas:
-  - Sidebar com busca, contagem de endpoints por tag, destaque do tag ativo
-  - Resizer para ajustar largura do painel direito
-  - Painel direito atualizado automaticamente ao abrir endpoints (com botões copiar)
-  - Usa MutationObserver + IntersectionObserver para detectar mudança na UI do Swagger
-  - Mobile friendly: toggle sidebar
-  Observação: o Swagger UI é carregado diretamente e o código observa o DOM para montar a sidebar.
+  Alterações principais para resolver o problema solicitado:
+  - O painel de código foi convertido em overlay (aberta à direita) para "sobrescrever" a visualização principal ao abrir um endpoint.
+  - Interceptamos o clique em .opblock-summary e impedimos a ação padrão do Swagger (que expande o bloco para a esquerda).
+    Em vez disso, mostramos os códigos/respostas clonados no painel direito (overlay).
+  - Mantive e reforcei a acessibilidade (teclado), busca e a sidebar melhorada do código anterior.
+  - O painel de código tem botão de fechar e botão para ir ao endpoint (desloca/realça o bloco no conteúdo).
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
@@ -414,18 +432,13 @@ function buildSidebar() {
     li.appendChild(right);
 
     li.onclick = () => {
-      // Scroll the tag element into view and open the first opblock
+      // Scroll the tag element into view
       tagEl.scrollIntoView({ behavior: "smooth", block: "center" });
-      // Expand the first opblock-summary inside tag
-      const firstSummary = tagEl.querySelector(".opblock-summary");
-      if (firstSummary) {
-        // If already open, toggle; else click to open
-        if (!firstSummary.parentElement.classList.contains('is-open')) {
-          firstSummary.click();
-        } else {
-          // ensure update of right panel
-          updateRightPanel();
-        }
+
+      // Open the overlay showing the first operation of the tag
+      const firstOp = tagEl.querySelector(".opblock");
+      if (firstOp) {
+        openRightPanelFor(firstOp);
       }
       setActiveTag(titleText);
     };
@@ -466,7 +479,7 @@ function wireActiveTagHighlighting() {
 
   const options = {
     root: document.querySelector('.content'),
-    rootMargin: '0px 0px -60% 0px', // consider element active when top crosses about 40% down
+    rootMargin: '0px 0px -60% 0px',
     threshold: [0, 0.1, 0.4, 0.6, 1.0]
   };
 
@@ -493,97 +506,58 @@ function setActiveTag(name) {
   meta.textContent = `Exibindo endpoints para: ${name}`;
 }
 
-/* Update right panel when an opblock is opened */
-function updateRightPanel() {
-  const panel = document.getElementById("code-view");
-  panel.innerHTML = "";
+/* OPEN/CLOSE overlay code panel helpers */
+const codePanel = document.getElementById('code-panel');
+const codeView = document.getElementById('code-view');
+const codeMethod = document.getElementById('code-method');
+const codePath = document.getElementById('code-path');
+const codeCopyBtn = document.getElementById('code-copy');
+const codeOpenInSwaggerBtn = document.getElementById('code-open-in-swagger');
+const codeCloseBtn = document.getElementById('code-close');
 
-  const open = document.querySelector(".opblock.is-open");
-  if (!open) {
-    panel.innerHTML = '<div class="panel-empty">Abra uma operação (clicando em um endpoint) para ver exemplos de respostas e códigos aqui.</div>';
-    return;
-  }
+let currentlySelectedOpblock = null;
 
-  // Extract method and path
-  const methodText = open.querySelector(".opblock-summary-method")?.textContent?.trim() || "";
-  const pathText = open.querySelector(".opblock-summary-path")?.textContent?.trim() || "";
+function openRightPanelFor(opblockEl) {
+  if (!opblockEl) return;
+  currentlySelectedOpblock = opblockEl;
 
-  // Header
-  const header = document.createElement("div");
-  header.className = "endpoint-header";
+  // Update header
+  const methodText = opblockEl.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
+  const pathText = opblockEl.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
 
-  const left = document.createElement("div");
-  const methodSpan = document.createElement("span");
-  methodSpan.className = "method-pill " + (methodText ? methodText.toLowerCase() : 'default');
-  methodSpan.textContent = methodText || "OP";
-  const pathSpan = document.createElement("div");
-  pathSpan.className = "path-text";
-  pathSpan.textContent = pathText;
+  codeMethod.className = 'method-pill ' + (methodText ? methodText.toLowerCase() : 'default');
+  codeMethod.textContent = methodText || 'OP';
+  codePath.textContent = pathText || '';
 
-  left.appendChild(methodSpan);
-  left.appendChild(document.createTextNode(" "));
-  left.appendChild(pathSpan);
+  // Fill content by cloning responses-wrapper inside the opblock (no need to actually expand it)
+  codeView.innerHTML = '';
 
-  // Controls
-  const controls = document.createElement("div");
-  controls.className = "controls";
-
-  const copyAllBtn = document.createElement("button");
-  copyAllBtn.className = "btn";
-  copyAllBtn.title = "Copiar conteúdo de resposta mostrado";
-  copyAllBtn.textContent = "Copiar";
-
-  const openInSwaggerBtn = document.createElement("button");
-  openInSwaggerBtn.className = "btn";
-  openInSwaggerBtn.textContent = "Abrir no Swagger";
-  openInSwaggerBtn.onclick = () => {
-    // scroll to the open opblock in the main content view
-    open.scrollIntoView({ behavior: "smooth", block: "center" });
-    // briefly highlight
-    open.style.boxShadow = "0 6px 18px rgba(0,47,108,0.12)";
-    setTimeout(()=> open.style.boxShadow = "", 900);
-  };
-
-  controls.appendChild(copyAllBtn);
-  controls.appendChild(openInSwaggerBtn);
-
-  header.appendChild(left);
-  header.appendChild(controls);
-
-  panel.appendChild(header);
-
-  // Clone Responses area
-  const responses = open.querySelector(".responses-wrapper");
+  const responses = opblockEl.querySelector('.responses-wrapper');
   if (responses) {
     const clone = responses.cloneNode(true);
 
-    // Remove interactive elements that don't make sense in the side panel like "Try it out"
+    // Remove interactive elements that don't make sense here
     clone.querySelectorAll('.execute, .try-out, .btn.execute, .responses-request, .model').forEach(n => n.remove());
 
-    // Ensure code blocks are visible
     clone.querySelectorAll('pre, code').forEach(el => {
       el.style.whiteSpace = 'pre';
       el.style.wordBreak = 'break-word';
       el.classList.add('hljs');
     });
 
-    // Append to panel
-    const rightBody = document.createElement("div");
-    rightBody.className = "right-body";
+    const rightBody = document.createElement('div');
+    rightBody.className = 'right-body';
     rightBody.appendChild(clone);
-    panel.appendChild(rightBody);
+    codeView.appendChild(rightBody);
 
-    // Highlight any code blocks using highlight.js
+    // Highlight code blocks
     rightBody.querySelectorAll('pre code').forEach(block => {
-      try {
-        hljs.highlightElement(block);
-      } catch(e) { /* ignore */ }
+      try { hljs.highlightElement(block); } catch(e) {}
     });
 
-    // Implement copy button: copy the concatenated text content of code blocks or responses
-    copyAllBtn.onclick = async () => {
+    // Attach copy behavior
+    codeCopyBtn.onclick = async () => {
       let text = "";
-      // prefer pre>code blocks
       const codes = rightBody.querySelectorAll('pre code');
       if (codes.length > 0) {
         text = Array.from(codes).map(c => c.innerText).join("\n\n---\n\n");
@@ -592,101 +566,95 @@ function updateRightPanel() {
       }
       try {
         await navigator.clipboard.writeText(text);
-        copyAllBtn.textContent = "Copiado ✓";
-        setTimeout(()=> copyAllBtn.textContent = "Copiar", 1400);
+        codeCopyBtn.textContent = "Copiado ✓";
+        setTimeout(()=> codeCopyBtn.textContent = "Copiar", 1400);
       } catch(err) {
-        copyAllBtn.textContent = "Erro";
-        setTimeout(()=> copyAllBtn.textContent = "Copiar", 1400);
+        codeCopyBtn.textContent = "Erro";
+        setTimeout(()=> codeCopyBtn.textContent = "Copiar", 1400);
       }
     };
+
   } else {
-    const msg = document.createElement("div");
-    msg.className = "panel-empty";
-    msg.textContent = "Nenhuma resposta de exemplo encontrada para este endpoint.";
-    panel.appendChild(msg);
+    const msg = document.createElement('div');
+    msg.className = 'panel-empty';
+    msg.textContent = 'Nenhuma resposta de exemplo encontrada para este endpoint.';
+    codeView.appendChild(msg);
+
+    codeCopyBtn.onclick = () => {
+      // fallback: copy path and method
+      navigator.clipboard.writeText(`${methodText} ${pathText}`).then(() => {
+        codeCopyBtn.textContent = "Copiado ✓";
+        setTimeout(()=> codeCopyBtn.textContent = "Copiar", 1400);
+      });
+    };
   }
+
+  // show panel
+  codePanel.classList.remove('hidden');
+
+  // focus for accessibility
+  codePanel.setAttribute('tabindex', '-1');
+  codePanel.focus();
 }
 
-/* Bind clicks on opblock summary to update right panel. Also observe DOM changes. */
-function bindEndpointClicks() {
-  // Delegate: many opblocks can be created later; use event delegation on content
+function closeRightPanel() {
+  codePanel.classList.add('hidden');
+  currentlySelectedOpblock = null;
+}
+
+/* Intercept clicks on opblock-summary to prevent Swagger from expanding content on the left.
+   Instead we show the right overlay panel with the cloned content. */
+function bindEndpointClicksIntercept() {
   const content = document.getElementById('swagger-ui');
+
+  // capture click events on summaries and prevent default propagation
   content.addEventListener('click', (e) => {
     const summary = e.target.closest('.opblock-summary');
-    if (summary) {
-      // small delay to allow Swagger to toggle the .is-open class and render the responses
-      setTimeout(updateRightPanel, 260);
-    }
-  });
+    if (!summary) return;
 
-  // Use a MutationObserver to watch for when an opblock gets the is-open class (e.g. opened programmatically)
-  const mo = new MutationObserver(mutations => {
-    for (const m of mutations) {
-      if (m.type === 'attributes' && m.attributeName === 'class') {
-        if (m.target.classList && m.target.classList.contains('opblock') && m.target.classList.contains('is-open')) {
-          setTimeout(updateRightPanel, 80);
-        }
-      }
-      // Also watch for new opblocks added to rebuild sidebar if necessary
-      if (m.addedNodes && m.addedNodes.length) {
-        buildSidebar();
-        wireActiveTagHighlighting();
-      }
-    }
-  });
+    // Prevent Swagger UI handlers from expanding blocks in the left pane
+    e.stopPropagation();
+    e.preventDefault();
 
-  // Observe the main container for added opblocks or class changes
-  const container = document.querySelector('.swagger-ui');
-  if (container) mo.observe(container, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+    // Get the parent opblock element
+    const opblock = summary.closest('.opblock');
+    if (!opblock) return;
+
+    // Open overlay for this opblock
+    openRightPanelFor(opblock);
+
+    // Mark active tag in sidebar
+    const tagEl = opblock.closest('.opblock-tag');
+    const tagName = tagEl?.querySelector('h3 span')?.textContent?.trim();
+    if (tagName) setActiveTag(tagName);
+  }, { capture: true });
+
+  // ensure keyboard activation (Enter/Space) also uses our handler
+  content.addEventListener('keydown', (e) => {
+    const summary = e.target.closest('.opblock-summary');
+    if (!summary) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.stopPropagation();
+      e.preventDefault();
+      const opblock = summary.closest('.opblock');
+      if (opblock) openRightPanelFor(opblock);
+    }
+  }, { capture: true });
 }
 
-/* Resizer for right panel */
-function initResizer() {
-  const layout = document.querySelector('.layout');
-  const resizer = document.getElementById('resizer');
-  const sidebar = document.getElementById('sidebar');
-  const codePanel = document.getElementById('code-panel');
+/* Additional helpers: go to endpoint in the main view (scroll + flash) */
+codeOpenInSwaggerBtn.addEventListener('click', () => {
+  if (!currentlySelectedOpblock) return;
+  // Scroll the opblock into view in the main content and flash a highlight
+  currentlySelectedOpblock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // briefly add a glow
+  const prev = currentlySelectedOpblock.style.boxShadow;
+  currentlySelectedOpblock.style.boxShadow = "0 10px 36px rgba(14,165,233,0.12)";
+  setTimeout(()=> currentlySelectedOpblock.style.boxShadow = prev || "", 900);
+});
 
-  let dragging = false;
-  let startX = 0;
-  let startRightWidth = parseInt(getComputedStyle(codePanel).width, 10);
-
-  const onDown = (e) => {
-    dragging = true;
-    startX = e.clientX || e.touches[0].clientX;
-    startRightWidth = parseInt(getComputedStyle(codePanel).width, 10);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  };
-
-  const onMove = (e) => {
-    if (!dragging) return;
-    const currentX = e.clientX || (e.touches && e.touches[0].clientX);
-    const dx = startX - currentX;
-    let newRightWidth = startRightWidth + dx;
-    // clamp widths (min 260, max 70% of width)
-    const containerWidth = layout.clientWidth;
-    newRightWidth = Math.max(260, Math.min(newRightWidth, Math.floor(containerWidth * 0.75)));
-    const sidebarWidth = parseInt(getComputedStyle(sidebar).width, 10);
-    // update grid template columns
-    layout.style.gridTemplateColumns = `${sidebarWidth}px 1fr ${newRightWidth}px`;
-  };
-
-  const onUp = () => {
-    dragging = false;
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  };
-
-  resizer.addEventListener('mousedown', onDown);
-  window.addEventListener('mousemove', onMove);
-  window.addEventListener('mouseup', onUp);
-
-  // Touch support
-  resizer.addEventListener('touchstart', onDown, {passive:true});
-  window.addEventListener('touchmove', onMove, {passive:true});
-  window.addEventListener('touchend', onUp);
-}
+/* Close button */
+codeCloseBtn.addEventListener('click', closeRightPanel);
 
 /* Mobile sidebar toggle */
 function initMobileControls() {
@@ -694,12 +662,33 @@ function initMobileControls() {
   const closeBtn = document.getElementById('close-sidebar');
   const sidebar = document.getElementById('sidebar');
 
-  openBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('open');
+  if (openBtn) openBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
+  if (closeBtn) closeBtn.addEventListener('click', () => sidebar.classList.remove('open'));
+}
+
+/* Bind clicks on opblock summaries that might be added later
+   and keep sidebar updated when Swagger re-renders */
+function bindMutationObservers() {
+  const uiRoot = document.querySelector('.swagger-ui');
+  if (!uiRoot) return;
+
+  const mo = new MutationObserver((mutations) => {
+    // Rebuild sidebar if new opblocks added
+    let rebuild = false;
+    for (const m of mutations) {
+      if (m.addedNodes && m.addedNodes.length) rebuild = true;
+    }
+    if (rebuild) {
+      // debounce
+      clearTimeout(window._rebuild_sidebar_timeout);
+      window._rebuild_sidebar_timeout = setTimeout(() => {
+        buildSidebar();
+        wireActiveTagHighlighting();
+      }, 200);
+    }
   });
-  closeBtn.addEventListener('click', () => {
-    sidebar.classList.remove('open');
-  });
+
+  mo.observe(uiRoot, { childList: true, subtree: true });
 }
 
 /* Top-level init workflow */
@@ -711,26 +700,19 @@ function initMobileControls() {
     // Build sidebar and wire interactions
     buildSidebar();
     wireActiveTagHighlighting();
-    bindEndpointClicks();
-    initResizer();
+    bindEndpointClicksIntercept();
+    bindMutationObservers();
     initMobileControls();
 
-    // If a tag or opblock already open, update right panel
-    setTimeout(updateRightPanel, 200);
+    // If a tag or opblock already open in UI, open the overlay for the first opblock instead of letting Swagger show left block
+    setTimeout(() => {
+      const firstOp = document.querySelector('.opblock');
+      if (firstOp) {
+        // don't auto-open for every page load; leave closed. If you prefer auto-open, uncomment next line:
+        // openRightPanelFor(firstOp);
+      }
+    }, 200);
 
-    // Also attach a MutationObserver to recreate sidebar if Swagger re-renders (e.g. after navigation)
-    const uiRoot = document.querySelector('.swagger-ui');
-    if (uiRoot) {
-      const mo = new MutationObserver(() => {
-        // slight debounce to avoid thrashing
-        clearTimeout(window._swagger_rebuild_timeout);
-        window._swagger_rebuild_timeout = setTimeout(() => {
-          buildSidebar();
-          wireActiveTagHighlighting();
-        }, 220);
-      });
-      mo.observe(uiRoot, { childList: true, subtree: true });
-    }
   } catch (err) {
     console.warn("Não foi possível inicializar a interface melhorada:", err);
   }
