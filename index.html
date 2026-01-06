@@ -27,9 +27,8 @@
     /* ===== LAYOUT 3 COLUNAS ===== */
     .layout {
       display: grid;
-      grid-template-columns: 300px minmax(0, 1fr) 420px;
+      grid-template-columns: 300px minmax(0, 1fr) 440px;
       height: 100vh;
-      width: 100vw;
     }
 
     /* ===== SIDEBAR ===== */
@@ -94,12 +93,15 @@
       overflow-y: auto;
     }
 
-    .code-panel h4 {
-      color: #fff;
+    .code-group {
+      margin-bottom: 24px;
+    }
+
+    .code-title {
       font-size: 13px;
-      margin: 0 0 8px;
-      text-transform: uppercase;
-      letter-spacing: .5px;
+      color: #fff;
+      margin-bottom: 6px;
+      font-weight: bold;
     }
 
     .code-block {
@@ -107,25 +109,15 @@
       color: var(--code-text);
       border-radius: 8px;
       padding: 12px;
-      margin-bottom: 16px;
       font-family: Consolas, monospace;
       font-size: 12px;
       line-height: 1.4;
       white-space: pre-wrap;
       max-height: 320px;
       overflow: auto;
-      position: relative;
     }
 
-    .code-block button {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      font-size: 11px;
-      cursor: pointer;
-    }
-
-    /* Mobile: oculta painel direito */
+    /* Mobile */
     @media (max-width: 1200px) {
       .layout {
         grid-template-columns: 260px 1fr;
@@ -159,8 +151,7 @@
   </main>
 
   <!-- PAINEL DE CÓDIGO -->
-  <aside class="code-panel" id="code-panel">
-    <h4>Código</h4>
+  <aside class="code-panel">
     <div id="code-content"></div>
   </aside>
 
@@ -169,93 +160,62 @@
 <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
 
 <script>
-  const STATIC_SECTIONS = [
-    "Seja bem-vindo(a)!",
-    "O que é o Pix?",
-    "SLAs",
-    "Idempotência",
-    "Releases",
-    "Operacional",
-    "Políticas",
-    "Antifraude",
-    "Autenticação e Segurança"
-  ];
-
   SwaggerUIBundle({
     url: "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml",
     dom_id: "#swagger-ui",
     layout: "BaseLayout"
   });
 
-  setTimeout(() => {
-    buildStaticSidebar();
-    buildDynamicSidebar();
-    bindSwaggerInteractions();
-  }, 2000);
-
-  function buildStaticSidebar() {
-    const ul = document.getElementById("sidebar-static");
-    ul.innerHTML = "";
-
-    STATIC_SECTIONS.forEach(title => {
-      const li = document.createElement("li");
-      li.textContent = title;
-      li.onclick = () => {
-        const el = findSectionByText(title);
-        if (el) el.scrollIntoView({ behavior: "smooth" });
-        setActive(li);
-      };
-      ul.appendChild(li);
-    });
-  }
-
-  function buildDynamicSidebar() {
-    const ul = document.getElementById("sidebar-dynamic");
-    ul.innerHTML = "";
-
-    document.querySelectorAll(".opblock-tag").forEach(section => {
-      const title = section.querySelector(".opblock-tag-section h3 span");
-      if (!title) return;
-
-      const li = document.createElement("li");
-      li.textContent = title.textContent.trim();
-      li.onclick = () => {
-        section.scrollIntoView({ behavior: "smooth" });
-        setActive(li);
-      };
-      ul.appendChild(li);
-    });
-  }
+  setTimeout(bindSwaggerInteractions, 2000);
 
   function bindSwaggerInteractions() {
     document.querySelectorAll(".opblock-summary").forEach(summary => {
       summary.addEventListener("click", () => {
-        setTimeout(extractCodeBlocks, 300);
+        setTimeout(extractCodeGroups, 300);
       });
     });
   }
 
-  function extractCodeBlocks() {
+  function extractCodeGroups() {
     const panel = document.getElementById("code-content");
     panel.innerHTML = "";
 
     document.querySelectorAll(".opblock-body pre").forEach(pre => {
+      const group = document.createElement("div");
+      group.className = "code-group";
+
+      const titleText = findTitleForCode(pre);
+
+      if (titleText) {
+        const title = document.createElement("div");
+        title.className = "code-title";
+        title.textContent = titleText;
+        group.appendChild(title);
+      }
+
       const block = document.createElement("div");
       block.className = "code-block";
       block.textContent = pre.textContent;
-      panel.appendChild(block);
+
+      group.appendChild(block);
+      panel.appendChild(group);
     });
   }
 
-  function setActive(li) {
-    document.querySelectorAll(".sidebar li")
-      .forEach(i => i.classList.remove("active"));
-    li.classList.add("active");
-  }
+  function findTitleForCode(pre) {
+    let el = pre.previousElementSibling;
 
-  function findSectionByText(text) {
-    return Array.from(document.querySelectorAll("h1,h2,h3"))
-      .find(el => el.textContent.trim().startsWith(text));
+    while (el) {
+      if (/^H[1-6]$/.test(el.tagName)) {
+        return el.textContent.trim();
+      }
+      if (el.classList.contains("response")) {
+        const status = el.querySelector(".response-col_status");
+        if (status) return "Response " + status.textContent.trim();
+      }
+      el = el.previousElementSibling;
+    }
+    return "Exemplo";
   }
 </script>
 </body>
