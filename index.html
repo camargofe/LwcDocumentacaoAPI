@@ -1,180 +1,203 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>PIX API - Banco BV</title>
 
-<!-- Swagger UI v5 CSS -->
-<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.0.0/swagger-ui.css" />
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" />
 
 <style>
   :root{
-    --sidebar-width: 280px;
+    --sidebar-width: 300px;
     --right-width: 520px;
-    --brand: #0b3b66;
-    --accent: #0ea5e9;
+    --brand: #002f6c;
     --muted: #6b7280;
     --bg: #f5f7fa;
-    --panel-bg: linear-gradient(180deg,#071422,#03101b);
-    --content-max: 880px;
   }
 
-  html,body{
-    height:100%;
-    margin:0;
+  html, body {
+    margin: 0;
+    height: 100%;
     font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
     background: var(--bg);
     color: #0b1220;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
   }
 
+  /* ===== LAYOUT ===== */
   .layout {
     display: grid;
     grid-template-columns: var(--sidebar-width) 1fr var(--right-width);
-    gap: 0;
     height: 100vh;
-    overflow: hidden;
   }
 
-  /* ===== LEFT SIDEBAR ===== */
+  /* ===== SIDEBAR ===== */
   .sidebar {
-    background: #ffffff;
+    background: #fff;
     border-right: 1px solid #e6e9ee;
-    padding: 22px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    padding: 16px;
     overflow-y: auto;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
   }
 
   .brand {
     display:flex;
-    gap:12px;
+    gap:10px;
     align-items:center;
   }
 
-  .brand img { width:56px; height:56px; object-fit:contain; flex:0 0 56px; }
-  .brand .brand-text { display:flex; flex-direction:column; }
-  .brand .brand-title { font-weight:700; color:var(--brand); font-size:18px; margin:0; line-height:1; }
-  .brand .brand-sub { font-size:12px; color:var(--muted); margin-top:3px; }
+  .brand-logo {
+    height: 40px;
+    width: auto;
+    display:block;
+  }
 
-  .sidebar .search { margin-top:6px; }
+  .sidebar h3 {
+    font-size: 15px;
+    color: var(--brand);
+    margin: 0;
+  }
+
+  .sidebar .search {
+    display:flex;
+  }
+
   .sidebar input[type="search"] {
-    width:100%;
-    padding:9px 12px;
-    border-radius:8px;
-    border:1px solid #e6e9ee;
-    background:#fbfdff;
-    font-size:13px;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #e6e9ee;
+    background: #fbfdff;
+    font-size: 13px;
   }
 
-  .nav { margin-top:8px; }
-  .nav ul { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; }
-
-  .tag {
-    background: #fafbfc;
-    border-radius:10px;
-    padding:8px;
-    border:1px solid transparent;
-    transition: 120ms ease;
+  .tag-list {
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
   }
-  .tag:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(10,20,40,0.04); border-color: rgba(11,59,102,0.06); }
 
-  .tag-header {
+  .tag-item {
     display:flex;
     justify-content:space-between;
-    gap:8px;
     align-items:center;
-    cursor:pointer;
-    padding:4px 6px;
-  }
-  .tag-title { color:var(--brand); font-weight:600; font-size:14px; }
-  .tag-count { background: rgba(11,59,102,0.06); color:var(--brand); padding:3px 8px; border-radius:999px; font-size:12px; }
-
-  .tag-ops { margin-top:8px; display:none; flex-direction:column; gap:6px; }
-  .tag.open .tag-ops { display:flex; }
-
-  .op-item {
-    display:flex;
-    gap:8px;
-    align-items:center;
-    padding:6px 8px;
+    padding:8px;
     border-radius:8px;
-    font-size:13px;
     cursor:pointer;
-    color:#0b1220;
-    background:transparent;
-    border:1px solid transparent;
-    text-align:left;
+    font-size:13px;
+    transition: background .12s, transform .06s;
   }
-  .op-item:hover { background: rgba(11,59,102,0.04); transform: translateY(-1px); border-color: rgba(11,59,102,0.03); }
 
-  .op-method {
-    min-width:54px;
-    text-align:center;
-    padding:4px 8px;
+  .tag-item:hover { background: rgba(0,47,108,0.06); transform: translateY(-1px); }
+  .tag-item.active { background: linear-gradient(90deg,#e9f1ff,#fbfdff); border:1px solid rgba(0,47,108,0.06); }
+
+  .tag-count {
+    background: rgba(0,47,108,0.08);
+    color: var(--brand);
+    padding: 3px 8px;
     border-radius:999px;
+    font-size:12px;
+  }
+
+  .sidebar .meta {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  /* ===== CONTENT ===== */
+  .content {
+    background: #ffffff;
+    overflow-y: auto;
+  }
+
+  .swagger-ui {
+    padding: 18px;
+  }
+
+  /* ===== RIGHT PANEL ===== */
+  .code-panel {
+    background: #071022;
+    border-left: 1px solid rgba(255,255,255,0.03);
+    padding: 16px;
+    color: #fff;
+    overflow-y: auto;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .endpoint-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+  }
+
+  .endpoint-title {
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .method-pill {
+    padding:6px 10px;
+    border-radius:8px;
     font-weight:700;
     font-size:12px;
     color:#fff;
   }
-  .op-method.get { background:#16a34a; }
-  .op-method.post { background:#0ea5e9; color:#06202a; }
-  .op-method.put { background:#f59e0b; color:#0b1220; }
-  .op-method.delete { background:#ef4444; }
+  .method-pill.get { background:#16a34a; }
+  .method-pill.post { background:#0ea5e9; }
+  .method-pill.put { background:#f59e0b; color:#0b1220; }
+  .method-pill.delete { background:#ef4444; }
+  .method-pill.default { background: rgba(255,255,255,0.06); }
 
-  .op-path {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
-    font-size:12px;
-    color:var(--muted);
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+  .path-text { color: rgba(255,255,255,0.95); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; }
+
+  .controls { display:flex; gap:8px; align-items:center; }
+
+  .btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.04);
+    color: #fff;
+    padding:6px 8px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:13px;
   }
+  .btn.primary { background: linear-gradient(90deg,#0ea5e9,#2dd4bf); color:#06202a; font-weight:700; border:none; }
 
-  /* ===== CENTER CONTENT ===== */
-  .content { background: #ffffff; overflow-y: auto; padding: 28px 40px; }
-  .content .doc-wrapper { max-width: var(--content-max); margin: 0 auto; padding-right: 24px; }
-  .doc-title { font-size:20px; font-weight:700; color:#13233b; margin-bottom:8px; }
-  .doc-intro { color: #44515a; line-height:1.6; margin-bottom:20px; font-size:14px; }
-
-  #swagger-ui { margin-top:18px; }
-
-  /* ===== RIGHT PANEL ===== */
-  .code-panel {
-    background: var(--panel-bg);
-    color:#fff;
-    padding:18px 18px;
-    border-left:1px solid rgba(255,255,255,0.03);
-    display:flex;
-    flex-direction:column;
-    gap:12px;
+  .responses-wrapper pre {
+    background: #020617 !important;
+    border-radius: 6px;
+    padding:12px;
     overflow:auto;
   }
 
-  .panel-top { display:flex; justify-content:space-between; align-items:center; gap:12px; }
-  .panel-title { font-weight:700; color:#dfe9ee; font-size:14px; }
-
-  .panel-controls { display:flex; gap:8px; align-items:center; }
-  .panel-select { background: rgba(255,255,255,0.03); color: #e6eef0; border: 1px solid rgba(255,255,255,0.04); padding:6px 10px; border-radius:8px; font-size:13px; }
-
-  .responses-wrapper { margin-top:8px; }
-  .responses-wrapper pre { background: #020617 !important; border-radius:8px; padding:14px; overflow:auto; }
-
   .panel-empty { color: rgba(255,255,255,0.6); font-size:13px; padding:8px; }
 
-  /* responsive */
+  /* Hide left opblock body only when we force-open for cloning (not used in this version but kept for safety) */
+  .opblock[data-clone-open="true"] .opblock-body {
+    display:none !important;
+  }
+
+  /* Responsive: collapse right panel on narrow screens */
   @media (max-width: 1200px) {
     .layout { grid-template-columns: 260px 1fr; }
     .code-panel { display: none; }
   }
+
   @media (max-width: 880px) {
     .layout { grid-template-columns: 1fr; }
-    .sidebar { position: fixed; left:0; top:0; bottom:0; width:76%; max-width:380px; transform:translateX(-120%); transition:transform .22s; z-index:100; box-shadow:8px 0 32px rgba(2,6,23,0.12); }
-    .sidebar.open { transform:translateX(0); }
-    .code-panel { position: fixed; right: 8px; top: 72px; bottom: 8px; width: calc(100% - 16px); max-width: 720px; z-index:100; border-radius:8px; }
+    .sidebar { position: fixed; left:0; top:0; bottom:0; width:76%; max-width:380px; transform: translateX(-120%); transition:transform .22s; z-index:90; box-shadow:8px 0 32px rgba(2,6,23,0.12); }
+    .sidebar.open { transform: translateX(0); }
   }
 </style>
 </head>
@@ -184,438 +207,353 @@
 
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
-    <div class="brand" aria-hidden="false">
-      <img src="https://developers-sandbox.bvopen.com.br/sites/default/files/apidoc_specs/API-PIX-V1/assets/images/logo.png" alt="Banco BV logo" />
-      <div class="brand-text">
-        <div class="brand-title">PIX API</div>
-        <div class="brand-sub">Banco BV</div>
+    <div class="brand">
+      <img src="https://developers-sandbox.bvopen.com.br/sites/default/files/apidoc_specs/API-PIX-V1/assets/images/logo.png" alt="Banco BV" class="brand-logo" />
+      <div>
+        <h3>Documentação</h3>
+        <div class="meta">PIX API - Banco BV</div>
       </div>
     </div>
 
     <div class="search">
-      <input id="sidebar-search" type="search" placeholder="Search..." aria-label="Buscar">
+      <input id="sidebar-search" type="search" placeholder="Buscar tag, caminho ou operação..." aria-label="Buscar">
     </div>
 
-    <nav class="nav" aria-label="Navegação da documentação">
-      <ul id="sidebar-menu" class="tag-list" aria-live="polite">
-        <!-- dynamically populated -->
-      </ul>
-    </nav>
+    <ul id="sidebar-menu" class="tag-list" aria-live="polite" aria-label="Lista de tags"></ul>
+
+    <!-- tag-meta removed per request -->
   </aside>
 
-  <!-- CENTER CONTENT -->
+  <!-- CONTENT -->
   <main class="content" id="content">
-    <div class="doc-wrapper">
-      <h2 class="doc-title">Documentação PIX - Banco BV</h2>
-      <p class="doc-intro">
-        Navegue pela API usando o menu à esquerda. Ao abrir um endpoint, exemplos de resposta aparecerão no painel à direita.
-      </p>
-
-      <div id="swagger-ui"></div>
-    </div>
+    <div id="swagger-ui" class="swagger-ui"></div>
   </main>
 
   <!-- RIGHT PANEL -->
   <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true">
-    <div class="panel-top">
-      <div class="panel-title" id="code-title">Abra um endpoint</div>
-      <div class="panel-controls">
-        <select id="panel-status" class="panel-select" aria-label="Status">
-          <option value="">response</option>
-        </select>
-        <button id="code-copy" class="panel-select">Copiar</button>
+    <div class="endpoint-header">
+      <div class="endpoint-title">
+        <span id="code-method" class="method-pill default">OP</span>
+        <div id="code-path" class="path-text">/caminho/exemplo</div>
+      </div>
+      <div class="controls">
+        <button id="code-copy" class="btn">Copiar</button>
+        <button id="code-open" class="btn">Ir ao endpoint</button>
       </div>
     </div>
 
-    <div id="code-view">
-      <div class="panel-empty">Abra uma operação (clicando em um endpoint) para ver exemplos de respostas e códigos aqui.</div>
-    </div>
+    <div id="code-view"><div class="panel-empty">Abra uma operação (clicando em um endpoint) para ver exemplos de respostas e códigos aqui.</div></div>
   </aside>
 
 </div>
 
 <!-- scripts -->
-<script src="https://unpkg.com/swagger-ui-dist@5.0.0/swagger-ui-bundle.js"></script>
+<script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
 <script>
 /*
-  Fixes applied:
-  - Logo set to provided URL
-  - Sidebar submenu clicks now reliably locate the matching .opblock-summary by normalizing text (method & path)
-    and using robust matching strategies (exact, endsWith, includes).
-  - Sidebar is rebuilt only when tags/opblocks are added/removed (debounced).
-  - No direct DOM references are stored; matching is dynamic at click time so re-renders do not break links.
+  Strategy:
+  - Keep the improved sidebar and right fixed panel layout (3-column grid).
+  - DO NOT intercept or block Swagger's native click behavior.
+  - Listen for user clicks (event delegation) on .opblock-summary to record the clicked opblock.
+  - Also observe DOM attribute changes (class) so that when an opblock gets .is-open we capture it.
+  - When an opblock is open (or was just clicked), clone its .responses-wrapper (or <pre> examples) into the right panel.
+  - This approach relies on Swagger performing its normal render of the response examples when an opblock is opened.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 
-/* initialize swagger-ui v5 */
+let lastClickedOpblock = null;
+
+// Initialize Swagger UI
 SwaggerUIBundle({
   url: SWAGGER_URL,
   dom_id: "#swagger-ui",
   layout: "BaseLayout",
-  deepLinking: true
+  deepLinking: true,
+  presets: [SwaggerUIBundle.presets.apis]
 });
 
-/* helpers */
-const $ = (s, ctx=document) => ctx.querySelector(s);
-const $$ = (s, ctx=document) => Array.from((ctx||document).querySelectorAll(s));
-const debounce = (fn, t=200) => { let id; return (...a) => { clearTimeout(id); id = setTimeout(() => fn(...a), t); }; };
+// small helpers
+const $qs = (s, scope = document) => scope.querySelector(s);
+const $qsa = (s, scope = document) => Array.from(scope.querySelectorAll(s));
 
-function normalizeText(s) {
-  if (!s) return '';
-  return s.replace(/\s+/g,' ').trim();
-}
-
-/* wait for initial swagger rendering of summaries */
-function waitSwaggerReady(timeout = 12000) {
+function waitForSwaggerReady(timeout = 10000) {
   return new Promise((resolve, reject) => {
-    const root = $('#swagger-ui');
-    if (!root) return reject(new Error('swagger-ui not found'));
     const start = Date.now();
-    const obs = new MutationObserver(() => {
-      if ($$('.opblock-summary').length) {
-        obs.disconnect();
-        resolve();
-      } else if (Date.now() - start > timeout) {
-        obs.disconnect();
-        reject(new Error('Timeout waiting for Swagger UI'));
-      }
-    });
-    obs.observe(root, { childList: true, subtree: true });
-    if ($$('.opblock-summary').length) { obs.disconnect(); resolve(); }
+    (function check() {
+      if ($qsa('.opblock-tag').length > 0) return resolve();
+      if (Date.now() - start > timeout) return reject(new Error('Swagger UI did not render in time'));
+      requestAnimationFrame(check);
+    })();
   });
 }
 
-/* build sidebar */
+/* Build improved sidebar from opblock tags */
 function buildSidebar() {
-  const menu = $('#sidebar-menu');
-  if (!menu) return;
+  const menu = document.getElementById('sidebar-menu');
   menu.innerHTML = '';
 
-  // find tags that swagger rendered
-  $$('.opblock-tag').forEach(tagEl => {
-    const title = tagEl.querySelector('h3 span')?.textContent?.trim();
-    if (!title) return;
+  const tags = $qsa('.opblock-tag');
+  tags.forEach(tagEl => {
+    const titleSpan = tagEl.querySelector('h3 span');
+    if (!titleSpan) return;
+    const titleText = titleSpan.textContent.trim();
+
+    const operations = tagEl.querySelectorAll('.opblock-summary');
+    const count = operations.length;
 
     const li = document.createElement('li');
-    li.className = 'tag';
+    li.className = 'tag-item';
+    li.tabIndex = 0;
+    li.dataset.tag = titleText;
+    li.innerHTML = `<div><strong>${escapeHtml(titleText)}</strong></div><div class="tag-count">${count}</div>`;
 
-    const header = document.createElement('div');
-    header.className = 'tag-header';
-    header.tabIndex = 0;
-    header.innerHTML = `<div class="tag-title">${escapeHtml(title)}</div>
-                        <div class="tag-count">${tagEl.querySelectorAll('.opblock').length}</div>`;
-
-    const ops = document.createElement('div');
-    ops.className = 'tag-ops';
-
-    tagEl.querySelectorAll('.opblock').forEach(op => {
-      const summary = op.querySelector('.opblock-summary');
-      if (!summary) return;
-      const method = normalizeText(summary.querySelector('.opblock-summary-method')?.textContent || '');
-      const path = normalizeText(summary.querySelector('.opblock-summary-path')?.textContent || '');
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'op-item';
-      btn.title = `${method} ${path}`;
-      btn.dataset.method = method;
-      btn.dataset.path = path;
-      btn.innerHTML = `<div class="op-method ${method.toLowerCase()}">${escapeHtml(method)}</div>
-                       <div class="op-path">${escapeHtml(path)}</div>`;
-
-      btn.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        // visually open tag
-        li.classList.add('open');
-        header.setAttribute('aria-expanded','true');
-
-        // find matching summary dynamically
-        const allSummaries = $$('.opblock-summary');
-        let target = null;
-
-        // 1) exact match (method & path)
-        target = allSummaries.find(s => {
-          const m = normalizeText(s.querySelector('.opblock-summary-method')?.textContent || '');
-          const p = normalizeText(s.querySelector('.opblock-summary-path')?.textContent || '');
-          return m === method && p === path;
-        });
-
-        // 2) path exact match only (some swagger builds may wrap method differently)
-        if (!target) {
-          target = allSummaries.find(s => {
-            const p = normalizeText(s.querySelector('.opblock-summary-path')?.textContent || '');
-            return p === path;
-          });
-        }
-
-        // 3) endsWith (handles base path or prefixes)
-        if (!target) {
-          target = allSummaries.find(s => {
-            const p = normalizeText(s.querySelector('.opblock-summary-path')?.textContent || '');
-            return p && p.endsWith(path);
-          });
-        }
-
-        // 4) includes fallback
-        if (!target) {
-          target = allSummaries.find(s => {
-            const p = normalizeText(s.querySelector('.opblock-summary-path')?.textContent || '');
-            return p && p.includes(path);
-          });
-        }
-
-        if (target) {
-          try { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
-          setTimeout(() => {
-            try {
-              // dispatch a real click to trigger swagger handlers
-              target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-            } catch (err) {
-              try { target.click(); } catch(e) {}
-            }
-          }, 120);
-        } else {
-          // last resort: scroll to top of the tag block
-          try { tagEl.scrollIntoView({ behavior:'smooth', block:'start' }); } catch (e) {}
-        }
-      });
-
-      ops.appendChild(btn);
+    li.addEventListener('click', () => {
+      tagEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setActiveTag(titleText);
     });
 
-    // header toggle
-    header.addEventListener('click', () => {
-      const wasOpen = li.classList.toggle('open');
-      header.setAttribute('aria-expanded', wasOpen ? 'true' : 'false');
+    li.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); li.click(); }
     });
-    header.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); header.click(); } });
 
-    li.appendChild(header);
-    li.appendChild(ops);
     menu.appendChild(li);
   });
 }
 
-/* update right panel by cloning responses of an opblock */
-function updateRightPanel(opblock) {
-  const panel = $('#code-view');
-  if (!panel) return;
-  panel.innerHTML = '';
-
-  if (!opblock) {
-    panel.innerHTML = '<div class="panel-empty">Abra uma operação para ver exemplos de respostas e códigos aqui.</div>';
-    $('#code-title').textContent = 'Abra um endpoint';
-    return;
-  }
-
-  const method = normalizeText(opblock.querySelector('.opblock-summary-method')?.textContent || '');
-  const path = normalizeText(opblock.querySelector('.opblock-summary-path')?.textContent || '');
-  $('#code-title').textContent = `${method} ${path}`;
-
-  const responses = opblock.querySelector('.responses-wrapper');
-  if (responses) {
-    const clone = responses.cloneNode(true);
-    clone.querySelectorAll('.try-out, .execute, .btn, .model, .responses-request, .parameters').forEach(n => n.remove());
-    panel.appendChild(clone);
-    lazyHighlight(panel);
-    populateStatusSelect(clone);
-    return;
-  }
-
-  // fallback to inline <pre> blocks
-  const pres = opblock.querySelectorAll('pre');
-  if (pres && pres.length) {
-    pres.forEach(p => panel.appendChild(p.cloneNode(true)));
-    lazyHighlight(panel);
-    return;
-  }
-
-  panel.innerHTML = '<div class="panel-empty">Nenhuma resposta encontrada.</div>';
+/* Set active tag in sidebar (no meta text updates per request) */
+function setActiveTag(name) {
+  const menu = document.getElementById('sidebar-menu');
+  Array.from(menu.children).forEach(li => li.classList.toggle('active', li.dataset.tag === name));
 }
 
-/* populate status select (best-effort) */
-function populateStatusSelect(cloned) {
-  const sel = $('#panel-status');
-  if (!sel) return;
-  sel.innerHTML = '';
-  const statuses = new Set();
+ /* Bind clicks on opblock summaries (delegation) to capture last clicked opblock
+   We DO NOT prevent default: let Swagger open the block so examples render. */
+function bindEndpointClicks() {
+  const container = document.getElementById('swagger-ui');
+  if (!container) return;
 
-  // look for elements that look like status boxes
-  cloned.querySelectorAll('[data-code], .response').forEach(n => {
-    const c = n.getAttribute('data-code') || n.getAttribute('data-status') || n.querySelector('.response-col_status')?.textContent;
-    if (c) statuses.add(normalizeText(String(c)));
+  container.addEventListener('click', (e) => {
+    const summary = e.target.closest('.opblock-summary');
+    if (!summary) return;
+    const opblock = summary.closest('.opblock');
+    if (!opblock) return;
+
+    // remember last clicked opblock so updateRightPanel knows which to prefer
+    lastClickedOpblock = opblock;
+
+    // small delay to allow Swagger to toggle .is-open and render the responses
+    setTimeout(() => updateRightPanel(opblock), 220);
   });
 
-  if (!statuses.size) {
-    // fallback: try common codes present as headings
-    ['200','201','204','400','401','403','404','500'].forEach(code => {
-      if (cloned.innerText.includes(code)) statuses.add(code);
-    });
-  }
+  // keyboard activation
+  container.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const summary = e.target.closest('.opblock-summary');
+    if (!summary) return;
+    const opblock = summary.closest('.opblock');
+    if (!opblock) return;
 
-  if (!statuses.size) {
-    sel.style.display = 'none';
-    return;
-  }
-
-  sel.style.display = '';
-  const empty = document.createElement('option');
-  empty.value = '';
-  empty.textContent = 'response';
-  sel.appendChild(empty);
-
-  statuses.forEach(s => {
-    const o = document.createElement('option');
-    o.value = s;
-    o.textContent = s;
-    sel.appendChild(o);
+    lastClickedOpblock = opblock;
+    setTimeout(() => updateRightPanel(opblock), 220);
   });
 }
 
-/* lazy load highlight.js and run */
-let hljsLoaded = false;
-let hljsLoading = false;
-function lazyHighlight(container) {
-  const blocks = container.querySelectorAll('pre code, pre');
-  if (!blocks.length) return;
-  if (hljsLoaded) {
-    container.querySelectorAll('pre code').forEach(b => { try { window.hljs.highlightElement(b); } catch(e){} });
-    return;
-  }
-  if (hljsLoading) return;
-  hljsLoading = true;
-  const s = document.createElement('script');
-  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js';
-  s.onload = () => {
-    hljsLoaded = true;
-    container.querySelectorAll('pre code').forEach(b => { try { window.hljs.highlightElement(b); } catch(e){} });
-  };
-  s.onerror = () => { hljsLoading = false; };
-  document.head.appendChild(s);
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css';
-  document.head.appendChild(link);
-}
+/* Observe class changes so we catch programmatic opens or other ways the opblock is opened */
+function observeOpblockOpenEvents() {
+  const uiRoot = document.querySelector('.swagger-ui');
+  if (!uiRoot) return;
 
-/* single main observer: watch for opblock opens and tag/op changes */
-function attachMainObserver() {
-  const root = $('#swagger-ui');
-  if (!root) return;
-  const observer = new MutationObserver(mutations => {
-    let rebuild = false;
+  const mo = new MutationObserver(mutations => {
     for (const m of mutations) {
-      if (m.type === 'attributes' && m.target.classList && m.target.classList.contains('opblock')) {
-        const el = m.target;
-        if (el.classList.contains('is-open')) {
-          // allow Swagger to populate responses, then clone
-          setTimeout(() => updateRightPanel(el), 120);
+      if (m.type === 'attributes' && m.attributeName === 'class') {
+        const target = m.target;
+        if (target.classList && target.classList.contains('opblock') && target.classList.contains('is-open')) {
+          // opblock gained is-open; prefer the recently clicked opblock, otherwise use this one
+          const preferred = lastClickedOpblock || target;
+          setTimeout(() => updateRightPanel(preferred), 80);
         }
       }
-      if (m.type === 'childList' && (m.addedNodes.length || m.removedNodes.length)) {
-        rebuild = true;
+
+      if (m.addedNodes && m.addedNodes.length) {
+        // new opblocks rendered -> rebuild sidebar (debounced)
+        clearTimeout(window._rebuild_sidebar);
+        window._rebuild_sidebar = setTimeout(() => {
+          buildSidebar();
+          wireActiveTagHighlighting();
+        }, 180);
       }
     }
-    if (rebuild) debouncedBuildSidebar();
   });
-  observer.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+
+  mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
-const debouncedBuildSidebar = debounce(() => buildSidebar(), 300);
+/* Find the responses/examples area inside an opblock reliably */
+function findResponsesWrapper(opblockEl) {
+  if (!opblockEl) return null;
 
-/* simple search */
-function initSidebarSearch() {
-  const input = $('#sidebar-search');
-  if (!input) return;
-  input.addEventListener('input', debounce(() => {
-    const q = input.value.trim().toLowerCase();
-    document.querySelectorAll('#sidebar-menu .tag').forEach(tag => {
-      const tagTitle = tag.querySelector('.tag-title')?.textContent?.toLowerCase() || '';
-      let anyOpMatch = false;
-      tag.querySelectorAll('.op-item').forEach(op => {
-        const title = (op.title || '').toLowerCase();
-        const match = !q || title.includes(q) || tagTitle.includes(q);
-        op.style.display = match ? '' : 'none';
-        if (match) anyOpMatch = true;
-      });
-      tag.style.display = (anyOpMatch || (!q || tagTitle.includes(q))) ? '' : 'none';
-      if (anyOpMatch) tag.classList.add('open'); else tag.classList.remove('open');
+  // Common directly available wrapper
+  let node = opblockEl.querySelector('.responses-wrapper');
+  if (node) return node;
+
+  // Some swagger versions place responses inside sections
+  node = opblockEl.querySelector('.opblock-body .responses-wrapper');
+  if (node) return node;
+
+  node = opblockEl.querySelector('.opblock-section .responses-wrapper');
+  if (node) return node;
+
+  // Examples can be under .response or inside tables; try to find <pre> blocks
+  const pre = opblockEl.querySelector('pre');
+  if (pre) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'responses-wrapper';
+    wrapper.appendChild(pre.cloneNode(true));
+    return wrapper;
+  }
+
+  // No responses found
+  return null;
+}
+
+/* Update right panel with cloned responses from the given opblock (or fallback logic) */
+function updateRightPanel(preferredOpblock) {
+  const panel = document.getElementById('code-view');
+  panel.innerHTML = '';
+
+  // Determine target opblock: prefer provided, then lastClickedOpblock, then first open
+  let opblock = preferredOpblock || lastClickedOpblock || document.querySelector('.opblock.is-open');
+  if (!opblock) {
+    // nothing to show
+    panel.innerHTML = '<div class="panel-empty">Abra uma operação para ver exemplos de respostas e códigos aqui.</div>';
+    return;
+  }
+
+  // If the opblock is not open yet (no .is-open) we still try, but prefer that the user click so Swagger renders content.
+  const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
+  const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
+
+  // Header
+  document.getElementById('code-method').className = 'method-pill ' + (method ? method.toLowerCase() : 'default');
+  document.getElementById('code-method').textContent = method || 'OP';
+  document.getElementById('code-path').textContent = path || '';
+
+  // Try to find responses
+  let responses = findResponsesWrapper(opblock);
+
+  // If not found, but the opblock is not open, give Swagger a small moment (sometimes rendering is slightly delayed)
+  if (!responses && !opblock.classList.contains('is-open')) {
+    // Wait a short bit and retry (non-blocking)
+    setTimeout(() => updateRightPanel(opblock), 200);
+    // meanwhile show spinner-like message
+    panel.innerHTML = '<div class="panel-empty">Carregando exemplos...</div>';
+    return;
+  }
+
+  if (!responses) {
+    panel.innerHTML = '<div class="panel-empty">Nenhuma resposta de exemplo encontrada para este endpoint.</div>';
+    return;
+  }
+
+  // Clone responses for the right panel
+  const clone = responses.cloneNode(true);
+
+  // Remove interactive elements not useful in the right panel
+  clone.querySelectorAll('.try-out, .execute, .btn, .model, .responses-request, .parameters').forEach(n => n.remove());
+
+  // Normalize any pre/code blocks for highlight.js
+  clone.querySelectorAll('pre, code').forEach(el => {
+    el.style.whiteSpace = 'pre';
+    el.style.wordBreak = 'break-word';
+    el.classList.add('hljs');
+  });
+
+  // Append header + cloned responses
+  panel.appendChild(clone);
+
+  // Highlight code blocks inside panel
+  panel.querySelectorAll('pre code').forEach(block => {
+    try { hljs.highlightElement(block); } catch(e) { /* ignore */ }
+  });
+
+  // Setup copy button to copy concatenated code blocks or panel text
+  const copyBtn = document.getElementById('code-copy');
+  copyBtn.onclick = async () => {
+    let text = '';
+    const codes = panel.querySelectorAll('pre code');
+    if (codes.length) {
+      text = Array.from(codes).map(c => c.innerText).join('\n\n---\n\n');
+    } else {
+      text = panel.innerText;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = 'Copiado ✓';
+      setTimeout(() => copyBtn.textContent = 'Copiar', 1200);
+    } catch {
+      copyBtn.textContent = 'Erro';
+      setTimeout(() => copyBtn.textContent = 'Copiar', 1200);
+    }
+  };
+
+  // When "Ir ao endpoint" is clicked, scroll to the opblock and briefly highlight it
+  const openBtn = document.getElementById('code-open');
+  openBtn.onclick = () => {
+    opblock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const prev = opblock.style.boxShadow;
+    opblock.style.boxShadow = '0 10px 36px rgba(14,165,233,0.12)';
+    setTimeout(() => opblock.style.boxShadow = prev || '', 900);
+  };
+}
+
+/* Basic tag highlighting based on viewport (IntersectionObserver) */
+function wireActiveTagHighlighting() {
+  const tagEls = $qsa('.opblock-tag');
+  if (!tagEls.length) return;
+  const obsRoot = document.querySelector('.content') || null;
+  const options = { root: obsRoot, rootMargin: '0px 0px -60% 0px', threshold: [0.1, 0.4] };
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const name = entry.target.querySelector('h3 span')?.textContent?.trim();
+        if (name) setActiveTag(name);
+      }
     });
-  }, 180));
+  }, options);
+  tagEls.forEach(t => observer.observe(t));
 }
 
-/* escape */
-function escapeHtml(s) {
-  if (!s) return '';
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* Utility: escape text for safe insertion */
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-/* init flow */
+/* Initialize everything after Swagger UI renders */
 (async function init() {
   try {
-    await waitSwaggerReady();
-    // give a small settle time for swagger internals
+    await waitForSwaggerReady();
+
+    // Build sidebar and wire interactions
+    buildSidebar();
+    wireActiveTagHighlighting();
+    bindEndpointClicks();
+    observeOpblockOpenEvents();
+
+    // If an opblock is already open on load, populate right panel for it
     setTimeout(() => {
-      buildSidebar();
-      attachMainObserver();
-      initSidebarSearch();
-      // if any opblock already open, show it
       const open = document.querySelector('.opblock.is-open');
-      if (open) updateRightPanel(open);
-      // rebuild sidebar in case swagger re-renders later
-      const uiRoot = document.getElementById('swagger-ui');
-      if (uiRoot) {
-        const mo = new MutationObserver(debouncedBuildSidebar);
-        mo.observe(uiRoot, { childList: true, subtree: true });
+      if (open) {
+        lastClickedOpblock = open;
+        updateRightPanel(open);
       }
-    }, 220);
+    }, 300);
   } catch (err) {
-    console.warn('Erro inicializando UI aprimorada:', err);
+    console.warn('Erro inicializando UI melhorada:', err);
   }
 })();
-
-/* copy button */
-document.getElementById('code-copy').addEventListener('click', async () => {
-  const panel = document.getElementById('code-view');
-  if (!panel) return;
-  let text = '';
-  const codes = panel.querySelectorAll('pre code');
-  if (codes.length) text = Array.from(codes).map(c => c.innerText).join('\n\n---\n\n');
-  else text = panel.innerText || '';
-  try {
-    await navigator.clipboard.writeText(text);
-    const btn = document.getElementById('code-copy');
-    btn.textContent = 'Copiado ✓';
-    setTimeout(() => btn.textContent = 'Copiar', 1200);
-  } catch {
-    const btn = document.getElementById('code-copy');
-    btn.textContent = 'Erro';
-    setTimeout(() => btn.textContent = 'Copiar', 1200);
-  }
-});
-
-/* "Ir ao endpoint" button: scroll & flash */
-document.getElementById('code-open').addEventListener('click', () => {
-  const title = document.getElementById('code-title').textContent || '';
-  if (!title) return;
-  const summaries = $$('.opblock-summary');
-  for (const s of summaries) {
-    const method = normalizeText(s.querySelector('.opblock-summary-method')?.textContent || '');
-    const path = normalizeText(s.querySelector('.opblock-summary-path')?.textContent || '');
-    if ((method + ' ' + path).trim() === title.trim()) {
-      const op = s.closest('.opblock');
-      if (op) {
-        op.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const prev = op.style.boxShadow;
-        op.style.boxShadow = '0 10px 36px rgba(14,165,233,0.12)';
-        setTimeout(() => op.style.boxShadow = prev || '', 900);
-      }
-      break;
-    }
-  }
-});
 </script>
 </body>
 </html>
