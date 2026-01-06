@@ -11,19 +11,24 @@
 
 <style>
   :root{
-    --sidebar-width: 300px;
-    --right-width: 520px;
-    --brand: #002f6c;
+    --sidebar-width: 240px;
+    --right-width: 480px;
+    --brand: #1b6bb3; /* adjusted brand */
     --muted: #6b7280;
-    --bg: #f5f7fa;
+    --bg: #f7f7f7;
+    --right-bg: #263238;
+    --right-card: #0e1416;
+    --accent: #2dd4bf;
   }
 
   html, body {
     margin: 0;
     height: 100%;
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, Helvetica;
     background: var(--bg);
     color: #0b1220;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
   }
 
   /* ===== LAYOUT ===== */
@@ -37,100 +42,173 @@
   .sidebar {
     background: #fff;
     border-right: 1px solid #e6e9ee;
-    padding: 16px;
+    padding: 20px 14px;
     overflow-y: auto;
     display:flex;
     flex-direction:column;
-    gap:12px;
+    gap:14px;
   }
 
   .brand {
     display:flex;
-    gap:10px;
+    gap:12px;
     align-items:center;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f0f0f0;
   }
 
   .brand-logo {
-    height: 40px;
+    height: 56px;
     width: auto;
     display:block;
   }
 
-  .sidebar h3 {
+  .brand h1 {
+    margin: 0;
     font-size: 15px;
     color: var(--brand);
-    margin: 0;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .brand .sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
   }
 
   .sidebar .search {
     display:flex;
+    align-items:center;
+    padding-top: 8px;
   }
 
-  .sidebar input[type="search"] {
+  .sidebar .search input[type="search"] {
     width: 100%;
     padding: 8px 10px;
-    border-radius: 8px;
+    border-radius: 6px;
     border: 1px solid #e6e9ee;
     background: #fbfdff;
     font-size: 13px;
   }
 
-  .tag-list {
+  .nav {
+    margin: 0;
+    padding: 8px 4px;
     list-style:none;
-    margin:0;
-    padding:0;
+    overflow:auto;
+  }
+
+  .tag-item {
+    display:block;
+    margin-bottom:6px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:13px;
+    color:#0b1220;
+    transition: background .12s, transform .06s;
+    padding: 6px;
+  }
+
+  .tag-item:hover { background: rgba(0,0,0,0.03); transform: translateY(-1px); }
+  .tag-item.active { background: linear-gradient(90deg,#eef6ff,#ffffff); border:1px solid rgba(0,47,108,0.04); }
+
+  .tag-head {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+
+  .tag-head strong { font-weight:600; color: #0b1220; font-size:13px; }
+
+  .tag-count {
+    background: rgba(0,47,108,0.06);
+    color: var(--brand);
+    padding: 4px 8px;
+    border-radius:999px;
+    font-size:12px;
+  }
+
+  .ops {
+    margin-top:8px;
+    padding-left:6px;
     display:flex;
     flex-direction:column;
     gap:6px;
   }
 
-  .tag-item {
+  .op-link {
     display:flex;
-    justify-content:space-between;
+    gap:10px;
     align-items:center;
-    padding:8px;
-    border-radius:8px;
-    cursor:pointer;
+    padding:6px 8px;
+    border-radius:6px;
     font-size:13px;
-    transition: background .12s, transform .06s;
+    color:#374151;
+    background: transparent;
+    border: none;
+    text-align:left;
+    cursor:pointer;
   }
 
-  .tag-item:hover { background: rgba(0,47,108,0.06); transform: translateY(-1px); }
-  .tag-item.active { background: linear-gradient(90deg,#e9f1ff,#fbfdff); border:1px solid rgba(0,47,108,0.06); }
+  .op-link:hover { background: rgba(0,0,0,0.03); }
 
-  .tag-count {
-    background: rgba(0,47,108,0.08);
-    color: var(--brand);
-    padding: 3px 8px;
-    border-radius:999px;
+  .op-link.active {
+    background: rgba(0,0,0,0.04);
+    box-shadow: inset 3px 0 0 var(--brand);
+    color: #0b1220;
+    font-weight:600;
+  }
+
+  .method-pill-left {
+    padding:4px 8px;
+    border-radius:6px;
+    font-weight:700;
+    font-size:11px;
+    color:#fff;
+    min-width:46px;
+    text-align:center;
+  }
+  .method-get { background:#16a34a; }
+  .method-post { background:#0ea5e9; }
+  .method-put { background:#f59e0b; color:#0b1220; }
+  .method-delete { background:#ef4444; }
+
+  .op-path {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
     font-size:12px;
-  }
-
-  .sidebar .meta {
-    color: var(--muted);
-    font-size: 12px;
+    color:#6b7280;
   }
 
   /* ===== CONTENT ===== */
   .content {
-    background: #ffffff;
+    background: #fff;
     overflow-y: auto;
   }
 
   .swagger-ui {
-    padding: 18px;
+    padding: 28px 42px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* Make the default swagger opblocks spacing similar to screenshot */
+  .swagger-ui .opblock {
+    border: none;
+    box-shadow: none;
   }
 
   /* ===== RIGHT PANEL ===== */
   .code-panel {
-    background: #071022;
+    background: var(--right-bg);
     border-left: 1px solid rgba(255,255,255,0.03);
-    padding: 16px;
+    padding: 18px;
     color: #fff;
     overflow-y: auto;
     display:flex;
     flex-direction:column;
-    gap:12px;
+    gap:18px;
   }
 
   .endpoint-header {
@@ -148,7 +226,7 @@
 
   .method-pill {
     padding:6px 10px;
-    border-radius:8px;
+    border-radius:6px;
     font-weight:700;
     font-size:12px;
     color:#fff;
@@ -157,7 +235,6 @@
   .method-pill.post { background:#0ea5e9; }
   .method-pill.put { background:#f59e0b; color:#0b1220; }
   .method-pill.delete { background:#ef4444; }
-  .method-pill.default { background: rgba(255,255,255,0.06); }
 
   .path-text { color: rgba(255,255,255,0.95); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; }
 
@@ -174,19 +251,37 @@
   }
   .btn.primary { background: linear-gradient(90deg,#0ea5e9,#2dd4bf); color:#06202a; font-weight:700; border:none; }
 
+  .responses-wrapper {
+    background: var(--right-card);
+    border-radius:6px;
+    padding:16px;
+    color:#cfe8df;
+  }
+
   .responses-wrapper pre {
-    background: #020617 !important;
+    background: transparent !important;
     border-radius: 6px;
-    padding:12px;
+    padding:0;
     overflow:auto;
+    color: #9be1cc;
+  }
+
+  .response-badges {
+    display:flex;
+    gap:8px;
+    margin-bottom:10px;
+  }
+
+  .response-badges .badge {
+    padding:6px 8px;
+    border-radius:6px;
+    background: rgba(255,255,255,0.03);
+    color:#cfe8df;
+    font-weight:700;
+    font-size:12px;
   }
 
   .panel-empty { color: rgba(255,255,255,0.6); font-size:13px; padding:8px; }
-
-  /* Hide left opblock body only when we force-open for cloning (not used in this version but kept for safety) */
-  .opblock[data-clone-open="true"] .opblock-body {
-    display:none !important;
-  }
 
   /* Responsive: collapse right panel on narrow screens */
   @media (max-width: 1200px) {
@@ -199,6 +294,9 @@
     .sidebar { position: fixed; left:0; top:0; bottom:0; width:76%; max-width:380px; transform: translateX(-120%); transition:transform .22s; z-index:90; box-shadow:8px 0 32px rgba(2,6,23,0.12); }
     .sidebar.open { transform: translateX(0); }
   }
+
+  /* small helpers */
+  .muted { color: var(--muted); font-size:12px; }
 </style>
 </head>
 
@@ -206,22 +304,22 @@
 <div class="layout">
 
   <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="brand">
+  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Sidebar">
+    <div class="brand" aria-hidden="false">
       <img src="https://developers-sandbox.bvopen.com.br/sites/default/files/apidoc_specs/API-PIX-V1/assets/images/logo.png" alt="Banco BV" class="brand-logo" />
       <div>
-        <h3>Documentação</h3>
-        <div class="meta">PIX API - Banco BV</div>
+        <h1>Documentação</h1>
+        <div class="sub">PIX API - Banco BV</div>
       </div>
     </div>
 
-    <div class="search">
-      <input id="sidebar-search" type="search" placeholder="Buscar tag, caminho ou operação..." aria-label="Buscar">
+    <div class="search" aria-hidden="false">
+      <input id="sidebar-search" type="search" placeholder="Search..." aria-label="Buscar" />
     </div>
 
-    <ul id="sidebar-menu" class="tag-list" aria-live="polite" aria-label="Lista de tags"></ul>
-
-    <!-- tag-meta removed per request -->
+    <nav>
+      <ul id="sidebar-menu" class="nav" aria-live="polite" aria-label="Lista de tags"></ul>
+    </nav>
   </aside>
 
   <!-- CONTENT -->
@@ -253,17 +351,15 @@
 
 <script>
 /*
-  Strategy:
-  - Keep the improved sidebar and right fixed panel layout (3-column grid).
-  - DO NOT intercept or block Swagger's native click behavior.
-  - Listen for user clicks (event delegation) on .opblock-summary to record the clicked opblock.
-  - Also observe DOM attribute changes (class) so that when an opblock gets .is-open we capture it.
-  - When an opblock is open (or was just clicked), clone its .responses-wrapper (or <pre> examples) into the right panel.
-  - This approach relies on Swagger performing its normal render of the response examples when an opblock is opened.
+  Enhanced sidebar that mirrors the layout in the provided screenshot:
+  - Lists tags with counts.
+  - Under each tag, lists operations with method pill + path.
+  - Clicking an operation scrolls to and opens the opblock (by dispatching a click on Swagger's .opblock-summary).
+  - Search filters tags & operations.
+  - Right panel remains the cloned response area.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
-
 let lastClickedOpblock = null;
 
 // Initialize Swagger UI
@@ -277,9 +373,9 @@ SwaggerUIBundle({
 
 // small helpers
 const $qs = (s, scope = document) => scope.querySelector(s);
-const $qsa = (s, scope = document) => Array.from(scope.querySelectorAll(s));
+const $qsa = (s, scope = document) => Array.from((scope || document).querySelectorAll(s));
 
-function waitForSwaggerReady(timeout = 10000) {
+function waitForSwaggerReady(timeout = 12000) {
   return new Promise((resolve, reject) => {
     const start = Date.now();
     (function check() {
@@ -290,7 +386,7 @@ function waitForSwaggerReady(timeout = 10000) {
   });
 }
 
-/* Build improved sidebar from opblock tags */
+/* Build sidebar with tags and nested operations */
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
   menu.innerHTML = '';
@@ -307,29 +403,97 @@ function buildSidebar() {
     const li = document.createElement('li');
     li.className = 'tag-item';
     li.tabIndex = 0;
-    li.dataset.tag = titleText;
-    li.innerHTML = `<div><strong>${escapeHtml(titleText)}</strong></div><div class="tag-count">${count}</div>`;
 
-    li.addEventListener('click', () => {
-      tagEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setActiveTag(titleText);
+    const head = document.createElement('div');
+    head.className = 'tag-head';
+    head.innerHTML = `<strong>${escapeHtml(titleText)}</strong><div class="tag-count">${count}</div>`;
+    li.appendChild(head);
+
+    // operations list
+    const opsContainer = document.createElement('div');
+    opsContainer.className = 'ops';
+
+    operations.forEach(op => {
+      const method = op.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
+      const path = op.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
+      const btn = document.createElement('button');
+      btn.className = 'op-link';
+      btn.type = 'button';
+      btn.innerHTML = `<div class="method-pill-left method-${method.toLowerCase()}">${escapeHtml(method)}</div>
+                       <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                         <div style="font-size:13px;color:#0b1220;">${escapeHtml(path)}</div>
+                         <div class="op-path" style="margin-top:2px">${escapeHtml(path)}</div>
+                       </div>`;
+
+      // wire click: simulate click on corresponding swagger opblock-summary element to open it
+      btn.addEventListener('click', () => {
+        const opblock = op.closest('.opblock');
+        if (!opblock) return;
+
+        // prefer to invoke Swagger's summary click to ensure correct behavior
+        const summary = opblock.querySelector('.opblock-summary');
+        if (summary) {
+          summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          summary.click();
+          lastClickedOpblock = opblock;
+          // update right panel after a small delay to allow Swagger to render examples
+          setTimeout(() => updateRightPanel(opblock), 220);
+        }
+      });
+
+      opsContainer.appendChild(btn);
     });
 
-    li.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); li.click(); }
+    li.appendChild(opsContainer);
+
+    // expand/collapse by clicking tag head
+    head.addEventListener('click', () => {
+      const isActive = li.classList.contains('active');
+      // collapse all
+      Array.from(menu.children).forEach(n => n.classList.remove('active'));
+      if (!isActive) li.classList.add('active');
+      // scroll tag into view
+      tagEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
     menu.appendChild(li);
   });
 }
 
-/* Set active tag in sidebar (no meta text updates per request) */
+/* Set active tag visually (keeps minimal behavior like screenshot) */
 function setActiveTag(name) {
   const menu = document.getElementById('sidebar-menu');
-  Array.from(menu.children).forEach(li => li.classList.toggle('active', li.dataset.tag === name));
+  Array.from(menu.children).forEach(li => {
+    const tagName = li.querySelector('.tag-head strong')?.textContent?.trim();
+    li.classList.toggle('active', tagName === name);
+  });
 }
 
- /* Bind clicks on opblock summaries (delegation) to capture last clicked opblock
+/* Filter sidebar items by search */
+function wireSearch() {
+  const input = document.getElementById('sidebar-search');
+  if (!input) return;
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    const items = $qsa('#sidebar-menu .tag-item');
+    items.forEach(item => {
+      const tagName = item.querySelector('.tag-head strong')?.textContent?.toLowerCase() || '';
+      const ops = Array.from(item.querySelectorAll('.op-link'));
+      let anyOpMatch = false;
+      ops.forEach(op => {
+        const txt = op.textContent.toLowerCase();
+        const match = q === '' || txt.includes(q);
+        op.style.display = match ? '' : 'none';
+        if (match) anyOpMatch = true;
+      });
+      // show tag if tag matches or any op matches
+      const tagMatch = q === '' || tagName.includes(q);
+      item.style.display = (tagMatch || anyOpMatch) ? '' : 'none';
+    });
+  });
+}
+
+/* Bind clicks on opblock summaries (delegation) to capture last clicked opblock
    We DO NOT prevent default: let Swagger open the block so examples render. */
 function bindEndpointClicks() {
   const container = document.getElementById('swagger-ui');
@@ -341,10 +505,7 @@ function bindEndpointClicks() {
     const opblock = summary.closest('.opblock');
     if (!opblock) return;
 
-    // remember last clicked opblock so updateRightPanel knows which to prefer
     lastClickedOpblock = opblock;
-
-    // small delay to allow Swagger to toggle .is-open and render the responses
     setTimeout(() => updateRightPanel(opblock), 220);
   });
 
@@ -371,9 +532,10 @@ function observeOpblockOpenEvents() {
       if (m.type === 'attributes' && m.attributeName === 'class') {
         const target = m.target;
         if (target.classList && target.classList.contains('opblock') && target.classList.contains('is-open')) {
-          // opblock gained is-open; prefer the recently clicked opblock, otherwise use this one
           const preferred = lastClickedOpblock || target;
           setTimeout(() => updateRightPanel(preferred), 80);
+          // also update sidebar active op visually
+          highlightSidebarOp(preferred);
         }
       }
 
@@ -382,13 +544,36 @@ function observeOpblockOpenEvents() {
         clearTimeout(window._rebuild_sidebar);
         window._rebuild_sidebar = setTimeout(() => {
           buildSidebar();
-          wireActiveTagHighlighting();
-        }, 180);
+          wireSearch();
+        }, 160);
       }
     }
   });
 
   mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+}
+
+/* Highlight corresponding op in the sidebar */
+function highlightSidebarOp(opblock) {
+  if (!opblock) return;
+  const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
+  const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
+
+  // find matching op-link
+  const ops = $qsa('#sidebar-menu .op-link');
+  ops.forEach(op => {
+    const text = op.textContent || '';
+    const isMatch = text.includes(path) && text.includes(method);
+    op.classList.toggle('active', isMatch);
+    // ensure parent tag is active/expanded
+    if (isMatch) {
+      const tagItem = op.closest('.tag-item');
+      if (tagItem) {
+        Array.from(document.querySelectorAll('#sidebar-menu .tag-item')).forEach(t => t.classList.remove('active'));
+        tagItem.classList.add('active');
+      }
+    }
+  });
 }
 
 /* Find the responses/examples area inside an opblock reliably */
@@ -437,8 +622,9 @@ function updateRightPanel(preferredOpblock) {
   const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
 
   // Header
-  document.getElementById('code-method').className = 'method-pill ' + (method ? method.toLowerCase() : 'default');
-  document.getElementById('code-method').textContent = method || 'OP';
+  const codeMethodEl = document.getElementById('code-method');
+  codeMethodEl.className = 'method-pill ' + (method ? method.toLowerCase() : 'default');
+  codeMethodEl.textContent = method || 'OP';
   document.getElementById('code-path').textContent = path || '';
 
   // Try to find responses
@@ -446,9 +632,7 @@ function updateRightPanel(preferredOpblock) {
 
   // If not found, but the opblock is not open, give Swagger a small moment (sometimes rendering is slightly delayed)
   if (!responses && !opblock.classList.contains('is-open')) {
-    // Wait a short bit and retry (non-blocking)
-    setTimeout(() => updateRightPanel(opblock), 200);
-    // meanwhile show spinner-like message
+    setTimeout(() => updateRightPanel(opblock), 240);
     panel.innerHTML = '<div class="panel-empty">Carregando exemplos...</div>';
     return;
   }
@@ -460,9 +644,10 @@ function updateRightPanel(preferredOpblock) {
 
   // Clone responses for the right panel
   const clone = responses.cloneNode(true);
+  clone.classList.add('responses-wrapper');
 
   // Remove interactive elements not useful in the right panel
-  clone.querySelectorAll('.try-out, .execute, .btn, .model, .responses-request, .parameters').forEach(n => n.remove());
+  clone.querySelectorAll('.try-out, .execute, .btn, .model, .responses-request, .parameters, .tab, .tabbed').forEach(n => n.remove());
 
   // Normalize any pre/code blocks for highlight.js
   clone.querySelectorAll('pre, code').forEach(el => {
@@ -471,7 +656,12 @@ function updateRightPanel(preferredOpblock) {
     el.classList.add('hljs');
   });
 
-  // Append header + cloned responses
+  // Add simple response badges like screenshot
+  const badges = document.createElement('div');
+  badges.className = 'response-badges';
+  badges.innerHTML = `<div class="badge">200</div><div class="badge">403</div><div class="badge">503</div>`;
+  panel.appendChild(badges);
+
   panel.appendChild(clone);
 
   // Highlight code blocks inside panel
@@ -509,23 +699,6 @@ function updateRightPanel(preferredOpblock) {
   };
 }
 
-/* Basic tag highlighting based on viewport (IntersectionObserver) */
-function wireActiveTagHighlighting() {
-  const tagEls = $qsa('.opblock-tag');
-  if (!tagEls.length) return;
-  const obsRoot = document.querySelector('.content') || null;
-  const options = { root: obsRoot, rootMargin: '0px 0px -60% 0px', threshold: [0.1, 0.4] };
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const name = entry.target.querySelector('h3 span')?.textContent?.trim();
-        if (name) setActiveTag(name);
-      }
-    });
-  }, options);
-  tagEls.forEach(t => observer.observe(t));
-}
-
 /* Utility: escape text for safe insertion */
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
@@ -538,7 +711,7 @@ function escapeHtml(str) {
 
     // Build sidebar and wire interactions
     buildSidebar();
-    wireActiveTagHighlighting();
+    wireSearch();
     bindEndpointClicks();
     observeOpblockOpenEvents();
 
@@ -548,6 +721,7 @@ function escapeHtml(str) {
       if (open) {
         lastClickedOpblock = open;
         updateRightPanel(open);
+        highlightSidebarOp(open);
       }
     }, 300);
   } catch (err) {
