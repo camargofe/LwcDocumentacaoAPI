@@ -1,13 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <title>PIX API</title>
-    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
-  </head>
-  <body>
-    <div id="swagger-ui"></div>
 
+    <!-- Swagger UI CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/swagger-ui-dist/swagger-ui.css"
+    />
+
+    <style>
+      /* Reset básico */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+
+      /* Layout principal */
+      .layout {
+        display: flex;
+        height: 100vh;
+        width: 100%;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 260px;
+        background-color: #f4f6f9;
+        border-right: 1px solid #ddd;
+        padding: 16px;
+        box-sizing: border-box;
+        overflow-y: auto;
+      }
+
+      .sidebar h3 {
+        margin-top: 0;
+        font-size: 18px;
+      }
+
+      .sidebar ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .sidebar li {
+        margin: 12px 0;
+        cursor: pointer;
+        color: #0070d2;
+      }
+
+      /* Área do Swagger (intocada) */
+      .content {
+        flex: 1;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <h3>PIX API</h3>
+        <ul>
+          <li>Visão Geral</li>
+          <li>Pagamentos</li>
+          <li>Webhooks</li>
+        </ul>
+      </aside>
+
+      <!-- Conteúdo Swagger -->
+      <main class="content">
+        <div id="swagger-ui"></div>
+      </main>
+    </div>
+
+    <!-- Swagger UI JS (INALTERADO) -->
     <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
     <script>
       SwaggerUIBundle({
