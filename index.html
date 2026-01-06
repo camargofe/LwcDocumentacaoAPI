@@ -7,117 +7,82 @@
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
 
   <style>
-    :root {
-      --bv-blue: #002f6c;
-      --bv-border: #e1e5eb;
-      --bv-bg: #f5f7fa;
-      --code-bg: #0f172a;
-      --code-text: #e5e7eb;
-      --text-muted: #6b7280;
-    }
-
     html, body {
       margin: 0;
-      padding: 0;
       height: 100%;
       font-family: Arial, sans-serif;
-      background: var(--bv-bg);
+      background: #f5f7fa;
     }
 
-    /* ===== LAYOUT 3 COLUNAS ===== */
     .layout {
       display: grid;
-      grid-template-columns: 300px minmax(0, 1fr) 440px;
+      grid-template-columns: 300px 1fr 520px;
       height: 100vh;
     }
 
-    /* ===== SIDEBAR ===== */
+    /* Sidebar */
     .sidebar {
       background: #fff;
-      border-right: 1px solid var(--bv-border);
-      padding: 20px 16px;
+      border-right: 1px solid #ddd;
+      padding: 16px;
       overflow-y: auto;
     }
 
     .sidebar h3 {
       font-size: 14px;
-      color: var(--bv-blue);
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    .sidebar ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+      color: #002f6c;
+      margin-bottom: 10px;
     }
 
     .sidebar li {
       font-size: 13px;
-      padding: 8px 10px;
-      border-radius: 6px;
+      padding: 6px 8px;
       cursor: pointer;
-      margin-bottom: 4px;
+      border-radius: 4px;
     }
 
-    .sidebar li:hover,
-    .sidebar li.active {
+    .sidebar li:hover {
       background: rgba(0,47,108,.1);
-      color: var(--bv-blue);
-      font-weight: bold;
     }
 
-    .sidebar-footer {
-      margin-top: 24px;
-      font-size: 12px;
-      border-top: 1px solid var(--bv-border);
-      padding-top: 12px;
-      color: var(--text-muted);
-    }
-
-    /* ===== CONTEÚDO CENTRAL ===== */
+    /* Conteúdo central */
     .content {
       background: #fff;
       overflow-y: auto;
     }
 
     .swagger-ui {
-      padding: 24px;
+      padding: 20px;
     }
 
-    /* ===== PAINEL DE CÓDIGO ===== */
+    /* Painel direito */
     .code-panel {
       background: #0b1220;
-      border-left: 1px solid var(--bv-border);
-      padding: 16px;
+      border-left: 1px solid #ddd;
       overflow-y: auto;
+      padding: 16px;
     }
 
-    .code-group {
+    /* Ajustes visuais do Swagger clonado */
+    .code-panel .swagger-ui {
+      background: transparent;
+      padding: 0;
+    }
+
+    .code-panel .opblock {
       margin-bottom: 24px;
+      box-shadow: none;
+      border: none;
     }
 
-    .code-title {
-      font-size: 13px;
-      color: #fff;
-      margin-bottom: 6px;
-      font-weight: bold;
+    .code-panel .opblock-summary {
+      pointer-events: none;
     }
 
-    .code-block {
-      background: var(--code-bg);
-      color: var(--code-text);
-      border-radius: 8px;
-      padding: 12px;
-      font-family: Consolas, monospace;
-      font-size: 12px;
-      line-height: 1.4;
-      white-space: pre-wrap;
-      max-height: 320px;
-      overflow: auto;
+    .code-panel pre {
+      background: #020617 !important;
     }
 
-    /* Mobile */
     @media (max-width: 1200px) {
       .layout {
         grid-template-columns: 260px 1fr;
@@ -132,27 +97,25 @@
 <body>
 <div class="layout">
 
-  <!-- SIDEBAR -->
+  <!-- Sidebar -->
   <aside class="sidebar">
     <h3>Documentação</h3>
-    <ul id="sidebar-static"></ul>
+    <ul id="sidebar-menu"></ul>
     <hr />
-    <ul id="sidebar-dynamic"></ul>
-
-    <div class="sidebar-footer">
+    <small>
       Open Banking<br />
       <strong>openbanking@bv.com.br</strong>
-    </div>
+    </small>
   </aside>
 
-  <!-- CONTEÚDO -->
+  <!-- Conteúdo -->
   <main class="content">
     <div id="swagger-ui"></div>
   </main>
 
-  <!-- PAINEL DE CÓDIGO -->
+  <!-- Painel de código -->
   <aside class="code-panel">
-    <div id="code-content"></div>
+    <div id="code-view"></div>
   </aside>
 
 </div>
@@ -166,57 +129,53 @@
     layout: "BaseLayout"
   });
 
-  setTimeout(bindSwaggerInteractions, 2000);
+  setTimeout(initSync, 2000);
 
-  function bindSwaggerInteractions() {
+  function initSync() {
+    buildSidebar();
+    bindEndpointClick();
+  }
+
+  function buildSidebar() {
+    const menu = document.getElementById("sidebar-menu");
+    document.querySelectorAll(".opblock-tag").forEach(tag => {
+      const title = tag.querySelector("h3 span");
+      if (!title) return;
+
+      const li = document.createElement("li");
+      li.textContent = title.textContent.trim();
+      li.onclick = () => tag.scrollIntoView({ behavior: "smooth" });
+      menu.appendChild(li);
+    });
+  }
+
+  function bindEndpointClick() {
     document.querySelectorAll(".opblock-summary").forEach(summary => {
       summary.addEventListener("click", () => {
-        setTimeout(extractCodeGroups, 300);
+        setTimeout(renderRightPanel, 300);
       });
     });
   }
 
-  function extractCodeGroups() {
-    const panel = document.getElementById("code-content");
+  function renderRightPanel() {
+    const panel = document.getElementById("code-view");
     panel.innerHTML = "";
 
-    document.querySelectorAll(".opblock-body pre").forEach(pre => {
-      const group = document.createElement("div");
-      group.className = "code-group";
+    const active = document.querySelector(".opblock.is-open");
+    if (!active) return;
 
-      const titleText = findTitleForCode(pre);
+    const clone = active.cloneNode(true);
 
-      if (titleText) {
-        const title = document.createElement("div");
-        title.className = "code-title";
-        title.textContent = titleText;
-        group.appendChild(title);
-      }
+    // Remove try-out e botões desnecessários
+    clone.querySelectorAll(".try-out, button").forEach(b => b.remove());
 
-      const block = document.createElement("div");
-      block.className = "code-block";
-      block.textContent = pre.textContent;
+    const wrapper = document.createElement("div");
+    wrapper.className = "swagger-ui";
+    wrapper.appendChild(clone);
 
-      group.appendChild(block);
-      panel.appendChild(group);
-    });
-  }
-
-  function findTitleForCode(pre) {
-    let el = pre.previousElementSibling;
-
-    while (el) {
-      if (/^H[1-6]$/.test(el.tagName)) {
-        return el.textContent.trim();
-      }
-      if (el.classList.contains("response")) {
-        const status = el.querySelector(".response-col_status");
-        if (status) return "Response " + status.textContent.trim();
-      }
-      el = el.previousElementSibling;
-    }
-    return "Exemplo";
+    panel.appendChild(wrapper);
   }
 </script>
+
 </body>
 </html>
