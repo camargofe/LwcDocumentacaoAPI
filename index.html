@@ -1,20 +1,19 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
+<html>
+  <head>
     <meta charset="UTF-8" />
-    <title>PIX API - Documentação</title>
+    <title>PIX API</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
 
-    <!-- Redoc -->
-    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
-
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
-    </style>
-</head>
-<body>
-    <redoc spec-url="pix.yaml"></redoc>
-</body>
+    <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+    <script>
+      SwaggerUIBundle({
+        url: "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml",
+        dom_id: "#swagger-ui"
+      });
+    </script>
+  </body>
 </html>
