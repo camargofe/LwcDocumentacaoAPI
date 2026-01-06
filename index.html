@@ -1,103 +1,106 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>PIX API - Banco BV</title>
+<meta charset="UTF-8" />
+<title>PIX API - Banco BV</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
 
-  <style>
-    html, body {
-      margin: 0;
-      height: 100%;
-      font-family: Arial, sans-serif;
-      background: #f5f7fa;
-    }
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  background: #f5f7fa;
+}
 
-    .layout {
-      display: grid;
-      grid-template-columns: 300px 1fr 520px;
-      height: 100vh;
-    }
+/* ===== LAYOUT ===== */
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr 520px;
+  height: 100vh;
+}
 
-    /* Sidebar */
-    .sidebar {
-      background: #fff;
-      border-right: 1px solid #ddd;
-      padding: 16px;
-      overflow-y: auto;
-    }
+/* ===== SIDEBAR ===== */
+.sidebar {
+  background: #fff;
+  border-right: 1px solid #ddd;
+  padding: 16px;
+  overflow-y: auto;
+}
 
-    .sidebar h3 {
-      font-size: 14px;
-      color: #002f6c;
-      margin-bottom: 10px;
-    }
+.sidebar h3 {
+  font-size: 14px;
+  color: #002f6c;
+}
 
-    .sidebar li {
-      font-size: 13px;
-      padding: 6px 8px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
+/* ===== CONTEÚDO CENTRAL ===== */
+.content {
+  background: #fff;
+  overflow-y: auto;
+}
 
-    .sidebar li:hover {
-      background: rgba(0,47,108,.1);
-    }
+.swagger-ui {
+  padding: 20px;
+}
 
-    /* Conteúdo central */
-    .content {
-      background: #fff;
-      overflow-y: auto;
-    }
+/* ===== PAINEL DIREITO ===== */
+.code-panel {
+  background: #0b1220;
+  border-left: 1px solid #ddd;
+  padding: 16px;
+  overflow: hidden; /* SEM SCROLL */
+}
 
-    .swagger-ui {
-      padding: 20px;
-    }
+/* Wrapper clonado */
+.code-panel .swagger-ui {
+  padding: 0;
+  background: transparent;
+}
 
-    /* Painel direito */
-    .code-panel {
-      background: #0b1220;
-      border-left: 1px solid #ddd;
-      overflow-y: auto;
-      padding: 16px;
-    }
+/* Cabeçalho GET /path */
+.code-panel .opblock-summary {
+  pointer-events: none;
+  margin-bottom: 12px;
+}
 
-    /* Ajustes visuais do Swagger clonado */
-    .code-panel .swagger-ui {
-      background: transparent;
-      padding: 0;
-    }
+/* Responses */
+.code-panel .responses-wrapper {
+  margin-top: 12px;
+}
 
-    .code-panel .opblock {
-      margin-bottom: 24px;
-      box-shadow: none;
-      border: none;
-    }
+/* Código */
+.code-panel pre {
+  background: #020617 !important;
+  max-width: 100%;
+  overflow: hidden; /* SEM SCROLL */
+}
 
-    .code-panel .opblock-summary {
-      pointer-events: none;
-    }
+/* Remove tudo que não é response */
+.code-panel .opblock-description-wrapper,
+.code-panel .parameters,
+.code-panel .scheme-container,
+.code-panel .try-out,
+.code-panel table {
+  display: none !important;
+}
 
-    .code-panel pre {
-      background: #020617 !important;
-    }
-
-    @media (max-width: 1200px) {
-      .layout {
-        grid-template-columns: 260px 1fr;
-      }
-      .code-panel {
-        display: none;
-      }
-    }
-  </style>
+/* Mobile */
+@media (max-width: 1200px) {
+  .layout {
+    grid-template-columns: 260px 1fr;
+  }
+  .code-panel {
+    display: none;
+  }
+}
+</style>
 </head>
 
 <body>
 <div class="layout">
 
-  <!-- Sidebar -->
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <h3>Documentação</h3>
     <ul id="sidebar-menu"></ul>
@@ -108,12 +111,12 @@
     </small>
   </aside>
 
-  <!-- Conteúdo -->
+  <!-- CONTEÚDO -->
   <main class="content">
     <div id="swagger-ui"></div>
   </main>
 
-  <!-- Painel de código -->
+  <!-- PAINEL DE CÓDIGO -->
   <aside class="code-panel">
     <div id="code-view"></div>
   </aside>
@@ -123,58 +126,42 @@
 <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
 
 <script>
-  SwaggerUIBundle({
-    url: "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml",
-    dom_id: "#swagger-ui",
-    layout: "BaseLayout"
+SwaggerUIBundle({
+  url: "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml",
+  dom_id: "#swagger-ui",
+  layout: "BaseLayout"
+});
+
+setTimeout(bindEvents, 2000);
+
+function bindEvents() {
+  document.querySelectorAll(".opblock-summary").forEach(el => {
+    el.addEventListener("click", () => {
+      setTimeout(renderCodePanel, 200);
+    });
   });
+}
 
-  setTimeout(initSync, 2000);
+function renderCodePanel() {
+  const panel = document.getElementById("code-view");
+  panel.innerHTML = "";
 
-  function initSync() {
-    buildSidebar();
-    bindEndpointClick();
-  }
+  const open = document.querySelector(".opblock.is-open");
+  if (!open) return;
 
-  function buildSidebar() {
-    const menu = document.getElementById("sidebar-menu");
-    document.querySelectorAll(".opblock-tag").forEach(tag => {
-      const title = tag.querySelector("h3 span");
-      if (!title) return;
+  const summary = open.querySelector(".opblock-summary")?.cloneNode(true);
+  const responses = open.querySelector(".responses-wrapper")?.cloneNode(true);
 
-      const li = document.createElement("li");
-      li.textContent = title.textContent.trim();
-      li.onclick = () => tag.scrollIntoView({ behavior: "smooth" });
-      menu.appendChild(li);
-    });
-  }
+  if (!summary || !responses) return;
 
-  function bindEndpointClick() {
-    document.querySelectorAll(".opblock-summary").forEach(summary => {
-      summary.addEventListener("click", () => {
-        setTimeout(renderRightPanel, 300);
-      });
-    });
-  }
+  const wrapper = document.createElement("div");
+  wrapper.className = "swagger-ui";
 
-  function renderRightPanel() {
-    const panel = document.getElementById("code-view");
-    panel.innerHTML = "";
+  wrapper.appendChild(summary);
+  wrapper.appendChild(responses);
 
-    const active = document.querySelector(".opblock.is-open");
-    if (!active) return;
-
-    const clone = active.cloneNode(true);
-
-    // Remove try-out e botões desnecessários
-    clone.querySelectorAll(".try-out, button").forEach(b => b.remove());
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "swagger-ui";
-    wrapper.appendChild(clone);
-
-    panel.appendChild(wrapper);
-  }
+  panel.appendChild(wrapper);
+}
 </script>
 
 </body>
