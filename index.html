@@ -379,16 +379,15 @@
 
 <script>
 /*
-  Correção principal:
-  - Muitos endpoints só têm a área de respostas renderizada quando o opblock é aberto pelo Swagger UI.
-  - Agora quando o usuário "abre" um endpoint, fazemos uma breve abertura programática e controlada do opblock:
-      1) marcamos o opblock com data-clone-open="true" e adicionamos a classe is-open (sem permitir que o conteúdo seja visualizado no lado esquerdo,
-         graças à regra CSS que esconde .opblock-body quando data-clone-open está presente)
-      2) aguardamos um curto intervalo para o Swagger renderizar as respostas
-      3) clonamos as respostas para o painel direito
-      4) removemos a marcação is-open / data-clone-open para não alterar o estado visual principal
-  - Essa abordagem garante que os exemplos/response-bodies realmente existentes sejam capturados e mostrados no painel direito,
-    sem abrir visivelmente o painel esquerdo do Swagger.
+  Final fix:
+  - Some Swagger UI builds render response/example nodes only when the opblock is actually toggled (clicked).
+  - To reliably capture those nodes while keeping the left UI visually unchanged, we:
+      * briefly programmatically click the opblock summary (to force render),
+      * but while it's rendering we add data-clone-open="true" and a CSS rule hides the left .opblock-body
+      * after a short delay we clone the rendered responses into the right overlay
+      * then programmatically click the summary again to close it and remove the data attribute
+  - Important: the global click interceptor ignores programmatic clicks by checking `suppressIntercept`.
+  - This script preserves the overlay layout you approved and ensures code/examples actually appear.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
@@ -429,7 +428,6 @@ function buildSidebar() {
     const titleSpan = tagEl.querySelector("h3 span");
     const titleText = titleSpan ? titleSpan.textContent.trim() : 'Sem nome';
 
-    // Count operations inside this tag
     const operations = tagEl.querySelectorAll(".opblock-summary");
     const count = operations.length;
 
@@ -451,10 +449,7 @@ function buildSidebar() {
     li.appendChild(right);
 
     li.onclick = () => {
-      // Scroll the tag element into view
       tagEl.scrollIntoView({ behavior: "smooth", block: "center" });
-
-      // Open the overlay showing the first operation of the tag
       const firstOp = tagEl.querySelector(".opblock");
       if (firstOp) {
         openRightPanelFor(firstOp);
@@ -462,7 +457,6 @@ function buildSidebar() {
       setActiveTag(titleText);
     };
 
-    // keyboard accessible
     li.onkeydown = (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); li.click(); }
     };
@@ -470,32 +464,20 @@ function buildSidebar() {
     menu.appendChild(li);
   });
 
-  // Search behavior
   const search = document.getElementById("sidebar-search");
   search.oninput = () => {
     const q = search.value.trim().toLowerCase();
     const items = Array.from(menu.children);
     items.forEach(item => {
       const tag = item.dataset.tag.toLowerCase();
-      if (!q || tag.includes(q)) {
-        item.style.display = "";
-      } else {
-        item.style.display = "none";
-      }
+      item.style.display = (!q || tag.includes(q)) ? "" : "none";
     });
   };
 }
 
-/* Highlight active tag based on which opblock is mostly visible in center column */
-let tagToElementMap = new Map();
+/* Active tag highlighting */
 function wireActiveTagHighlighting() {
   const tagEls = $qsa('.opblock-tag');
-  tagToElementMap.clear();
-  tagEls.forEach(tag => {
-    const title = tag.querySelector('h3 span')?.textContent?.trim();
-    if (title) tagToElementMap.set(title, tag);
-  });
-
   const options = {
     root: document.querySelector('.content'),
     rootMargin: '0px 0px -60% 0px',
@@ -504,9 +486,8 @@ function wireActiveTagHighlighting() {
 
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
-      const tag = entry.target;
       if (entry.isIntersecting) {
-        const name = tag.querySelector('h3 span')?.textContent?.trim();
+        const name = entry.target.querySelector('h3 span')?.textContent?.trim();
         if (name) setActiveTag(name);
       }
     });
@@ -518,11 +499,10 @@ function wireActiveTagHighlighting() {
 function setActiveTag(name) {
   const menu = document.getElementById("sidebar-menu");
   Array.from(menu.children).forEach(li => {
-    if (li.dataset.tag === name) li.classList.add('active');
-    else li.classList.remove('active');
+    li.classList.toggle('active', li.dataset.tag === name);
   });
   const meta = document.getElementById('tag-meta');
-  meta.textContent = `Exibindo endpoints para: ${name}`;
+  meta.textContent = name ? `Exibindo endpoints para: ${name}` : 'Selecione uma tag para navegar rapidamente para os endpoints relacionados.';
 }
 
 /* OPEN/CLOSE overlay code panel helpers */
@@ -535,38 +515,32 @@ const codeOpenInSwaggerBtn = document.getElementById('code-open-in-swagger');
 const codeCloseBtn = document.getElementById('code-close');
 
 let currentlySelectedOpblock = null;
+let suppressIntercept = false; // used so programmatic clicks are not intercepted
 
-/* Small helper: try to find a responses-wrapper inside opblock in various places */
+/* Helper: try to locate responses-wrapper or pre blocks where examples usually appear */
 function findResponsesWrapper(opblockEl) {
-  // typical locations: .responses-wrapper, inside .opblock-body or .opblock-section
   let node = opblockEl.querySelector('.responses-wrapper');
   if (node) return node;
   node = opblockEl.querySelector('.opblock-body .responses-wrapper');
   if (node) return node;
   node = opblockEl.querySelector('.opblock-section .responses-wrapper');
   if (node) return node;
-  // fallback: look for <pre> blocks in the opblock (sometimes examples render as pre)
+  // fallback: examples sometimes render as <pre> inside opblock-body
   const pre = opblockEl.querySelector('pre');
   if (pre) {
-    // create a simple wrapper to mimic responses-wrapper
     const wrapper = document.createElement('div');
     wrapper.className = 'responses-wrapper';
-    const clonePre = pre.cloneNode(true);
-    wrapper.appendChild(clonePre);
+    wrapper.appendChild(pre.cloneNode(true));
     return wrapper;
   }
   return null;
 }
 
-/* Open right panel for given opblock element
-   If responses are not yet present, briefly open the opblock programmatically (hidden) to allow Swagger to render them,
-   clone the responses, then clean up.
-*/
+/* Core: open overlay and ensure responses/examples are rendered and cloned */
 async function openRightPanelFor(opblockEl) {
   if (!opblockEl) return;
   currentlySelectedOpblock = opblockEl;
 
-  // Update header (method and path if available even before rendering responses)
   const methodText = opblockEl.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
   const pathText = opblockEl.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
 
@@ -575,32 +549,52 @@ async function openRightPanelFor(opblockEl) {
   codePath.textContent = pathText || '';
 
   codeView.innerHTML = '';
-  // Try to find responses without opening
+
+  // Try to find responses already present (if Swagger had them rendered)
   let responses = findResponsesWrapper(opblockEl);
 
+  // If not present, we need to trigger Swagger to render them by toggling the opblock summary.
+  // We'll do this programmatically while preventing the UI flash by setting data-clone-open and hiding .opblock-body via CSS.
   if (!responses) {
-    // If not present, programmatically cause Swagger to render them while preventing visual flash:
-    // mark with data-clone-open so our CSS hides the left opblock-body
-    opblockEl.dataset.cloneOpen = "true";
-    // add 'is-open' class so Swagger creates the content (many implementations use this class)
-    opblockEl.classList.add('is-open');
+    const summary = opblockEl.querySelector('.opblock-summary');
+    if (summary) {
+      try {
+        // prevent our capture intercept from treating this programmatic click as a user click
+        suppressIntercept = true;
 
-    // Give Swagger a short time to render the responses
-    await new Promise(r => setTimeout(r, 260));
+        // mark to hide the left expansion visually
+        opblockEl.dataset.cloneOpen = "true";
 
-    // Now try to find responses again
-    responses = findResponsesWrapper(opblockEl);
+        // programmatically click summary to cause Swagger to render the body
+        summary.click();
 
-    // Clean up: remove class and dataset so left UI remains unchanged
-    opblockEl.classList.remove('is-open');
-    delete opblockEl.dataset.cloneOpen;
+        // wait a short time for Swagger to render the content
+        await new Promise(r => setTimeout(r, 280));
+
+        // try to find responses again
+        responses = findResponsesWrapper(opblockEl);
+
+        // close the opblock to restore original state (if it was closed before)
+        // If it was already open, the second click would close it; that's acceptable because we only want to capture the content.
+        summary.click();
+
+        // give tiny time for close to complete
+        await new Promise(r => setTimeout(r, 50));
+      } catch (err) {
+        console.warn('Erro ao forçar renderização do opblock:', err);
+      } finally {
+        // cleanup
+        delete opblockEl.dataset.cloneOpen;
+        suppressIntercept = false;
+      }
+    }
   }
 
   if (responses) {
     const clone = responses.cloneNode(true);
 
     // Remove interactive elements that don't make sense here
-    clone.querySelectorAll('.execute, .try-out, .btn.execute, .responses-request, .model, .parameters').forEach(n => n.remove());
+    clone.querySelectorAll('.execute, .try-out, .btn.execute, .responses-request, .model, .parameters, .responses-table').forEach(n => n.remove());
 
     // Ensure code blocks are visible and highlightable
     clone.querySelectorAll('pre, code').forEach(el => {
@@ -619,7 +613,7 @@ async function openRightPanelFor(opblockEl) {
       try { hljs.highlightElement(block); } catch(e) {}
     });
 
-    // Attach copy behavior
+    // copy button
     codeCopyBtn.onclick = async () => {
       let text = "";
       const codes = rightBody.querySelectorAll('pre code');
@@ -639,13 +633,7 @@ async function openRightPanelFor(opblockEl) {
     };
 
   } else {
-    // fallback: show a helpful message and try to include any inline pre tags
-    const msg = document.createElement('div');
-    msg.className = 'panel-empty';
-    msg.textContent = 'Nenhuma resposta de exemplo encontrada para este endpoint.';
-    codeView.appendChild(msg);
-
-    // If there are any <pre> elements anywhere inside the opblock, include them as examples
+    // If still not found, try to include inline <pre> nodes if any
     const inlinePre = opblockEl.querySelectorAll('pre');
     if (inlinePre && inlinePre.length) {
       const rightBody = document.createElement('div');
@@ -655,14 +643,37 @@ async function openRightPanelFor(opblockEl) {
       rightBody.querySelectorAll('pre code').forEach(block => {
         try { hljs.highlightElement(block); } catch(e) {}
       });
-    }
 
-    codeCopyBtn.onclick = () => {
-      navigator.clipboard.writeText(`${methodText} ${pathText}`).then(() => {
-        codeCopyBtn.textContent = "Copiado ✓";
-        setTimeout(()=> codeCopyBtn.textContent = "Copiar", 1400);
-      });
-    };
+      codeCopyBtn.onclick = async () => {
+        const codes = rightBody.querySelectorAll('pre code');
+        let text = codes.length ? Array.from(codes).map(c => c.innerText).join("\n\n---\n\n") : rightBody.innerText;
+        try {
+          await navigator.clipboard.writeText(text);
+          codeCopyBtn.textContent = "Copiado ✓";
+          setTimeout(()=> codeCopyBtn.textContent = "Copiar", 1400);
+        } catch {
+          codeCopyBtn.textContent = "Erro";
+          setTimeout(()=> codeCopyBtn.textContent = "Copiar", 1400);
+        }
+      };
+
+    } else {
+      const msg = document.createElement('div');
+      msg.className = 'panel-empty';
+      msg.textContent = 'Nenhuma resposta de exemplo encontrada para este endpoint.';
+      codeView.appendChild(msg);
+
+      codeCopyBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(`${methodText} ${pathText}`);
+          codeCopyBtn.textContent = "Copiado ✓";
+          setTimeout(()=> codeCopyBtn.textContent = "Copiar", 1400);
+        } catch {
+          codeCopyBtn.textContent = "Erro";
+          setTimeout(()=> codeCopyBtn.textContent = "Copiar", 1400);
+        }
+      };
+    }
   }
 
   // show panel
@@ -678,15 +689,19 @@ function closeRightPanel() {
   currentlySelectedOpblock = null;
 }
 
-/* Intercept clicks on opblock-summary to prevent Swagger from expanding content on the left.
-   Instead we show the right overlay panel with the cloned content. */
+/* Intercept clicks on opblock-summary.
+   If the click is a real user interaction (isTrusted) and suppressIntercept is false, we prevent Swagger's default
+   expansion and instead open the overlay. Programmatic clicks (suppressIntercept=true) are ignored by this handler.
+*/
 function bindEndpointClicksIntercept() {
   const content = document.getElementById('swagger-ui');
 
-  // capture click events on summaries and prevent Swagger's default expansion
   content.addEventListener('click', (e) => {
     const summary = e.target.closest('.opblock-summary');
     if (!summary) return;
+
+    // If this is a programmatic click (suppressIntercept) or event not trusted, ignore interception
+    if (suppressIntercept || !e.isTrusted) return;
 
     // Prevent Swagger UI from opening left-side opblock visually (we'll open programmatically in hidden manner)
     e.stopPropagation();
@@ -695,33 +710,31 @@ function bindEndpointClicksIntercept() {
     const opblock = summary.closest('.opblock');
     if (!opblock) return;
 
+    // open overlay for this opblock (this function will programmatically click the summary to force render)
     openRightPanelFor(opblock);
 
-    // Mark active tag in sidebar
     const tagEl = opblock.closest('.opblock-tag');
     const tagName = tagEl?.querySelector('h3 span')?.textContent?.trim();
     if (tagName) setActiveTag(tagName);
   }, { capture: true });
 
-  // ensure keyboard activation (Enter/Space) also uses our handler
+  // keyboard activation (Enter/Space) should also open overlay
   content.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
     const summary = e.target.closest('.opblock-summary');
     if (!summary) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.stopPropagation();
-      e.preventDefault();
-      const opblock = summary.closest('.opblock');
-      if (opblock) openRightPanelFor(opblock);
-    }
+    // prevent default and open overlay
+    e.stopPropagation();
+    e.preventDefault();
+    const opblock = summary.closest('.opblock');
+    if (opblock) openRightPanelFor(opblock);
   }, { capture: true });
 }
 
 /* Additional helpers: go to endpoint in the main view (scroll + flash) */
 codeOpenInSwaggerBtn.addEventListener('click', () => {
   if (!currentlySelectedOpblock) return;
-  // Scroll the opblock into view in the main content and flash a highlight
   currentlySelectedOpblock.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  // briefly add a glow
   const prev = currentlySelectedOpblock.style.boxShadow;
   currentlySelectedOpblock.style.boxShadow = "0 10px 36px rgba(14,165,233,0.12)";
   setTimeout(()=> currentlySelectedOpblock.style.boxShadow = prev || "", 900);
@@ -740,19 +753,17 @@ function initMobileControls() {
   if (closeBtn) closeBtn.addEventListener('click', () => sidebar.classList.remove('open'));
 }
 
-/* Bind mutation observer to rebuild sidebar when Swagger renders opblocks */
+/* Mutation observer: rebuild sidebar when Swagger renders opblocks */
 function bindMutationObservers() {
   const uiRoot = document.querySelector('.swagger-ui');
   if (!uiRoot) return;
 
   const mo = new MutationObserver((mutations) => {
-    // Rebuild sidebar if new opblocks added
     let rebuild = false;
     for (const m of mutations) {
       if (m.addedNodes && m.addedNodes.length) rebuild = true;
     }
     if (rebuild) {
-      // debounce
       clearTimeout(window._rebuild_sidebar_timeout);
       window._rebuild_sidebar_timeout = setTimeout(() => {
         buildSidebar();
@@ -767,18 +778,22 @@ function bindMutationObservers() {
 /* Top-level init workflow */
 (async function init() {
   try {
-    // wait until Swagger UI inserts opblock tags
     await waitForSwaggerReady();
 
-    // Build sidebar and wire interactions
     buildSidebar();
     wireActiveTagHighlighting();
     bindEndpointClicksIntercept();
     bindMutationObservers();
     initMobileControls();
 
-    // If you want to automatically open first opblock in overlay on load, uncomment:
-    // const firstOp = document.querySelector('.opblock'); if (firstOp) openRightPanelFor(firstOp);
+    // Optionally update right panel if an opblock is already open in UI
+    setTimeout(() => {
+      const open = document.querySelector('.opblock.is-open');
+      if (open) {
+        // open overlay for that opblock to show responses on the right
+        // openRightPanelFor(open);
+      }
+    }, 300);
   } catch (err) {
     console.warn("Não foi possível inicializar a interface melhorada:", err);
   }
