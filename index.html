@@ -126,6 +126,14 @@
     color: var(--muted);
   }
 
+  .sidebar .collapse-toggle {
+    display:none;
+    background: transparent;
+    border: none;
+    color: var(--brand);
+    font-weight: 600;
+  }
+
   /* ===== CONTEÚDO CENTRAL ===== */
   .content {
     background: #ffffff;
@@ -159,7 +167,8 @@
   }
 
   /* ===== PAINEL DIREITO (OVERLAY) =====
-     Changed to overlay so cloned responses open on the right overlaying the content (not expanding UI on the left) */
+     The panel overlays the content on the right and does not expand the Swagger UI itself.
+  */
   .code-panel {
     position: absolute;
     right: 20px;
@@ -260,6 +269,12 @@
     color: rgba(255,255,255,0.7);
     cursor: pointer;
     font-size: 14px;
+  }
+
+  /* While we programmatically open an opblock to capture responses, hide its left panel body to avoid visual flash.
+     We set data-clone-open="true" on the opblock element briefly; this rule keeps the left expansion hidden. */
+  .opblock[data-clone-open="true"] .opblock-body {
+    display: none !important;
   }
 
   /* Responsive behavior */
@@ -364,12 +379,16 @@
 
 <script>
 /*
-  Alterações principais para resolver o problema solicitado:
-  - O painel de código foi convertido em overlay (aberta à direita) para "sobrescrever" a visualização principal ao abrir um endpoint.
-  - Interceptamos o clique em .opblock-summary e impedimos a ação padrão do Swagger (que expande o bloco para a esquerda).
-    Em vez disso, mostramos os códigos/respostas clonados no painel direito (overlay).
-  - Mantive e reforcei a acessibilidade (teclado), busca e a sidebar melhorada do código anterior.
-  - O painel de código tem botão de fechar e botão para ir ao endpoint (desloca/realça o bloco no conteúdo).
+  Correção principal:
+  - Muitos endpoints só têm a área de respostas renderizada quando o opblock é aberto pelo Swagger UI.
+  - Agora quando o usuário "abre" um endpoint, fazemos uma breve abertura programática e controlada do opblock:
+      1) marcamos o opblock com data-clone-open="true" e adicionamos a classe is-open (sem permitir que o conteúdo seja visualizado no lado esquerdo,
+         graças à regra CSS que esconde .opblock-body quando data-clone-open está presente)
+      2) aguardamos um curto intervalo para o Swagger renderizar as respostas
+      3) clonamos as respostas para o painel direito
+      4) removemos a marcação is-open / data-clone-open para não alterar o estado visual principal
+  - Essa abordagem garante que os exemplos/response-bodies realmente existentes sejam capturados e mostrados no painel direito,
+    sem abrir visivelmente o painel esquerdo do Swagger.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
@@ -388,7 +407,7 @@ function $qs(selector, scope=document) { return scope.querySelector(selector); }
 function $qsa(selector, scope=document) { return Array.from(scope.querySelectorAll(selector)); }
 
 /* Wait until opblock-tag elements are present (injected by Swagger UI) */
-function waitForSwaggerReady(timeout = 8000) {
+function waitForSwaggerReady(timeout = 10000) {
   return new Promise((resolve, reject) => {
     const start = Date.now();
     const check = () => {
@@ -517,11 +536,37 @@ const codeCloseBtn = document.getElementById('code-close');
 
 let currentlySelectedOpblock = null;
 
-function openRightPanelFor(opblockEl) {
+/* Small helper: try to find a responses-wrapper inside opblock in various places */
+function findResponsesWrapper(opblockEl) {
+  // typical locations: .responses-wrapper, inside .opblock-body or .opblock-section
+  let node = opblockEl.querySelector('.responses-wrapper');
+  if (node) return node;
+  node = opblockEl.querySelector('.opblock-body .responses-wrapper');
+  if (node) return node;
+  node = opblockEl.querySelector('.opblock-section .responses-wrapper');
+  if (node) return node;
+  // fallback: look for <pre> blocks in the opblock (sometimes examples render as pre)
+  const pre = opblockEl.querySelector('pre');
+  if (pre) {
+    // create a simple wrapper to mimic responses-wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'responses-wrapper';
+    const clonePre = pre.cloneNode(true);
+    wrapper.appendChild(clonePre);
+    return wrapper;
+  }
+  return null;
+}
+
+/* Open right panel for given opblock element
+   If responses are not yet present, briefly open the opblock programmatically (hidden) to allow Swagger to render them,
+   clone the responses, then clean up.
+*/
+async function openRightPanelFor(opblockEl) {
   if (!opblockEl) return;
   currentlySelectedOpblock = opblockEl;
 
-  // Update header
+  // Update header (method and path if available even before rendering responses)
   const methodText = opblockEl.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
   const pathText = opblockEl.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
 
@@ -529,16 +574,35 @@ function openRightPanelFor(opblockEl) {
   codeMethod.textContent = methodText || 'OP';
   codePath.textContent = pathText || '';
 
-  // Fill content by cloning responses-wrapper inside the opblock (no need to actually expand it)
   codeView.innerHTML = '';
+  // Try to find responses without opening
+  let responses = findResponsesWrapper(opblockEl);
 
-  const responses = opblockEl.querySelector('.responses-wrapper');
+  if (!responses) {
+    // If not present, programmatically cause Swagger to render them while preventing visual flash:
+    // mark with data-clone-open so our CSS hides the left opblock-body
+    opblockEl.dataset.cloneOpen = "true";
+    // add 'is-open' class so Swagger creates the content (many implementations use this class)
+    opblockEl.classList.add('is-open');
+
+    // Give Swagger a short time to render the responses
+    await new Promise(r => setTimeout(r, 260));
+
+    // Now try to find responses again
+    responses = findResponsesWrapper(opblockEl);
+
+    // Clean up: remove class and dataset so left UI remains unchanged
+    opblockEl.classList.remove('is-open');
+    delete opblockEl.dataset.cloneOpen;
+  }
+
   if (responses) {
     const clone = responses.cloneNode(true);
 
     // Remove interactive elements that don't make sense here
-    clone.querySelectorAll('.execute, .try-out, .btn.execute, .responses-request, .model').forEach(n => n.remove());
+    clone.querySelectorAll('.execute, .try-out, .btn.execute, .responses-request, .model, .parameters').forEach(n => n.remove());
 
+    // Ensure code blocks are visible and highlightable
     clone.querySelectorAll('pre, code').forEach(el => {
       el.style.whiteSpace = 'pre';
       el.style.wordBreak = 'break-word';
@@ -575,13 +639,25 @@ function openRightPanelFor(opblockEl) {
     };
 
   } else {
+    // fallback: show a helpful message and try to include any inline pre tags
     const msg = document.createElement('div');
     msg.className = 'panel-empty';
     msg.textContent = 'Nenhuma resposta de exemplo encontrada para este endpoint.';
     codeView.appendChild(msg);
 
+    // If there are any <pre> elements anywhere inside the opblock, include them as examples
+    const inlinePre = opblockEl.querySelectorAll('pre');
+    if (inlinePre && inlinePre.length) {
+      const rightBody = document.createElement('div');
+      rightBody.className = 'right-body';
+      inlinePre.forEach(p => rightBody.appendChild(p.cloneNode(true)));
+      codeView.appendChild(rightBody);
+      rightBody.querySelectorAll('pre code').forEach(block => {
+        try { hljs.highlightElement(block); } catch(e) {}
+      });
+    }
+
     codeCopyBtn.onclick = () => {
-      // fallback: copy path and method
       navigator.clipboard.writeText(`${methodText} ${pathText}`).then(() => {
         codeCopyBtn.textContent = "Copiado ✓";
         setTimeout(()=> codeCopyBtn.textContent = "Copiar", 1400);
@@ -607,20 +683,18 @@ function closeRightPanel() {
 function bindEndpointClicksIntercept() {
   const content = document.getElementById('swagger-ui');
 
-  // capture click events on summaries and prevent default propagation
+  // capture click events on summaries and prevent Swagger's default expansion
   content.addEventListener('click', (e) => {
     const summary = e.target.closest('.opblock-summary');
     if (!summary) return;
 
-    // Prevent Swagger UI handlers from expanding blocks in the left pane
+    // Prevent Swagger UI from opening left-side opblock visually (we'll open programmatically in hidden manner)
     e.stopPropagation();
     e.preventDefault();
 
-    // Get the parent opblock element
     const opblock = summary.closest('.opblock');
     if (!opblock) return;
 
-    // Open overlay for this opblock
     openRightPanelFor(opblock);
 
     // Mark active tag in sidebar
@@ -666,8 +740,7 @@ function initMobileControls() {
   if (closeBtn) closeBtn.addEventListener('click', () => sidebar.classList.remove('open'));
 }
 
-/* Bind clicks on opblock summaries that might be added later
-   and keep sidebar updated when Swagger re-renders */
+/* Bind mutation observer to rebuild sidebar when Swagger renders opblocks */
 function bindMutationObservers() {
   const uiRoot = document.querySelector('.swagger-ui');
   if (!uiRoot) return;
@@ -704,15 +777,8 @@ function bindMutationObservers() {
     bindMutationObservers();
     initMobileControls();
 
-    // If a tag or opblock already open in UI, open the overlay for the first opblock instead of letting Swagger show left block
-    setTimeout(() => {
-      const firstOp = document.querySelector('.opblock');
-      if (firstOp) {
-        // don't auto-open for every page load; leave closed. If you prefer auto-open, uncomment next line:
-        // openRightPanelFor(firstOp);
-      }
-    }, 200);
-
+    // If you want to automatically open first opblock in overlay on load, uncomment:
+    // const firstOp = document.querySelector('.opblock'); if (firstOp) openRightPanelFor(firstOp);
   } catch (err) {
     console.warn("Não foi possível inicializar a interface melhorada:", err);
   }
