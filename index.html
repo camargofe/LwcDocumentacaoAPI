@@ -1,22 +1,20 @@
-<template>
-    <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <h3>PIX API</h3>
-            <ul>
-                <li>Visão Geral</li>
-                <li>Pagamentos</li>
-                <li>Webhooks</li>
-            </ul>
-        </aside>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <title>PIX API - Documentação</title>
 
-        <!-- Conteúdo -->
-        <main class="content">
-            <iframe
-                src="https://camargofe.github.io/pix-api-doc/index.html"
-                title="Documentação PIX API"
-                loading="lazy"
-            ></iframe>
-        </main>
-    </div>
-</template>
+    <!-- Redoc -->
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <redoc spec-url="pix.yaml"></redoc>
+</body>
+</html>
