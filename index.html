@@ -11,7 +11,6 @@
     />
 
     <style>
-      /* Reset básico */
       html,
       body {
         margin: 0;
@@ -19,16 +18,14 @@
         height: 100%;
       }
 
-      /* Layout principal */
       .layout {
         display: flex;
         height: 100vh;
         width: 100%;
       }
 
-      /* Sidebar */
       .sidebar {
-        width: 260px;
+        width: 300px;
         background-color: #f4f6f9;
         border-right: 1px solid #ddd;
         padding: 16px;
@@ -48,12 +45,16 @@
       }
 
       .sidebar li {
-        margin: 12px 0;
+        margin: 10px 0;
         cursor: pointer;
+        font-size: 14px;
         color: #0070d2;
       }
 
-      /* Área do Swagger (intocada) */
+      .sidebar li:hover {
+        text-decoration: underline;
+      }
+
       .content {
         flex: 1;
         overflow-y: auto;
@@ -63,17 +64,50 @@
 
   <body>
     <div class="layout">
-      <!-- Sidebar -->
+      <!-- SIDEBAR -->
       <aside class="sidebar">
         <h3>PIX API</h3>
         <ul>
-          <li>Visão Geral</li>
-          <li>Pagamentos</li>
-          <li>Webhooks</li>
+          <li>O que é o Pix?</li>
+          <li>SLAs</li>
+          <li>Idempotência</li>
+          <li>Releases</li>
+          <li>Operacional</li>
+          <li>Fluxos de tentativas no envio de pagamentos</li>
+          <li>Location</li>
+          <li>Gerenciamento de cobranças para pagamento imediato</li>
+          <li>Gerenciamento de cobranças com vencimento</li>
+          <li>Gerenciamento de cobranças com vencimento em lote</li>
+          <li>Notificação</li>
+          <li>Gerenciamento de Pix recebidos</li>
+          <li>Gerenciamento de Pix enviados</li>
+          <li>DICT</li>
+          <li>Notificação de Infração</li>
+          <li>QRCode</li>
+          <li>
+            Reúne endpoints (locations) que retornam o Payload JSON que representa
+            uma Cobrança
+          </li>
+          <li>Solicitação de Devolução Especial</li>
+          <li>Pix Saque e Pix Troco</li>
+          <li>Participantes SPI</li>
+          <li>Gerenciamento de Notificações - Webhook</li>
+          <li>Iniciação de Pagamento</li>
+          <li>Políticas</li>
+          <li>Antifraude</li>
+          <li>Agendamentos</li>
+          <li>Pix Automático</li>
+          <li>Recuperação de Valores</li>
+          <li>Autenticação e Segurança</li>
+          <li>Iniciação Open Finance - ITP</li>
+          <li>API docs by Redocly</li>
+          <li>Pix - Pagamentos instantâneos (0.3.84)</li>
+          <li>Download OpenAPI specification</li>
+          <li>Open Banking: openbanking@bv.com.br</li>
         </ul>
       </aside>
 
-      <!-- Conteúdo Swagger -->
+      <!-- CONTEÚDO (Swagger intacto) -->
       <main class="content">
         <div id="swagger-ui"></div>
       </main>
