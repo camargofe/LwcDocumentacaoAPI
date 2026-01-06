@@ -218,81 +218,60 @@
 
 <script>
 /*
-  Stable & robust implementation:
-  - Keeps native Swagger click behavior.
-  - Sidebar shows tags and submenus (operations).
-  - Clicking submenu scrolls to the operation and programmatically clicks the opblock summary.
-  - MutationObserver rebuilds sidebar when Swagger re-renders.
-  - Spinner and lazy highlight.js loading when examples shown.
-  - Simpler, reliable mapping: store a direct reference to the opblock's summary element when building the sidebar.
+  Correção aplicada conforme análise:
+  - Remove referências diretas _targetSummary (que ficavam órfãs após re-renders)
+  - Sidebar salva somente method/path
+  - Na hora do clique, busca dinamicamente o .opblock-summary correspondente
+  - Usa apenas um MutationObserver principal para detectar quando opblocks são abertos (is-open)
+  - Reconstroi o sidebar apenas quando tags/opblocks são re-renderizados (debounced)
+  - Mantém o layout e UX existentes
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 
-let hljsLoaded = false;
-let hljsLoading = false;
-
-/* Initialize Swagger UI */
+/* Start Swagger UI */
 SwaggerUIBundle({
   url: SWAGGER_URL,
   dom_id: "#swagger-ui",
   layout: "BaseLayout",
-  deepLinking: true,
-  presets: [SwaggerUIBundle.presets.apis]
+  deepLinking: true
 });
 
-/* Helpers */
-const $ = (s, ctx=document) => ctx.querySelector(s);
-const $$ = (s, ctx=document) => Array.from((ctx||document).querySelectorAll(s));
-const debounce = (fn, t=120) => { let id; return (...a) => { clearTimeout(id); id = setTimeout(()=>fn(...a), t); }; };
+/* Small helpers */
+const $ = (s, ctx = document) => ctx.querySelector(s);
+const $$ = (s, ctx = document) => Array.from((ctx || document).querySelectorAll(s));
+const debounce = (fn, t = 200) => { let id; return (...a) => { clearTimeout(id); id = setTimeout(() => fn(...a), t); }; };
 
-function ensureHljs() {
+/* Wait for Swagger to render summaries (robustly, using MutationObserver) */
+function waitSwagger() {
   return new Promise(resolve => {
-    if (hljsLoaded) return resolve(window.hljs);
-    if (hljsLoading) {
-      const i = setInterval(() => { if (hljsLoaded) { clearInterval(i); resolve(window.hljs); } }, 80);
-      return;
-    }
-    hljsLoading = true;
-    const s = document.createElement('script');
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js";
-    s.onload = () => { hljsLoaded = true; hljsLoading = false; resolve(window.hljs); };
-    s.onerror = () => { hljsLoading = false; resolve(null); };
-    document.head.appendChild(s);
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css';
-    document.head.appendChild(link);
-  });
-}
-
-/* Wait until Swagger UI renders tags */
-function waitForSwaggerReady(timeout = 12000) {
-  return new Promise((resolve, reject) => {
     const root = document.getElementById('swagger-ui');
-    if (!root) return reject(new Error('swagger-ui container not found'));
-    const start = Date.now();
+    if (!root) return resolve();
     const obs = new MutationObserver(() => {
-      if ($$('.opblock-tag').length > 0) { obs.disconnect(); resolve(); }
-      else if (Date.now() - start > timeout) { obs.disconnect(); reject(new Error('Timeout waiting for Swagger UI')); }
+      if ($$('.opblock-summary').length) {
+        obs.disconnect();
+        resolve();
+      }
     });
     obs.observe(root, { childList: true, subtree: true });
-    if ($$('.opblock-tag').length > 0) { obs.disconnect(); resolve(); }
+    // fallback immediate check
+    if ($$('.opblock-summary').length) {
+      obs.disconnect(); resolve();
+    }
   });
 }
 
-/* Build sidebar: for each tag create header + ops
-   We capture a direct reference to each opblock's summary element in a closure for robust triggering.
+/* Build sidebar: tags and their submenu operations.
+   Save only method + path for each submenu entry.
 */
 function buildSidebar() {
-  const menu = document.getElementById('sidebar-menu');
+  const menu = $('#sidebar-menu');
+  if (!menu) return;
   menu.innerHTML = '';
 
-  const tags = $$('.opblock-tag');
-  tags.forEach(tagEl => {
-    const titleSpan = tagEl.querySelector('h3 span');
-    const tagName = titleSpan ? titleSpan.textContent.trim() : 'Sem nome';
-    const opblocks = tagEl.querySelectorAll('.opblock');
+  $$('.opblock-tag').forEach(tagEl => {
+    const title = tagEl.querySelector('h3 span')?.textContent?.trim();
+    if (!title) return;
 
     const li = document.createElement('li');
     li.className = 'tag';
@@ -300,84 +279,68 @@ function buildSidebar() {
     const header = document.createElement('div');
     header.className = 'tag-header';
     header.tabIndex = 0;
-    header.setAttribute('role','button');
-    header.setAttribute('aria-expanded','false');
-
-    const tleft = document.createElement('div');
-    tleft.className = 'tag-title';
-    tleft.textContent = tagName;
-
-    const tright = document.createElement('div');
-    tright.className = 'tag-count';
-    tright.textContent = opblocks.length;
-
-    header.appendChild(tleft);
-    header.appendChild(tright);
+    header.innerHTML = `
+      <div class="tag-title">${escapeHtml(title)}</div>
+      <div class="tag-count">${tagEl.querySelectorAll('.opblock').length}</div>
+    `;
 
     const ops = document.createElement('div');
     ops.className = 'tag-ops';
 
-    // For each opblock capture the summary element
-    opblocks.forEach(op => {
+    tagEl.querySelectorAll('.opblock').forEach(op => {
       const summary = op.querySelector('.opblock-summary');
       if (!summary) return;
-
       const method = summary.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
       const path = summary.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
 
-      const opBtn = document.createElement('button');
-      opBtn.className = 'op-item';
-      opBtn.type = 'button';
-      opBtn.title = `${method} ${path}`;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'op-item';
+      btn.title = `${method} ${path}`;
+      btn.dataset.method = method;
+      btn.dataset.path = path;
+      btn.innerHTML = `
+        <div class="op-method ${method.toLowerCase()}">${escapeHtml(method)}</div>
+        <div class="op-path">${escapeHtml(path)}</div>
+      `;
 
-      const mspan = document.createElement('div');
-      mspan.className = `op-method ${method.toLowerCase()}`;
-      mspan.textContent = method;
-
-      const pspan = document.createElement('div');
-      pspan.className = 'op-path';
-      pspan.textContent = path;
-
-      opBtn.appendChild(mspan);
-      opBtn.appendChild(pspan);
-
-      // store direct reference to the summary DOM node (closure)
-      opBtn._targetSummary = summary;
-
-      // click submenu: scroll to the opblock and click the summary (do not block native behavior)
-      opBtn.addEventListener('click', (ev) => {
+      // On click, find the corresponding opblock-summary dynamically and trigger it
+      btn.addEventListener('click', (ev) => {
         ev.preventDefault();
-        // expand the tag visually
+        // open tag visually
         li.classList.add('open');
         header.setAttribute('aria-expanded', 'true');
 
-        // scroll to the summary and programmatically click it
-        try {
-          opBtn._targetSummary.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } catch (e) { /* ignore */ }
+        // find target summary dynamically by matching method+path
+        const target = $$('.opblock-summary').find(s => {
+          const m = s.querySelector('.opblock-summary-method')?.textContent?.trim();
+          const p = s.querySelector('.opblock-summary-path')?.textContent?.trim();
+          return m === method && p === path;
+        });
 
-        // small delay so scroll completes
-        setTimeout(() => {
-          // dispatch a real click event to trigger Swagger UI handlers
+        if (target) {
           try {
-            opBtn._targetSummary.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-          } catch (err) {
-            // fallback to .click()
-            try { opBtn._targetSummary.click(); } catch(e) {}
-          }
-        }, 140);
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } catch (e) {}
+          // small delay for smooth scroll then click
+          setTimeout(() => {
+            try {
+              target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+            } catch (err) {
+              try { target.click(); } catch(e) {}
+            }
+          }, 120);
+        }
       });
 
-      ops.appendChild(opBtn);
+      ops.appendChild(btn);
     });
 
-    // toggle behavior
-    const toggle = () => {
-      const isOpen = li.classList.toggle('open');
-      header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    };
-    header.addEventListener('click', toggle);
-    header.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    header.addEventListener('click', () => {
+      li.classList.toggle('open');
+      header.setAttribute('aria-expanded', li.classList.contains('open') ? 'true' : 'false');
+    });
+    header.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); header.click(); } });
 
     li.appendChild(header);
     li.appendChild(ops);
@@ -385,228 +348,124 @@ function buildSidebar() {
   });
 }
 
-/* Find responses wrapper robustly (same as earlier) */
-function findResponsesWrapper(opblockEl) {
-  if (!opblockEl) return null;
-  let node = opblockEl.querySelector('.responses-wrapper');
-  if (node) return node;
-  node = opblockEl.querySelector('.opblock-body .responses-wrapper');
-  if (node) return node;
-  node = opblockEl.querySelector('.opblock-section .responses-wrapper');
-  if (node) return node;
-  const pre = opblockEl.querySelector('pre');
-  if (pre) { const wrap = document.createElement('div'); wrap.className = 'responses-wrapper'; wrap.appendChild(pre.cloneNode(true)); return wrap; }
-  return null;
-}
-
-/* spinner helper */
-function showSpinner(show=true) { const s = document.getElementById('panel-spinner'); if (s) s.style.display = show ? '' : 'none'; }
-
-/* Update right panel by cloning the responses for a given opblock */
-async function updateRightPanelFor(opblockEl) {
-  const panel = document.getElementById('code-view');
+/* Update right panel when an opblock is opened */
+function updateRightPanel(opblock) {
+  const panel = $('#code-view');
+  if (!panel) return;
   panel.innerHTML = '';
 
-  if (!opblockEl) {
-    panel.innerHTML = '<div class="panel-empty">Abra uma operação para ver exemplos de respostas e códigos aqui.</div>';
-    return;
-  }
+  if (!opblock) return;
 
-  const method = opblockEl.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
-  const path = opblockEl.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
+  const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
+  const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
+
   const titleEl = document.getElementById('code-title');
   titleEl.textContent = `${method} ${path}`;
 
   const codeMethodEl = document.getElementById('code-method');
-  if (method) { codeMethodEl.textContent = method; codeMethodEl.className = `op-method ${method.toLowerCase()}`; codeMethodEl.style.display = ''; }
-  else { codeMethodEl.style.display = 'none'; }
-
-  showSpinner(true);
-  // allow Swagger a short time to render
-  await new Promise(r => setTimeout(r, 180));
-
-  let responses = findResponsesWrapper(opblockEl);
-
-  // retry once if not found and opblock is open
-  if (!responses && opblockEl.classList.contains('is-open')) {
-    await new Promise(r => setTimeout(r, 150));
-    responses = findResponsesWrapper(opblockEl);
+  if (method) {
+    codeMethodEl.textContent = method;
+    codeMethodEl.className = `op-method ${method.toLowerCase()}`;
+    codeMethodEl.style.display = '';
+  } else {
+    codeMethodEl.style.display = 'none';
   }
 
-  showSpinner(false);
-
-  if (!responses) {
-    // attempt to show inline pre tags
-    const pres = opblockEl.querySelectorAll('pre');
+  const responses = opblock.querySelector('.responses-wrapper');
+  if (responses) {
+    panel.appendChild(responses.cloneNode(true));
+  } else {
+    // try to present inline pre blocks if any
+    const pres = opblock.querySelectorAll('pre');
     if (pres && pres.length) {
       pres.forEach(p => panel.appendChild(p.cloneNode(true)));
-      await ensureHljs().then(hljs => { panel.querySelectorAll('pre code').forEach(b=>{ try{ hljs?.highlightElement(b); }catch(e){} }); });
       return;
     }
-    panel.innerHTML = '<div class="panel-empty">Nenhuma resposta de exemplo encontrada para este endpoint.</div>';
-    return;
+    panel.innerHTML = '<div class="panel-empty">Nenhuma resposta encontrada.</div>';
   }
-
-  const clone = responses.cloneNode(true);
-  clone.querySelectorAll('.try-out, .execute, .btn, .model, .responses-request, .parameters').forEach(n => n.remove());
-  clone.querySelectorAll('pre, code').forEach(el => { el.style.whiteSpace='pre'; el.style.wordBreak='break-word'; el.classList.add('hljs'); });
-
-  panel.appendChild(clone);
-
-  // lazy highlight
-  await ensureHljs().then(hljs => {
-    panel.querySelectorAll('pre code').forEach(block => { try { hljs?.highlightElement(block); } catch(e){} });
-  });
 }
 
-/* Observe Swagger UI: when opblock gets class is-open, clone responses to right panel.
-   Also rebuild sidebar if opblocks are added/changed. */
-function attachObservers() {
-  const uiRoot = document.getElementById('swagger-ui');
-  if (!uiRoot) return;
+/* Observe opblock opens and tag changes (single observer)
+   - When opblock receives class "is-open", update right panel
+   - When tags/opblocks are added, rebuild sidebar (debounced)
+*/
+function attachObserver() {
+  const root = document.getElementById('swagger-ui');
+  if (!root) return;
 
-  const mo = new MutationObserver((mutations) => {
-    let shouldRebuild = false;
+  const observer = new MutationObserver(mutations => {
+    let tagsChanged = false;
     for (const m of mutations) {
-      if (m.type === 'attributes' && m.attributeName === 'class' && m.target.classList && m.target.classList.contains('opblock')) {
+      if (m.type === 'attributes' && m.target.classList && m.target.classList.contains('opblock')) {
+        // opblock opened
         const el = m.target;
         if (el.classList.contains('is-open')) {
-          // opblock opened by user/programmatic click -> update right panel
-          setTimeout(() => updateRightPanelFor(el), 120);
+          // small delay to allow Swagger to populate responses
+          setTimeout(() => updateRightPanel(el), 120);
         }
       }
-      if (m.addedNodes && m.addedNodes.length) shouldRebuild = true;
+      if (m.type === 'childList' && (m.addedNodes.length || m.removedNodes.length)) {
+        // additions/removals within swagger UI might indicate tags/opblocks changed
+        tagsChanged = true;
+      }
     }
-    if (shouldRebuild) {
-      debouncedBuildSidebar();
+    if (tagsChanged) {
+      debouncedRebuild();
     }
   });
 
-  mo.observe(uiRoot, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  observer.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
-/* Debounced sidebar rebuild */
-const debouncedBuildSidebar = debounce(() => {
-  // rebuild sidebar after small delay to allow Swagger to finish rendering
-  setTimeout(() => {
-    buildSidebar();
-  }, 80);
-}, 180);
+/* Debounced rebuild to avoid loops */
+const debouncedRebuild = debounce(() => {
+  buildSidebar();
+}, 300);
 
-/* wire up direct user clicks on Swagger UI (in case user clicks summary directly) */
-function bindSwaggerUserClicks() {
-  const container = document.getElementById('swagger-ui');
-  if (!container) return;
-  container.addEventListener('click', (e) => {
-    const summary = e.target.closest('.opblock-summary');
-    if (!summary) return;
-    const opblock = summary.closest('.opblock');
-    if (!opblock) return;
-    setTimeout(() => updateRightPanelFor(opblock), 220);
-  });
-  container.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    const summary = e.target.closest('.opblock-summary');
-    if (!summary) return;
-    const opblock = summary.closest('.opblock');
-    if (!opblock) return;
-    setTimeout(() => updateRightPanelFor(opblock), 220);
-  });
+/* Utility: escape HTML to prevent injection into sidebar */
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-/* Sidebar search: filter tags & ops */
-function initSidebarSearch() {
-  const input = document.getElementById('sidebar-search');
-  input.addEventListener('input', debounce(() => {
-    const q = input.value.trim().toLowerCase();
-    const tags = document.querySelectorAll('#sidebar-menu .tag');
-    tags.forEach(tag => {
-      const tagName = tag.querySelector('.tag-title')?.textContent?.toLowerCase() || '';
-      const ops = tag.querySelectorAll('.op-item');
-      let anyOpMatch = false;
-      ops.forEach(op => {
-        const title = (op.title || '').toLowerCase();
-        const match = !q || title.includes(q) || tagName.includes(q);
-        op.style.display = match ? '' : 'none';
-        if (match) anyOpMatch = true;
-      });
-      tag.style.display = (anyOpMatch || (!q || tagName.includes(q))) ? '' : 'none';
-      if (anyOpMatch) tag.classList.add('open');
-      else tag.classList.remove('open');
-    });
-  }, 160));
-}
-
-/* Entrypoint: wait for Swagger render then build & wire */
+/* Init: wait for swagger, then build sidebar and attach observer */
 (async function init() {
   try {
-    await waitForSwaggerReady();
-
-    // initial build and wiring
+    await waitSwagger();
     buildSidebar();
-    attachObservers();
-    bindSwaggerUserClicks();
-    initSidebarSearch();
+    attachObserver();
 
-    // If some opblock already open on load, display it
+    // wire up a small search to filter tags/ops (keeps previous behavior)
+    const input = document.getElementById('sidebar-search');
+    if (input) {
+      input.addEventListener('input', debounce(() => {
+        const q = input.value.trim().toLowerCase();
+        document.querySelectorAll('#sidebar-menu .tag').forEach(tag => {
+          const tagTitle = tag.querySelector('.tag-title')?.textContent?.toLowerCase() || '';
+          let anyOpMatch = false;
+          tag.querySelectorAll('.op-item').forEach(op => {
+            const title = (op.title || '').toLowerCase();
+            const match = !q || title.includes(q) || tagTitle.includes(q);
+            op.style.display = match ? '' : 'none';
+            if (match) anyOpMatch = true;
+          });
+          tag.style.display = (anyOpMatch || (!q || tagTitle.includes(q))) ? '' : 'none';
+          if (anyOpMatch) tag.classList.add('open'); else tag.classList.remove('open');
+        });
+      }, 200));
+    }
+
+    // if an opblock is already open on load, update panel
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
-      if (open) updateRightPanelFor(open);
-    }, 300);
+      if (open) updateRightPanel(open);
+    }, 250);
 
-    // Rebuild sidebar if Swagger re-renders later
-    const uiRoot = document.getElementById('swagger-ui');
-    if (uiRoot) {
-      const mo = new MutationObserver(debouncedBuildSidebar);
-      mo.observe(uiRoot, { childList: true, subtree: true });
-    }
   } catch (err) {
-    console.warn('Erro ao inicializar UI aprimorada:', err);
+    console.warn('Erro inicializando a UI aprimorada:', err);
   }
 })();
-
-/* Copy and "Ir ao endpoint" button behaviors */
-document.getElementById('code-copy').addEventListener('click', async () => {
-  const panel = document.getElementById('code-view');
-  if (!panel) return;
-  let text = '';
-  const codes = panel.querySelectorAll('pre code');
-  if (codes.length) text = Array.from(codes).map(c => c.innerText).join('\n\n---\n\n');
-  else text = panel.innerText || '';
-  try {
-    await navigator.clipboard.writeText(text);
-    const b = document.getElementById('code-copy');
-    b.textContent = 'Copiado ✓';
-    setTimeout(()=> b.textContent = 'Copiar', 1200);
-  } catch {
-    const b = document.getElementById('code-copy');
-    b.textContent = 'Erro';
-    setTimeout(()=> b.textContent = 'Copiar', 1200);
-  }
-});
-
-document.getElementById('code-open').addEventListener('click', () => {
-  // If right panel has a displayed endpoint, scroll to it in the main swagger UI
-  const title = document.getElementById('code-title').textContent || '';
-  if (!title) return;
-  // find opblock whose summary matches the title (method + path)
-  const summaries = $$('.opblock-summary');
-  for (const s of summaries) {
-    const method = s.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
-    const path = s.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
-    if ((method + ' ' + path).trim() === title.trim()) {
-      const op = s.closest('.opblock');
-      if (op) {
-        op.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // briefly flash
-        const prev = op.style.boxShadow;
-        op.style.boxShadow = '0 10px 36px rgba(14,165,233,0.12)';
-        setTimeout(()=> op.style.boxShadow = prev || '', 900);
-      }
-      break;
-    }
-  }
-});
 </script>
+
 </body>
 </html>
