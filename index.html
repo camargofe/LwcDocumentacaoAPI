@@ -51,7 +51,6 @@
 
   .brand {
     display:flex;
-    gap:12px;
     align-items:center;
     padding-bottom: 6px;
     border-bottom: 1px solid #f0f0f0;
@@ -61,20 +60,6 @@
     height: 56px;
     width: auto;
     display:block;
-  }
-
-  .brand h1 {
-    margin: 0;
-    font-size: 15px;
-    color: var(--brand);
-    font-weight: 600;
-    line-height: 1;
-  }
-
-  .brand .sub {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 4px;
   }
 
   .sidebar .search {
@@ -307,10 +292,6 @@
   <aside class="sidebar" id="sidebar" role="navigation" aria-label="Sidebar">
     <div class="brand" aria-hidden="false">
       <img src="https://developers-sandbox.bvopen.com.br/sites/default/files/apidoc_specs/API-PIX-V1/assets/images/logo.png" alt="Banco BV" class="brand-logo" />
-      <div>
-        <h1>Documentação</h1>
-        <div class="sub">PIX API - Banco BV</div>
-      </div>
     </div>
 
     <div class="search" aria-hidden="false">
@@ -613,7 +594,7 @@ function updateRightPanel(preferredOpblock) {
   let opblock = preferredOpblock || lastClickedOpblock || document.querySelector('.opblock.is-open');
   if (!opblock) {
     // nothing to show
-    panel.innerHTML = '<div class="panel-empty">Abra uma operação para ver exemplos de respostas e códigos aqui.</div>';
+    panel.innerHTML = '<div class="panel-empty">Abra uma operação (clicando em um endpoint) para ver exemplos de respostas e códigos aqui.</div>';
     return;
   }
 
