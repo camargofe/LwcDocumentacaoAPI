@@ -11,6 +11,7 @@
       --bv-blue: #002f6c;
       --bv-border: #e1e5eb;
       --bv-bg: #f5f7fa;
+      --text-muted: #6b7280;
       --code-bg: #0f172a;
       --code-text: #e5e7eb;
     }
@@ -29,9 +30,9 @@
       width: 100vw;
     }
 
-    /* SIDEBAR */
+    /* ===== SIDEBAR ===== */
     .sidebar {
-      width: 280px;
+      width: 300px;
       background: #fff;
       border-right: 1px solid var(--bv-border);
       padding: 20px 16px;
@@ -52,8 +53,10 @@
       list-style: none;
       padding: 0;
       margin: 0;
-      flex: 1;
-      overflow-y: auto;
+    }
+
+    .sidebar ul + hr {
+      margin: 16px 0;
     }
 
     .sidebar li {
@@ -61,6 +64,9 @@
       padding: 8px 10px;
       border-radius: 6px;
       cursor: pointer;
+      color: #333;
+      margin-bottom: 4px;
+      transition: background .15s, color .15s;
     }
 
     .sidebar li:hover,
@@ -74,10 +80,11 @@
       font-size: 12px;
       border-top: 1px solid var(--bv-border);
       padding-top: 12px;
-      color: #6b7280;
+      margin-top: auto;
+      color: var(--text-muted);
     }
 
-    /* CONTENT */
+    /* ===== CONTENT ===== */
     .content {
       flex: 1;
       overflow-y: auto;
@@ -111,17 +118,6 @@
       max-height: 140px;
       overflow: auto;
       white-space: pre-wrap;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
-    }
-
-    .summary-code-box::-webkit-scrollbar {
-      height: 6px;
-      width: 6px;
-    }
-
-    .summary-code-box::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,.25);
-      border-radius: 4px;
     }
   </style>
 </head>
@@ -129,9 +125,15 @@
 <body>
 <div class="layout">
 
+  <!-- ===== SIDEBAR ===== -->
   <aside class="sidebar">
     <h3>Documentação</h3>
-    <ul id="sidebar-menu"></ul>
+
+    <ul id="sidebar-static"></ul>
+
+    <hr />
+
+    <ul id="sidebar-dynamic"></ul>
 
     <div class="sidebar-footer">
       Open Banking<br />
@@ -139,6 +141,7 @@
     </div>
   </aside>
 
+  <!-- ===== CONTENT ===== -->
   <main class="content">
     <div id="swagger-ui"></div>
   </main>
@@ -148,27 +151,57 @@
 <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
 
 <script>
+  const STATIC_SECTIONS = [
+    "Seja bem-vindo(a)!",
+    "O que é o Pix?",
+    "SLAs",
+    "Idempotência",
+    "Releases",
+    "Operacional",
+    "Fluxos de tentativas no envio de pagamentos",
+    "Políticas",
+    "Antifraude",
+    "Autenticação e Segurança"
+  ];
+
   SwaggerUIBundle({
     url: "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml",
     dom_id: "#swagger-ui",
     layout: "BaseLayout"
   });
 
-  // Aguarda o Swagger renderizar
   setTimeout(() => {
-    buildSidebar();
+    buildStaticSidebar();
+    buildDynamicSidebar();
     enhanceSummaries();
     bindOpblockClicks();
   }, 2000);
 
-  function buildSidebar() {
-    const menu = document.getElementById("sidebar-menu");
-    const sections = document.querySelectorAll(".opblock-tag");
-    if (!menu || !sections.length) return;
+  function buildStaticSidebar() {
+    const ul = document.getElementById("sidebar-static");
+    ul.innerHTML = "";
 
-    menu.innerHTML = "";
+    STATIC_SECTIONS.forEach(title => {
+      const li = document.createElement("li");
+      li.textContent = title;
 
-    sections.forEach(section => {
+      li.onclick = () => {
+        const el = findSectionByText(title);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          setActive(li);
+        }
+      };
+
+      ul.appendChild(li);
+    });
+  }
+
+  function buildDynamicSidebar() {
+    const ul = document.getElementById("sidebar-dynamic");
+    ul.innerHTML = "";
+
+    document.querySelectorAll(".opblock-tag").forEach(section => {
       const title = section.querySelector(".opblock-tag-section h3 span");
       if (!title) return;
 
@@ -176,15 +209,25 @@
       li.textContent = title.textContent.trim();
 
       li.onclick = () => {
-        document.querySelectorAll(".sidebar li")
-          .forEach(i => i.classList.remove("active"));
-
-        li.classList.add("active");
         section.scrollIntoView({ behavior: "smooth", block: "start" });
+        setActive(li);
       };
 
-      menu.appendChild(li);
+      ul.appendChild(li);
     });
+  }
+
+  function setActive(activeLi) {
+    document
+      .querySelectorAll(".sidebar li")
+      .forEach(li => li.classList.remove("active"));
+
+    activeLi.classList.add("active");
+  }
+
+  function findSectionByText(text) {
+    return Array.from(document.querySelectorAll("h1,h2,h3"))
+      .find(el => el.textContent.trim().startsWith(text));
   }
 
   function enhanceSummaries() {
@@ -210,6 +253,5 @@
     });
   }
 </script>
-
 </body>
 </html>
