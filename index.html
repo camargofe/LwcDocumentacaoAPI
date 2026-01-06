@@ -154,12 +154,12 @@
     layout: "BaseLayout"
   });
 
-  const observer = new MutationObserver(() => {
+  // Aguarda o Swagger renderizar
+  setTimeout(() => {
     buildSidebar();
     enhanceSummaries();
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
+    bindOpblockClicks();
+  }, 2000);
 
   function buildSidebar() {
     const menu = document.getElementById("sidebar-menu");
@@ -201,6 +201,15 @@
       summary.appendChild(box);
     });
   }
+
+  function bindOpblockClicks() {
+    document.querySelectorAll(".opblock-summary").forEach(summary => {
+      summary.addEventListener("click", () => {
+        requestAnimationFrame(enhanceSummaries);
+      });
+    });
+  }
 </script>
+
 </body>
 </html>
