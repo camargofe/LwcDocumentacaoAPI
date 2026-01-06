@@ -1,19 +1,144 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>PIX API</title>
-    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
-  </head>
-  <body>
-    <div id="swagger-ui"></div>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>PIX API - Banco BV</title>
 
-    <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
-    <script>
-      SwaggerUIBundle({
-        url: "https://camargofe.github.io/pix-api-doc/pix.yaml",
-        dom_id: "#swagger-ui"
-      });
-    </script>
-  </body>
+  <!-- Redoc -->
+  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f5f7fa;
+    }
+
+    .layout {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 300px;
+      background-color: #ffffff;
+      border-right: 1px solid #ddd;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .sidebar h3 {
+      font-size: 14px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      color: #002f6c;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .sidebar li {
+      margin-bottom: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .sidebar li:hover {
+      color: #002f6c;
+      text-decoration: underline;
+    }
+
+    /* CONTEÚDO */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      background-color: #ffffff;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="layout">
+    
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <h3>Pix</h3>
+      <ul>
+        <li>O que é o Pix?</li>
+        <li>SLAs</li>
+        <li>Idempotência</li>
+        <li>Releases</li>
+        <li>Operacional</li>
+        <li>Fluxos de tentativas no envio de pagamentos</li>
+        <li>Location</li>
+      </ul>
+
+      <h3>Cobranças</h3>
+      <ul>
+        <li>Pagamento imediato</li>
+        <li>Com vencimento</li>
+        <li>Com vencimento em lote</li>
+      </ul>
+
+      <h3>Gerenciamento</h3>
+      <ul>
+        <li>Notificação</li>
+        <li>Pix recebidos</li>
+        <li>Pix enviados</li>
+        <li>DICT</li>
+        <li>Notificação de Infração</li>
+        <li>QRCode</li>
+      </ul>
+
+      <h3>Outros</h3>
+      <ul>
+        <li>Solicitação de Devolução Especial</li>
+        <li>Pix Saque e Pix Troco</li>
+        <li>Participantes SPI</li>
+        <li>Webhook</li>
+        <li>Iniciação de Pagamento</li>
+        <li>Políticas</li>
+        <li>Antifraude</li>
+        <li>Agendamentos</li>
+        <li>Pix Automático</li>
+        <li>Recuperação de Valores</li>
+        <li>Autenticação e Segurança</li>
+        <li>Iniciação Open Finance - ITP</li>
+      </ul>
+
+      <h3>Sobre</h3>
+      <ul>
+        <li>API docs by Redocly</li>
+        <li>Pix - Pagamentos instantâneos (0.3.84)</li>
+        <li>Download OpenAPI specification</li>
+      </ul>
+    </aside>
+
+    <!-- REDOC -->
+    <main class="content">
+      <redoc
+        spec-url="pix.yaml"
+        hide-hostname
+        expand-responses="200,201"
+        theme='{
+          "colors": {
+            "primary": { "main": "#002f6c" }
+          },
+          "sidebar": {
+            "backgroundColor": "#ffffff"
+          },
+          "typography": {
+            "fontFamily": "Arial, sans-serif",
+            "fontSize": "14px"
+          }
+        }'
+      ></redoc>
+    </main>
+
+  </div>
+</body>
 </html>
