@@ -1,147 +1,37 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <title>PIX API - Banco BV</title>
-
-  <!-- Swagger UI -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/swagger-ui-dist/swagger-ui.css"
-  />
-
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: Arial, sans-serif;
-      background-color: #f5f7fa;
+<script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+<script>
+  const ui = SwaggerUIBundle({
+    url: "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml",
+    dom_id: "#swagger-ui",
+    layout: "BaseLayout",
+    onComplete: () => {
+      buildSidebar();
     }
+  });
 
-    .layout {
-      display: flex;
-      height: 100vh;
-      width: 100vw;
-    }
+  function buildSidebar() {
+    const menu = document.getElementById("sidebar-menu");
+    menu.innerHTML = "";
 
-    /* SIDEBAR */
-    .sidebar {
-      width: 300px;
-      background-color: #ffffff;
-      border-right: 1px solid #ddd;
-      padding: 20px;
-      overflow-y: auto;
-      box-sizing: border-box;
-    }
+    // Cada tag vira uma seção
+    const sections = document.querySelectorAll(".opblock-tag");
 
-    .sidebar h3 {
-      font-size: 14px;
-      margin-top: 20px;
-      margin-bottom: 10px;
-      color: #002f6c;
-    }
+    sections.forEach(section => {
+      const title = section.querySelector(".opblock-tag-section h3 span");
+      if (!title) return;
 
-    .sidebar ul {
-      list-style: none;
-      padding-left: 0;
-      margin: 0;
-    }
+      const li = document.createElement("li");
+      li.textContent = title.textContent.trim();
+      li.style.cursor = "pointer";
 
-    .sidebar li {
-      margin-bottom: 8px;
-      font-size: 13px;
-      color: #333;
-      cursor: default;
-    }
+      li.onclick = () => {
+        section.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      };
 
-    /* CONTEÚDO */
-    .content {
-      flex: 1;
-      overflow-y: auto;
-      background-color: #ffffff;
-    }
-
-    /* Ajustes Swagger */
-    .swagger-ui {
-      padding: 20px;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="layout">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <h3>Pix</h3>
-      <ul>
-        <li>O que é o Pix?</li>
-        <li>SLAs</li>
-        <li>Idempotência</li>
-        <li>Releases</li>
-        <li>Operacional</li>
-        <li>Fluxos de tentativas no envio de pagamentos</li>
-        <li>Location</li>
-      </ul>
-
-      <h3>Cobranças</h3>
-      <ul>
-        <li>Gerenciamento de cobranças para pagamento imediato</li>
-        <li>Gerenciamento de cobranças com vencimento</li>
-        <li>Gerenciamento de cobranças com vencimento em lote</li>
-      </ul>
-
-      <h3>Gerenciamento</h3>
-      <ul>
-        <li>Notificação</li>
-        <li>Gerenciamento de Pix recebidos</li>
-        <li>Gerenciamento de Pix enviados</li>
-        <li>DICT</li>
-        <li>Notificação de Infração</li>
-        <li>QRCode</li>
-      </ul>
-
-      <h3>Outros</h3>
-      <ul>
-        <li>Solicitação de Devolução Especial</li>
-        <li>Pix Saque e Pix Troco</li>
-        <li>Participantes SPI</li>
-        <li>Webhook</li>
-        <li>Iniciação de Pagamento</li>
-        <li>Pix Automático</li>
-        <li>Recuperação de Valores</li>
-        <li>Autenticação e Segurança</li>
-      </ul>
-
-      <hr />
-
-      <p style="font-size:12px;">
-        Open Banking:<br />
-        <strong>openbanking@bv.com.br</strong>
-      </p>
-
-      <p style="font-size:12px;">
-        Seja bem-vindo(a)! Nesta documentação, você encontrará informações detalhadas
-        sobre como realizar o processo de integração com o Pix BV.
-      </p>
-    </aside>
-
-    <!-- SWAGGER UI -->
-    <main class="content">
-      <div id="swagger-ui"></div>
-    </main>
-
-  </div>
-
-  <!-- Swagger JS -->
-  <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
-  <script>
-    SwaggerUIBundle({
-      url: "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml",
-      dom_id: "#swagger-ui",
-      layout: "BaseLayout"
+      menu.appendChild(li);
     });
-  </script>
-</body>
-</html>
+  }
+</script>
