@@ -21,8 +21,8 @@
     color: #0b1220;
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
-    overflow-x: hidden; /* evita scroll horizontal */
-    overflow-y: auto;   /* permite rolagem vertical da página */
+    overflow-x: hidden;
+    overflow-y: auto; /* página pode rolar verticalmente */
   }
 
   :root{
@@ -35,46 +35,48 @@
     --panel-bg: #12171a;
     --panel-card: #0f1617;
     --accent: #14b8a6;
-    --page-gutter: 18px;
+    --page-gutter: 16px;
   }
 
-  /* ===== LAYOUT ===== */
+  /* ===== LAYOUT =====
+     Grid com colunas fixas; conteúdo central terá rolagem própria (limitado à viewport),
+     enquanto o painel direito fica sticky e sempre visível.
+  */
   .layout {
     display: grid;
     grid-template-columns: var(--sidebar-width) 1fr var(--right-width);
-    gap: 0;
-    min-height: 100vh;
-    align-items: start;
+    gap: 18px;
+    min-height: calc(100vh - (var(--page-gutter) * 2));
     padding: var(--page-gutter);
-    column-gap: 18px;
+    align-items: start;
   }
 
   /* ===== SIDEBAR ===== */
   .sidebar {
     background: var(--card);
     border-right: 1px solid rgba(15,23,42,0.06);
-    padding: 18px;
+    padding: 14px;
     display:flex;
     flex-direction:column;
-    gap:14px;
+    gap:12px;
     position: relative;
-    /* make sidebar scrollable independently while keeping it visible */
     max-height: calc(100vh - (var(--page-gutter) * 2));
     overflow: auto;
     -webkit-overflow-scrolling: touch;
+    min-width: 0;
   }
 
-  .brand { display:flex; align-items:center; gap:12px; padding-bottom:6px; border-bottom:1px solid rgba(2,6,23,0.03); }
-  .brand-logo { height:44px; width:auto; display:block; }
-  .brand-text { font-weight:800; font-size:15px; }
+  .brand { display:flex; align-items:center; gap:10px; padding-bottom:6px; border-bottom:1px solid rgba(2,6,23,0.03); }
+  .brand-logo { height:40px; width:auto; display:block; }
+  .brand-text { font-weight:800; font-size:14px; }
 
   .sidebar .search input[type="search"] {
     width: 100%;
-    padding: 10px 12px;
+    padding: 9px 10px;
     border-radius: 8px;
     border: 1px solid rgba(2,6,23,0.06);
     background: #fbfdff;
-    font-size: 14px;
+    font-size: 13px;
     outline: none;
   }
 
@@ -83,7 +85,7 @@
   .menu-section { margin-bottom:8px; }
 
   .menu-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; color:var(--muted); font-weight:600; font-size:13px; }
-  .menu-heading .count { background: rgba(15,111,178,0.08); color:var(--brand); padding:4px 8px; border-radius:999px; font-size:12px; }
+  .menu-heading .count { background: rgba(15,111,178,0.08); color:var(--brand); padding:3px 8px; border-radius:999px; font-size:12px; }
 
   .tag-item {
     display:block;
@@ -100,7 +102,7 @@
   .tag-item:hover { background: rgba(2,6,23,0.03); transform: translateY(-1px); }
   .tag-item.active { background: linear-gradient(180deg,#f2f8ff,#ffffff); border:1px solid rgba(15,111,178,0.06); box-shadow: 0 6px 18px rgba(12,37,63,0.04); }
 
-  .ops { margin-top:8px; padding-left:4px; display:flex; flex-direction:column; gap:6px; }
+  .ops { margin-top:6px; padding-left:4px; display:flex; flex-direction:column; gap:6px; }
 
   .op-link {
     display:flex;
@@ -118,55 +120,43 @@
   .op-link:hover { background: rgba(2,6,23,0.03); transform: translateY(-1px); }
   .op-link.active { background: rgba(2,6,23,0.04); box-shadow: inset 3px 0 0 var(--brand); color:#0b1220; font-weight:700; }
 
-  .method-pill-left {
-    padding:6px 10px;
-    border-radius:8px;
-    font-weight:800;
-    font-size:11px;
-    color:#fff;
-    min-width:54px;
-    text-align:center;
-  }
+  .method-pill-left { padding:6px 10px; border-radius:8px; font-weight:800; font-size:11px; color:#fff; min-width:52px; text-align:center; }
   .method-get { background:#16a34a; }
   .method-post { background:#0ea5e9; }
   .method-put { background:#f59e0b; color:#0b1220; }
   .method-delete { background:#ef4444; }
 
-  .op-path { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:12px; color:#6b7280; }
-
-  /* ===== CONTENT ===== */
+  /* ===== CONTENT (central) =====
+     Tornar o conteúdo central com altura limitada e rolável internamente.
+     Isso libera espaço vertical para o painel direito sticky ser totalmente visível.
+  */
   .content {
-    background: transparent;
-    padding: 0; /* page padding is on .layout */
-    min-width: 0; /* prevent overflow */
+    min-width: 0;
+    max-height: calc(100vh - (var(--page-gutter) * 2));
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .swagger-ui {
     background: var(--card);
-    border-radius: 12px;
-    padding: 22px;
-    box-shadow: 0 10px 30px rgba(9,30,66,0.06);
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 8px 24px rgba(9,30,66,0.06);
     color: #0b1220;
-    overflow: visible !important;
     width: 100%;
-    min-width: 0; /* important to avoid overflow */
+    min-width: 0;
+    /* limitar a altura do swagger para caber na viewport */
+    max-height: calc(100vh - (var(--page-gutter) * 2) - 12px);
+    overflow: auto;
   }
 
-  /* Make swagger internals more predictable and avoid broken layouts */
-  .swagger-ui .wrapper, 
-  .swagger-ui .info, 
-  .swagger-ui .opblock, 
-  .swagger-ui .block, 
-  .swagger-ui .content {
+  /* tornar internos previsíveis */
+  .swagger-ui .wrapper, .swagger-ui .info, .swagger-ui .opblock, .swagger-ui .block, .swagger-ui .content {
     width: 100% !important;
     max-width: 100% !important;
   }
 
-  .swagger-ui .scheme-container { margin-top: 8px; margin-bottom: 8px; }
-  .swagger-ui .info .title { font-size: 26px; margin-bottom: 6px; }
-  .swagger-ui .info .description { font-size: 14px; color: var(--muted); }
-
-  /* Ensure opblocks don't create horizontal scrolls: wrap code & paths */
+  /* evitar horizontais indesejadas */
   .swagger-ui .opblock .opblock-summary-path,
   .swagger-ui .opblock .opblock-summary-method,
   .swagger-ui .opblock pre,
@@ -177,30 +167,28 @@
     white-space: normal !important;
   }
 
-  .swagger-ui .opblock { border: none; box-shadow: none; margin-bottom: 14px; }
+  .swagger-ui .opblock { border: none; box-shadow: none; margin-bottom: 12px; }
 
   /* ===== RIGHT PANEL =====
-     Make the panel sticky and visible: it will stay on-screen while the main content scrolls.
-     The panel itself becomes scrollable when its content exceeds the viewport height.
-  */
+     Sticky, com altura limitada e scroll interno se necessário. */
   .code-panel {
     background: linear-gradient(180deg,var(--panel-bg),#0c1113);
     border-left: 1px solid rgba(255,255,255,0.03);
-    padding: 18px;
+    padding: 14px;
     color: #e6fbf4;
     display:flex;
     flex-direction:column;
-    gap:18px;
+    gap:12px;
     position: sticky;
     top: var(--page-gutter);
     align-self: start;
     max-height: calc(100vh - (var(--page-gutter) * 2));
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-    min-width: 0; /* avoid forcing horizontal scroll */
+    min-width: 0;
   }
 
-  .endpoint-header { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-shrink: 0; }
+  .endpoint-header { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-shrink: 0; }
   .endpoint-title { display:flex; align-items:center; gap:8px; min-width: 0; }
 
   .method-pill { padding:6px 10px; border-radius:8px; font-weight:800; font-size:12px; color:#fff; }
@@ -209,37 +197,36 @@
   .method-pill.put { background:#f59e0b; color:#0b1220; }
   .method-pill.delete { background:#ef4444; }
 
-  .path-text { color: rgba(255,255,255,0.96); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+  /* reduzir largura do path para caber no cabeçalho e evitar quebra do layout */
+  .path-text { color: rgba(255,255,255,0.96); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
 
   .controls { display:flex; gap:8px; align-items:center; flex-shrink: 0; }
   .btn {
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.03);
     color: #e8fbf5;
-    padding:8px 10px;
+    padding:7px 9px;
     border-radius:8px;
     cursor:pointer;
     font-size:13px;
   }
-  .btn.primary { background: linear-gradient(90deg,#0ea5e9,#14b8a6); color:#06202a; font-weight:800; border:none; }
 
   .responses-wrapper {
     background: var(--panel-card);
-    border-radius:10px;
-    padding:14px;
+    border-radius:8px;
+    padding:12px;
     color:#cfe8df;
-    overflow: visible;
   }
 
   .responses-wrapper pre, .responses-wrapper code {
     background: transparent !important;
     border-radius: 6px;
     padding: 0;
-    overflow: visible;
     color: #9be1cc;
     white-space: pre-wrap !important;
     word-break: break-word;
     overflow-wrap: anywhere;
+    max-width: 100%;
   }
 
   .response-badges { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
@@ -252,8 +239,8 @@
     .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 12px; }
     .code-panel { display: none; }
     .sidebar { max-height: none; overflow: visible; position: relative; }
-    .content { padding-top: 12px; }
-    .swagger-ui { padding: 18px; }
+    .content { max-height: none; overflow: visible; }
+    .swagger-ui { max-height: none; overflow: visible; padding: 16px; }
   }
 
   @media (max-width: 880px) {
@@ -264,7 +251,7 @@
   .muted { color: var(--muted); font-size:12px; }
   .small { font-size:12px; color:var(--muted); }
 
-  /* Hide default Swagger horizontal overflow artifacts */
+  /* remove overflow estranhos do swagger */
   .swagger-ui .opblock .opblock-body { overflow: visible !important; }
 </style>
 </head>
@@ -317,13 +304,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
 <script>
-/*
-  Keep previous robust behavior; no changes required here for the sticky panel.
-  The CSS ensures the sidebar and right panel are visible and scrollable when needed.
-*/
+/* Script funcional (mantido da versão anterior) */
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 let lastClickedOpblock = null;
-let sidebarBuilt = false;
 
 SwaggerUIBundle({
   url: SWAGGER_URL,
@@ -333,8 +316,9 @@ SwaggerUIBundle({
   presets: [SwaggerUIBundle.presets.apis]
 });
 
-const $qs = (s, scope = document) => scope.querySelector(s);
+// helpers
 const $qsa = (s, scope = document) => Array.from((scope || document).querySelectorAll(s));
+const $qs = (s, scope = document) => (scope || document).querySelector(s);
 
 function waitForSwaggerReady(timeout = 15000) {
   return new Promise((resolve, reject) => {
@@ -352,7 +336,7 @@ function buildSidebar() {
   if (!menu) return;
   menu.innerHTML = '';
 
-  // H2 sections
+  // sections (h2)
   const h2s = $qsa('#swagger-ui h2');
   if (h2s.length) {
     const section = document.createElement('li');
@@ -362,7 +346,6 @@ function buildSidebar() {
     list.style.display = 'flex';
     list.style.flexDirection = 'column';
     list.style.gap = '6px';
-
     h2s.forEach(h2 => {
       const text = (h2.textContent || '').trim();
       const btn = document.createElement('button');
@@ -376,7 +359,6 @@ function buildSidebar() {
       });
       list.appendChild(btn);
     });
-
     section.appendChild(list);
     menu.appendChild(section);
   }
@@ -393,7 +375,6 @@ function buildSidebar() {
 
     const li = document.createElement('li');
     li.className = 'menu-section';
-    li.tabIndex = 0;
 
     const head = document.createElement('div');
     head.className = 'menu-heading';
@@ -440,8 +421,6 @@ function buildSidebar() {
 
     menu.appendChild(li);
   });
-
-  sidebarBuilt = true;
 }
 
 function wireSearch() {
@@ -515,7 +494,6 @@ function observeSwagger() {
 
 function findResponsesWrapper(opblockEl) {
   if (!opblockEl) return null;
-
   const selectors = [
     '.responses-wrapper',
     '.responses-inner',
@@ -528,12 +506,10 @@ function findResponsesWrapper(opblockEl) {
     '.example',
     '.opblock-description'
   ];
-
   for (const sel of selectors) {
     const node = opblockEl.querySelector(sel);
     if (node) return node;
   }
-
   const pre = opblockEl.querySelector('pre, code, .highlight');
   if (pre) {
     const wrapper = document.createElement('div');
@@ -541,7 +517,6 @@ function findResponsesWrapper(opblockEl) {
     wrapper.appendChild(pre.cloneNode(true));
     return wrapper;
   }
-
   return null;
 }
 
@@ -633,21 +608,15 @@ function escapeHtml(str) {
   } catch (e) {
     console.warn('Swagger UI may be slow to render:', e);
   } finally {
-    try { buildSidebar(); } catch(e) { /* ignore */ }
+    try { buildSidebar(); } catch(e){/*ignore*/ }
     wireSearch();
     bindGlobalOpClicks();
     observeSwagger();
-
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
       if (open) {
         lastClickedOpblock = open;
         updateRightPanel(open);
-      } else {
-        const first = document.querySelector('.opblock');
-        if (first) {
-          try { updateRightPanel(first); } catch(e){/*ignore*/ }
-        }
       }
     }, 350);
   }
