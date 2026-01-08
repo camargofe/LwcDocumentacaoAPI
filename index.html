@@ -54,7 +54,6 @@
     flex-direction:column;
     gap:14px;
     position: relative;
-    /* allow page scroll rather than internal scrollbars */
   }
 
   .brand { display:flex; align-items:center; gap:12px; padding-bottom:6px; border-bottom:1px solid rgba(2,6,23,0.03); }
@@ -129,7 +128,6 @@
   .content {
     background: transparent;
     padding: 28px 42px;
-    /* keep no internal scrollbars — the page scrolls */
   }
 
   .swagger-ui {
@@ -138,7 +136,6 @@
     padding: 22px;
     box-shadow: 0 10px 30px rgba(9,30,66,0.06);
     color: #0b1220;
-    /* allow inner elements to wrap; avoid internal scrollbars */
     overflow: visible !important;
   }
 
@@ -166,10 +163,8 @@
     display:flex;
     flex-direction:column;
     gap:18px;
-    /* keep it visible while page scrolls (no inner scrollbars) */
     position: relative;
     align-self: start;
-    border-radius: 0 0 0 0;
     overflow: visible;
   }
 
@@ -210,7 +205,6 @@
     padding: 0;
     overflow: visible;
     color: #9be1cc;
-    /* wrap long lines instead of horizontal scroll */
     white-space: pre-wrap !important;
     word-break: break-word;
     overflow-wrap: anywhere;
@@ -235,8 +229,6 @@
   }
 
   .muted { color: var(--muted); font-size:12px; }
-
-  /* Small helpers */
   .small { font-size:12px; color:var(--muted); }
 </style>
 </head>
@@ -247,10 +239,7 @@
   <aside class="sidebar" id="sidebar" role="navigation" aria-label="Sidebar">
     <div class="brand" aria-hidden="false">
       <img src="https://developers-sandbox.bvopen.com.br/sites/default/files/apidoc_specs/API-PIX-V1/assets/images/logo.png" alt="Banco BV" class="brand-logo" />
-      <div>
-        <div style="font-weight:800">Banco BV</div>
-        <div class="small">PIX API — documentação</div>
-      </div>
+      <!-- subtítulo removido conforme solicitado -->
     </div>
 
     <div class="search" aria-hidden="false">
@@ -290,13 +279,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
 <script>
-/*
-  Versão melhorada do script:
-  - Mantém a lógica do sidebar com tags e operações.
-  - Adiciona DETECÇÃO de <h2> dentro do Swagger UI e cria seções de menu para eles.
-  - Evita dependência de scroll interno: força que pre/code quebrem linhas.
-*/
-
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 let lastClickedOpblock = null;
 
@@ -315,7 +297,6 @@ function waitForSwaggerReady(timeout = 12000) {
   return new Promise((resolve, reject) => {
     const start = Date.now();
     (function check() {
-      // esperar por opblock-tag OR por títulos h2 (algumas versões usam h2 para seções)
       if ($qsa('.opblock-tag').length > 0 || $qsa('#swagger-ui h2').length > 0) return resolve();
       if (Date.now() - start > timeout) return reject(new Error('Swagger UI did not render in time'));
       requestAnimationFrame(check);
@@ -323,7 +304,8 @@ function waitForSwaggerReady(timeout = 12000) {
   });
 }
 
-/* Build sidebar that considers h2 as menu sections and then tags */
+/* Build sidebar that considers h2 as menu sections and then tags.
+   Removed the small "Seção" label under each item as requested. */
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
   menu.innerHTML = '';
@@ -344,10 +326,10 @@ function buildSidebar() {
       const btn = document.createElement('button');
       btn.className = 'tag-item';
       btn.type = 'button';
-      btn.innerHTML = `<strong>${escapeHtml(text)}</strong><div class="small muted">Seção</div>`;
+      // removed the small "Seção" label here
+      btn.innerHTML = `<strong>${escapeHtml(text)}</strong>`;
       btn.addEventListener('click', () => {
         h2.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // visually activate
         Array.from(menu.querySelectorAll('.tag-item')).forEach(n => n.classList.remove('active'));
         btn.classList.add('active');
       });
@@ -358,7 +340,7 @@ function buildSidebar() {
     menu.appendChild(section);
   }
 
-  // 2) Build tags + operations (as before)
+  // 2) Build tags + operations
   const tags = $qsa('.opblock-tag');
   tags.forEach(tagEl => {
     const titleSpan = tagEl.querySelector('h3 span');
@@ -478,7 +460,6 @@ function observeOpblockOpenEvents() {
   const mo = new MutationObserver(mutations => {
     for (const m of mutations) {
       if (m.addedNodes && m.addedNodes.length) {
-        // rebuild sidebar when new nodes (opblocks) are added
         clearTimeout(window._rebuild_sidebar);
         window._rebuild_sidebar = setTimeout(() => {
           buildSidebar();
@@ -576,10 +557,8 @@ function updateRightPanel(preferredOpblock) {
   const clone = responses.cloneNode(true);
   clone.classList.add('responses-wrapper');
 
-  // remove controls & interactive elements that don't belong in preview panel
   clone.querySelectorAll('.try-out, .execute, .btn, .model, .responses-request, .parameters, .tab, .tabbed').forEach(n => n.remove());
 
-  // Force wrapping of long lines to avoid horizontal scroll
   clone.querySelectorAll('pre, code').forEach(el => {
     el.style.whiteSpace = 'pre-wrap';
     el.style.wordBreak = 'break-word';
@@ -593,12 +572,10 @@ function updateRightPanel(preferredOpblock) {
   panel.appendChild(badges);
   panel.appendChild(clone);
 
-  // Highlight code blocks
   panel.querySelectorAll('pre code').forEach(block => {
     try { hljs.highlightElement(block); } catch(e) { /* ignore */ }
   });
 
-  // Copy button behaviour
   const copyBtn = document.getElementById('code-copy');
   copyBtn.onclick = async () => {
     let text = '';
