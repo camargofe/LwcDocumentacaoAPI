@@ -32,9 +32,8 @@
     --muted: #6b7280;
     --bg: #f5f7fb;
     --card: #ffffff;
-    --panel-bg: #0f262a;       /* darker teal for panel background */
-    --panel-section: #0a1618;  /* inner panel section */
-    --panel-card: #0b1416;     /* code card background */
+    --panel-bg: #12171a;
+    --panel-card: #0f1617;
     --accent: #14b8a6;
     --page-gutter: 16px;
   }
@@ -144,22 +143,26 @@
     overflow: auto;
   }
 
-  /* Top H2 container moved by script */
-  .swagger-top-h2s { margin: 8px 0 18px 0; padding-left: 6px; }
+  /* Container where H2s moved to top will live */
+  .swagger-top-h2s {
+    margin: 8px 0 14px 0;
+    padding-left: 6px;
+  }
   .swagger-top-h2s h2.moved-h2 {
     font-size: 20px;
-    margin: 4px 0 12px 0;
+    margin: 8px 0;
     font-weight: 800;
     color: #0b1220;
     line-height: 1.15;
   }
 
-  /* make swagger internals predictable */
+  /* tornar internos previsíveis */
   .swagger-ui .wrapper, .swagger-ui .info, .swagger-ui .opblock, .swagger-ui .block, .swagger-ui .content {
     width: 100% !important;
     max-width: 100% !important;
   }
 
+  /* evitar horizontais indesejadas */
   .swagger-ui .opblock .opblock-summary-path,
   .swagger-ui .opblock .opblock-summary-method,
   .swagger-ui .opblock pre,
@@ -172,9 +175,9 @@
 
   .swagger-ui .opblock { border: none; box-shadow: none; margin-bottom: 12px; }
 
-  /* ===== RIGHT PANEL - DARK LAYOUT ===== */
+  /* ===== RIGHT PANEL ===== */
   .code-panel {
-    background: var(--panel-bg);
+    background: linear-gradient(180deg,var(--panel-bg),#0c1113);
     border-left: 1px solid rgba(255,255,255,0.03);
     padding: 14px;
     color: #e6fbf4;
@@ -188,145 +191,52 @@
     overflow: auto;
     -webkit-overflow-scrolling: touch;
     min-width: 0;
-    border-radius: 6px;
   }
 
-  /* Header bar with try/method/path (dark) */
-  .panel-header {
-    background: rgba(0,0,0,0.25);
-    color: #fff;
-    padding: 8px 12px;
-    border-radius: 6px;
-    display:flex;
-    align-items:center;
-    gap:10px;
-  }
-  .panel-header .try-badge {
-    background: #6a9fb0;
-    color: #eaf6f5;
-    padding: 4px 8px;
-    border-radius:4px;
-    font-weight:700;
-    font-size:12px;
-    text-transform:lowercase;
-  }
-  .panel-header .method-pill {
-    padding:6px 10px;
-    border-radius:6px;
-    font-weight:800;
-    font-size:12px;
-    color:#fff;
-  }
-  .panel-header .method-pill.get { background:#16a34a; }
-  .panel-header .method-pill.post { background:#0ea5e9; }
-  .panel-header .method-pill.put { background:#f59e0b; color:#0b1220; }
-  .panel-header .method-pill.delete { background:#ef4444; }
+  .endpoint-header { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-shrink: 0; }
+  .endpoint-title { display:flex; align-items:center; gap:8px; min-width: 0; }
 
-  .panel-header .path {
-    margin-left: 6px;
-    color:#e6fbf4;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
-    font-size: 13px;
-    opacity: 0.95;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  .method-pill { padding:6px 10px; border-radius:8px; font-weight:800; font-size:12px; color:#fff; }
+  .method-pill.get { background:#16a34a; }
+  .method-pill.post { background:#0ea5e9; }
+  .method-pill.put { background:#f59e0b; color:#0b1220; }
+  .method-pill.delete { background:#ef4444; }
 
-  /* Section (Request/Response) */
-  .panel-section {
-    background: transparent;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
-  .panel-section h3 {
-    margin:0;
-    font-size:16px;
-    color:#e6fbf4;
-  }
+  .path-text { color: rgba(255,255,255,0.96); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
 
-  /* Code card: dark inner box */
-  .code-card {
-    background: var(--panel-card);
+  .controls { display:flex; gap:8px; align-items:center; flex-shrink: 0; }
+  .btn {
+    background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.03);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-
-  .code-card .content-type {
-    background: rgba(255,255,255,0.03);
-    color: #9bdacb;
-    padding: 8px 12px;
-    font-size: 13px;
-    border-bottom: 1px solid rgba(255,255,255,0.02);
-  }
-
-  .code-card .code-area {
-    padding: 12px;
-    color: #9be1cc;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
-    font-size: 13px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow: auto;
-    max-height: 320px;
-  }
-
-  .code-card .code-area pre {
-    margin: 0;
-    background: transparent;
-    color: #9be1cc;
-    white-space: pre-wrap;
-  }
-
-  /* controls within top-right of code card */
-  .code-card .card-controls {
-    display:flex;
-    gap:10px;
-    justify-content:flex-end;
-    align-items:center;
-    padding: 8px 12px;
-    font-size:13px;
-    color: #bcded6;
-  }
-  .code-card .card-controls button {
-    background: transparent;
-    border: none;
-    color: #bcded6;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight:600;
-  }
-  .code-card .card-controls button:hover { background: rgba(255,255,255,0.02); }
-
-  /* Response code badges row */
-  .response-codes {
-    display:flex;
-    gap:8px;
-    align-items:center;
-    flex-wrap:wrap;
-  }
-  .response-codes .code-badge {
-    background: #0f2e2f;
-    color: #9be1cc;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-weight:700;
+    color: #e8fbf5;
+    padding:7px 9px;
+    border-radius:8px;
     cursor:pointer;
-    border: 1px solid rgba(255,255,255,0.02);
-  }
-  .response-codes .code-badge.active {
-    background: linear-gradient(90deg,#1f9aa0,#2db4a6);
-    color: #041417;
+    font-size:13px;
   }
 
-  /* Small helpers */
-  .panel-small {
-    color: #9bdacb;
-    font-size: 13px;
+  .responses-wrapper {
+    background: var(--panel-card);
+    border-radius:8px;
+    padding:12px;
+    color:#cfe8df;
   }
+
+  .responses-wrapper pre, .responses-wrapper code {
+    background: transparent !important;
+    border-radius: 6px;
+    padding: 0;
+    color: #9be1cc;
+    white-space: pre-wrap !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+  }
+
+  .response-badges { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .response-badges .badge { padding:6px 8px; border-radius:8px; background: rgba(255,255,255,0.03); color:#cfe8df; font-weight:700; font-size:12px; }
+
+  .panel-empty { color: rgba(255,255,255,0.65); font-size:13px; padding:8px; }
 
   /* Responsividade */
   @media (max-width: 1200px) {
@@ -337,6 +247,15 @@
     .swagger-ui { max-height: none; overflow: visible; padding: 16px; }
   }
 
+  @media (max-width: 880px) {
+    .sidebar { position: fixed; left:0; top:0; bottom:0; width:76%; max-width:380px; transform: translateX(-120%); transition:transform .22s; z-index:90; box-shadow:8px 0 32px rgba(2,6,23,0.12); }
+    .sidebar.open { transform: translateX(0); }
+  }
+
+  .muted { color: var(--muted); font-size:12px; }
+  .small { font-size:12px; color:var(--muted); }
+
+  /* remove overflow estranhos do swagger */
   .swagger-ui .opblock .opblock-body { overflow: visible !important; }
 </style>
 </head>
@@ -368,42 +287,18 @@
 
   <!-- RIGHT PANEL -->
   <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true">
-    <!-- header bar (try / method / path) -->
-    <div id="panel-header" class="panel-header" aria-hidden="false">
-      <div class="try-badge">try</div>
-      <div id="code-method" class="method-pill default">OP</div>
-      <div id="code-path" class="path">/caminho/exemplo</div>
-    </div>
-
-    <!-- Request samples -->
-    <div id="request-section" class="panel-section" aria-hidden="false" style="display:none;">
-      <h3>Request samples</h3>
-      <div class="code-card" id="request-card">
-        <div class="content-type" id="request-content-type">application/json</div>
-        <div class="card-controls" id="request-controls">
-          <button id="request-copy">Copy</button>
-          <button id="request-expand">Expand all</button>
-          <button id="request-collapse">Collapse all</button>
-        </div>
-        <div class="code-area" id="request-code-area"><pre><code></code></pre></div>
+    <div class="endpoint-header">
+      <div class="endpoint-title">
+        <span id="code-method" class="method-pill default">OP</span>
+        <div id="code-path" class="path-text">/caminho/exemplo</div>
+      </div>
+      <div class="controls">
+        <button id="code-copy" class="btn" title="Copiar conteúdo do painel">Copiar</button>
+        <button id="code-open" class="btn" title="Ir ao endpoint">Ir ao endpoint</button>
       </div>
     </div>
 
-    <!-- Response samples -->
-    <div id="response-section" class="panel-section" aria-hidden="false" style="display:none;">
-      <h3>Response samples</h3>
-      <div class="response-codes" id="response-codes"></div>
-      <div class="code-card" id="response-card" style="margin-top:6px;">
-        <div class="content-type" id="response-content-type">application/json</div>
-        <div class="card-controls" id="response-controls">
-          <button id="response-copy">Copy</button>
-          <button id="response-expand">Expand all</button>
-          <button id="response-collapse">Collapse all</button>
-        </div>
-        <div class="code-area" id="response-code-area"><pre><code></code></pre></div>
-      </div>
-    </div>
-
+    <div id="code-view"><div class="panel-empty">Abra uma operação (clicando em um endpoint) para ver exemplos de respostas e códigos aqui.</div></div>
   </aside>
 
 </div>
@@ -413,13 +308,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
 <script>
-/* Combined: functional sidebar + new code-panel behavior + removal of inline tag list */
+/*
+  Mantive a lógica robusta anterior e acrescentei relocateH2s() para mover h2s flutuantes
+  para o topo da documentação e aplicar estilo consistente.
+*/
+
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 let lastClickedOpblock = null;
-let responseExamples = [];
-let requestExample = null;
 
-/* Initialize Swagger UI */
 SwaggerUIBundle({
   url: SWAGGER_URL,
   dom_id: "#swagger-ui",
@@ -428,9 +324,9 @@ SwaggerUIBundle({
   presets: [SwaggerUIBundle.presets.apis]
 });
 
-/* helpers */
-const $qs = (s, scope = document) => (scope || document).querySelector(s);
+// helpers
 const $qsa = (s, scope = document) => Array.from((scope || document).querySelectorAll(s));
+const $qs = (s, scope = document) => (scope || document).querySelector(s);
 
 function waitForSwaggerReady(timeout = 15000) {
   return new Promise((resolve, reject) => {
@@ -443,7 +339,7 @@ function waitForSwaggerReady(timeout = 15000) {
   });
 }
 
-/* Move H2s to top container to avoid floating titles in content */
+/* Move any H2s rendered by swagger into a top container inside .swagger-ui */
 function relocateH2s() {
   const ui = document.getElementById('swagger-ui');
   if (!ui) return;
@@ -451,6 +347,7 @@ function relocateH2s() {
   if (!container) {
     container = document.createElement('div');
     container.className = 'swagger-top-h2s';
+    // insert after .info (if present) or at the top of .swagger-ui
     const info = ui.querySelector('.info');
     if (info && info.parentNode) info.parentNode.insertBefore(container, info.nextSibling);
     else ui.insertBefore(container, ui.firstChild);
@@ -458,49 +355,23 @@ function relocateH2s() {
 
   const h2s = Array.from(ui.querySelectorAll('h2'));
   h2s.forEach(h2 => {
+    // skip ones already moved
     if (container.contains(h2)) return;
+    // skip h2s that are inside opblocks or other UI widgets (if any)
     if (h2.closest('.opblock') || h2.closest('.swagger-top-h2s')) return;
+    // move the element (keeps events/ids intact)
     container.appendChild(h2);
     h2.classList.add('moved-h2');
   });
 }
 
-/* Remove duplicate inline tag list inside swagger content (the "other sidebar" shown inside the docs) */
-function removeInlineTagList() {
-  const ui = document.getElementById('swagger-ui');
-  if (!ui) return;
-
-  // collect known tag names from opblock-tags
-  const tagEls = $qsa('.opblock-tag h3 span');
-  const tagNames = tagEls.map(s => s.textContent.trim()).filter(Boolean);
-
-  // candidate ULs inside markdown/info sections
-  const candidates = ui.querySelectorAll('.info ul, .markdown ul, .wrapper ul');
-  candidates.forEach(ul => {
-    const lis = Array.from(ul.querySelectorAll('li'));
-    if (lis.length < 5) return; // too small to be the tag list
-    const texts = lis.map(li => li.textContent.trim());
-    // count how many tag names appear in the list items
-    let matches = 0;
-    for (const t of tagNames) {
-      if (texts.find(x => x.includes(t))) matches++;
-    }
-    // if we match a few tags (or the majority), remove the containing block
-    if (matches >= Math.min(3, Math.max(1, Math.round(tagNames.length * 0.2)))) {
-      const parent = ul.closest('.markdown') || ul.closest('.info') || ul.parentNode;
-      if (parent) parent.remove();
-      else ul.remove();
-    }
-  });
-}
-
-/* Build sidebar: H2 sections + tags + operations (robust) */
+/* Build sidebar from H2 (sections) + tags + ops */
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
   if (!menu) return;
   menu.innerHTML = '';
 
-  // 1) H2 sections
+  // sections (h2)
   const h2s = $qsa('#swagger-ui h2');
   if (h2s.length) {
     const section = document.createElement('li');
@@ -510,7 +381,6 @@ function buildSidebar() {
     list.style.display = 'flex';
     list.style.flexDirection = 'column';
     list.style.gap = '6px';
-
     h2s.forEach(h2 => {
       const text = (h2.textContent || '').trim();
       const btn = document.createElement('button');
@@ -524,12 +394,11 @@ function buildSidebar() {
       });
       list.appendChild(btn);
     });
-
     section.appendChild(list);
     menu.appendChild(section);
   }
 
-  // 2) Tags + operations
+  // tags + ops
   const tags = $qsa('.opblock-tag');
   tags.forEach(tagEl => {
     const titleSpan = tagEl.querySelector('h3 span');
@@ -541,7 +410,6 @@ function buildSidebar() {
 
     const li = document.createElement('li');
     li.className = 'menu-section';
-    li.tabIndex = 0;
 
     const head = document.createElement('div');
     head.className = 'menu-heading';
@@ -562,7 +430,6 @@ function buildSidebar() {
                          <div style="font-size:13px;color:#0b1220;">${escapeHtml(path)}</div>
                        </div>`;
 
-      // clicking the sidebar item should open the opblock in swagger and update panel
       btn.addEventListener('click', () => {
         const opblock = op.closest('.opblock');
         if (!opblock) return;
@@ -591,7 +458,8 @@ function buildSidebar() {
   });
 }
 
-/* Sidebar search */
+/* search, clicks, observer, findResponsesWrapper, updateRightPanel (mantidos) */
+
 function wireSearch() {
   const input = document.getElementById('sidebar-search');
   if (!input) return;
@@ -614,28 +482,6 @@ function wireSearch() {
   });
 }
 
-/* Highlight corresponding op in the sidebar */
-function highlightSidebarOp(opblock) {
-  if (!opblock) return;
-  const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
-  const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
-
-  const ops = $qsa('#sidebar-menu .op-link');
-  ops.forEach(op => {
-    const text = op.textContent || '';
-    const isMatch = text.includes(path) && text.includes(method);
-    op.classList.toggle('active', isMatch);
-    if (isMatch) {
-      const tagItem = op.closest('.menu-section');
-      if (tagItem) {
-        Array.from(document.querySelectorAll('#sidebar-menu .menu-section')).forEach(t => t.classList.remove('active'));
-        tagItem.classList.add('active');
-      }
-    }
-  });
-}
-
-/* capture clicks anywhere on opblock summaries */
 function bindGlobalOpClicks() {
   document.addEventListener('click', (e) => {
     const summary = e.target.closest('.opblock-summary');
@@ -643,10 +489,7 @@ function bindGlobalOpClicks() {
     const opblock = summary.closest('.opblock');
     if (!opblock) return;
     lastClickedOpblock = opblock;
-    setTimeout(() => {
-      updateRightPanel(opblock);
-      highlightSidebarOp(opblock);
-    }, 200);
+    setTimeout(() => updateRightPanel(opblock), 200);
   });
 
   document.addEventListener('keydown', (e) => {
@@ -656,14 +499,10 @@ function bindGlobalOpClicks() {
     const opblock = summary.closest('.opblock');
     if (!opblock) return;
     lastClickedOpblock = opblock;
-    setTimeout(() => {
-      updateRightPanel(opblock);
-      highlightSidebarOp(opblock);
-    }, 200);
+    setTimeout(() => updateRightPanel(opblock), 200);
   });
 }
 
-/* Observe swagger UI mutations to rebuild sidebar & relocate H2s & remove inline lists */
 function observeSwagger() {
   const uiRoot = document.querySelector('#swagger-ui');
   if (!uiRoot) return;
@@ -675,10 +514,7 @@ function observeSwagger() {
         const t = m.target;
         if (t.classList && t.classList.contains('opblock') && t.classList.contains('is-open')) {
           const preferred = lastClickedOpblock || t;
-          setTimeout(() => {
-            updateRightPanel(preferred);
-            highlightSidebarOp(preferred);
-          }, 80);
+          setTimeout(() => updateRightPanel(preferred), 80);
         }
       }
     }
@@ -687,7 +523,6 @@ function observeSwagger() {
       window._rebuild_sidebar = setTimeout(() => {
         try {
           relocateH2s();
-          removeInlineTagList();
           buildSidebar();
           wireSearch();
         } catch(e){/*ignore*/ }
@@ -698,227 +533,137 @@ function observeSwagger() {
   mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
-/* Heuristics to find request & response example content */
-function extractRequestExample(opblock) {
+function findResponsesWrapper(opblockEl) {
+  if (!opblockEl) return null;
   const selectors = [
-    '.opblock-body .request-body pre',
-    '.opblock-body .request-body code',
-    '.opblock-body .body-param pre',
-    '.opblock-body .body-param code',
-    '.opblock-body .parameter__examples pre',
-    '.opblock-section .example pre',
-    '.opblock-section .example code',
-    '.try-out .microlight',
+    '.responses-wrapper',
+    '.responses-inner',
+    '.opblock-body .responses-wrapper',
+    '.opblock-body .responses-inner',
+    '.opblock-body .responses',
+    '.response',
+    '.responses',
+    '.examples-wrapper',
+    '.example',
+    '.opblock-description'
   ];
   for (const sel of selectors) {
-    const node = opblock.querySelector(sel);
-    if (node) {
-      return { contentType: 'application/json', text: node.innerText.trim() };
-    }
+    const node = opblockEl.querySelector(sel);
+    if (node) return node;
   }
-
-  const textarea = opblock.querySelector('textarea');
-  if (textarea && textarea.value.trim()) {
-    return { contentType: 'application/json', text: textarea.value.trim() };
+  const pre = opblockEl.querySelector('pre, code, .highlight');
+  if (pre) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'responses-wrapper';
+    wrapper.appendChild(pre.cloneNode(true));
+    return wrapper;
   }
-
   return null;
 }
 
-function extractResponseExamples(opblock) {
-  const out = [];
-  let responseNodes = opblock.querySelectorAll('.responses-wrapper .response');
-  if (!responseNodes || responseNodes.length === 0) {
-    responseNodes = opblock.querySelectorAll('.response');
-  }
-  responseNodes = Array.from(responseNodes).filter(n => opblock.contains(n));
-  for (const node of responseNodes) {
-    let status = (node.querySelector('.response-col_status')?.textContent ||
-                  node.querySelector('.response__status')?.textContent ||
-                  node.querySelector('.response-status-code')?.textContent ||
-                  node.querySelector('h4')?.textContent ||
-                  node.querySelector('.response_status')?.textContent ||
-                  '').trim();
-    const m = status.match(/(\d{3})/);
-    if (m) status = m[1];
-    else {
-      const fallback = node.textContent.match(/(^|\s)(\d{3})(\b)/);
-      status = fallback ? fallback[2] : 'default';
-    }
-    const pre = node.querySelector('pre') || node.querySelector('code') || node.querySelector('.microlight');
-    const text = pre ? pre.innerText.trim() : null;
-    const contentType = 'application/json';
-    if (text) out.push({ status, contentType, text });
-  }
-
-  if (out.length === 0) {
-    const presInResponses = opblock.querySelectorAll('.responses-wrapper pre, .responses-wrapper code');
-    const chosen = presInResponses.length ? presInResponses : opblock.querySelectorAll('pre, code');
-    Array.from(chosen).forEach((p, idx) => {
-      const txt = p.innerText.trim();
-      if (txt) out.push({ status: (idx === 0 ? '200' : 'example' + idx), contentType: 'application/json', text: txt });
-    });
-  }
-
-  const seen = new Set();
-  const unique = [];
-  for (const e of out) {
-    if (!seen.has(e.status)) {
-      unique.push(e);
-      seen.add(e.status);
-    }
-  }
-
-  return unique;
-}
-
-/* Update right panel (uses new dark layout structure) */
 function updateRightPanel(preferredOpblock) {
-  const panelHeaderMethod = document.getElementById('code-method');
-  const panelHeaderPath = document.getElementById('code-path');
-
-  const requestSection = document.getElementById('request-section');
-  const requestContentType = document.getElementById('request-content-type');
-  const requestCodeArea = document.getElementById('request-code-area');
-
-  const responseSection = document.getElementById('response-section');
-  const responseCodes = document.getElementById('response-codes');
-  const responseContentType = document.getElementById('response-content-type');
-  const responseCodeArea = document.getElementById('response-code-area');
-
-  // reset UI
-  requestSection.style.display = 'none';
-  responseSection.style.display = 'none';
-  responseCodes.innerHTML = '';
-  requestCodeArea.querySelector('pre code').textContent = '';
-  responseCodeArea.querySelector('pre code').textContent = '';
-  responseExamples = [];
-  requestExample = null;
+  const panel = document.getElementById('code-view');
+  if (!panel) return;
+  panel.innerHTML = '';
 
   const opblock = preferredOpblock || lastClickedOpblock || document.querySelector('.opblock.is-open');
   if (!opblock) {
-    panelHeaderMethod.className = 'method-pill default';
-    panelHeaderMethod.textContent = 'OP';
-    panelHeaderPath.textContent = '';
+    panel.innerHTML = '<div class="panel-empty">Abra uma operação (clicando em um endpoint) para ver exemplos de respostas e códigos aqui.</div>';
     return;
   }
 
-  // header
   const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
   const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
-  panelHeaderMethod.className = 'method-pill ' + (method ? method.toLowerCase() : 'default');
-  panelHeaderMethod.textContent = method || 'OP';
-  panelHeaderPath.textContent = path || '';
 
-  // extract examples
-  try { requestExample = extractRequestExample(opblock); } catch(e){ requestExample = null; }
-  try { responseExamples = extractResponseExamples(opblock); } catch(e){ responseExamples = []; }
+  const codeMethodEl = document.getElementById('code-method');
+  codeMethodEl.className = 'method-pill ' + (method ? method.toLowerCase() : 'default');
+  codeMethodEl.textContent = method || 'OP';
+  document.getElementById('code-path').textContent = path || '';
 
-  // Render request example if available
-  if (requestExample && requestExample.text) {
-    requestSection.style.display = '';
-    requestContentType.textContent = requestExample.contentType || 'application/json';
-    requestCodeArea.querySelector('pre code').textContent = requestExample.text || '';
-    try { hljs.highlightElement(requestCodeArea.querySelector('pre code')); } catch(e){/*ignore*/ }
-  } else {
-    requestSection.style.display = 'none';
+  let responses = findResponsesWrapper(opblock);
+  if (!responses && !opblock.classList.contains('is-open')) {
+    panel.innerHTML = '<div class="panel-empty">Carregando exemplos...</div>';
+    setTimeout(() => updateRightPanel(opblock), 240);
+    return;
+  }
+  if (!responses) {
+    panel.innerHTML = '<div class="panel-empty">Nenhuma resposta de exemplo encontrada para este endpoint.</div>';
+    return;
   }
 
-  // Render response examples
-  if (responseExamples && responseExamples.length) {
-    responseSection.style.display = '';
-    responseExamples.forEach((ex, idx) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'code-badge';
-      btn.textContent = ex.status;
-      btn.addEventListener('click', () => {
-        Array.from(responseCodes.children).forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        responseContentType.textContent = ex.contentType || 'application/json';
-        responseCodeArea.querySelector('pre code').textContent = ex.text || '';
-        try { hljs.highlightElement(responseCodeArea.querySelector('pre code')); } catch(e){/*ignore*/ }
-      });
-      if (idx === 0) btn.classList.add('active');
-      responseCodes.appendChild(btn);
-    });
+  const clone = responses.cloneNode(true);
+  clone.classList.add('responses-wrapper');
+  clone.querySelectorAll('.try-out, .execute, .btn, .model, .responses-request, .parameters, .tab, .tabbed').forEach(n => n.remove());
+  clone.querySelectorAll('pre, code').forEach(el => {
+    el.style.whiteSpace = 'pre-wrap';
+    el.style.wordBreak = 'break-word';
+    el.style.overflowWrap = 'anywhere';
+    el.classList.add('hljs');
+  });
 
-    const first = responseExamples[0];
-    responseContentType.textContent = first.contentType || 'application/json';
-    responseCodeArea.querySelector('pre code').textContent = first.text || '';
-    try { hljs.highlightElement(responseCodeArea.querySelector('pre code')); } catch(e){/*ignore*/ }
-  } else {
-    responseSection.style.display = 'none';
-  }
+  const badges = document.createElement('div');
+  badges.className = 'response-badges';
+  badges.innerHTML = `<div class="badge">200</div><div class="badge">4xx</div><div class="badge">5xx</div>`;
+  panel.appendChild(badges);
+  panel.appendChild(clone);
 
-  // wire controls for request
-  const rCopy = document.getElementById('request-copy');
-  const rExpand = document.getElementById('request-expand');
-  const rCollapse = document.getElementById('request-collapse');
-  if (rCopy) {
-    rCopy.onclick = async () => {
-      const text = requestCodeArea.querySelector('pre code')?.innerText || '';
-      try {
-        await navigator.clipboard.writeText(text);
-        rCopy.textContent = 'Copied ✓';
-        setTimeout(()=> rCopy.textContent = 'Copy', 1200);
-      } catch {
-        rCopy.textContent = 'Error';
-        setTimeout(()=> rCopy.textContent = 'Copy', 1200);
-      }
-    };
-  }
-  if (rExpand) rExpand.onclick = () => requestCodeArea.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre');
-  if (rCollapse) rCollapse.onclick = () => requestCodeArea.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre-wrap');
+  panel.querySelectorAll('pre code').forEach(block => {
+    try { hljs.highlightElement(block); } catch(e) { /* ignore */ }
+  });
 
-  // wire controls for response
-  const respCopy = document.getElementById('response-copy');
-  const respExpand = document.getElementById('response-expand');
-  const respCollapse = document.getElementById('response-collapse');
-  if (respCopy) {
-    respCopy.onclick = async () => {
-      const text = responseCodeArea.querySelector('pre code')?.innerText || '';
-      try {
-        await navigator.clipboard.writeText(text);
-        respCopy.textContent = 'Copied ✓';
-        setTimeout(()=> respCopy.textContent = 'Copy', 1200);
-      } catch {
-        respCopy.textContent = 'Error';
-        setTimeout(()=> respCopy.textContent = 'Copy', 1200);
-      }
-    };
-  }
-  if (respExpand) respExpand.onclick = () => responseCodeArea.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre');
-  if (respCollapse) respCollapse.onclick = () => responseCodeArea.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre-wrap');
+  const copyBtn = document.getElementById('code-copy');
+  copyBtn.onclick = async () => {
+    let text = '';
+    const codes = panel.querySelectorAll('pre code');
+    if (codes.length) {
+      text = Array.from(codes).map(c => c.innerText).join('\n\n---\n\n');
+    } else {
+      text = panel.innerText;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = 'Copiado ✓';
+      setTimeout(() => copyBtn.textContent = 'Copiar', 1200);
+    } catch {
+      copyBtn.textContent = 'Erro';
+      setTimeout(() => copyBtn.textContent = 'Copiar', 1200);
+    }
+  };
 
+  const openBtn = document.getElementById('code-open');
+  openBtn.onclick = () => {
+    opblock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const prev = opblock.style.boxShadow;
+    opblock.style.boxShadow = '0 10px 36px rgba(14,165,233,0.12)';
+    setTimeout(() => opblock.style.boxShadow = prev || '', 900);
+  };
 }
 
-/* Escape html helper */
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-/* Init: wait for swagger, relocate H2s, remove inline tag list, build sidebar, wire everything */
+/* Init sequence: wait for swagger, relocate H2s, build sidebar, wire interactions */
 (async function init() {
   try {
     await waitForSwaggerReady();
   } catch (e) {
     console.warn('Swagger UI may be slow to render:', e);
   } finally {
-    try { relocateH2s(); } catch(e){/*ignore*/ }
-    try { removeInlineTagList(); } catch(e){/*ignore*/ }
+    // relocate H2s first so sidebar sees them in the right place
+    try { relocateH2s(); } catch(e){/*ignore*/}
+
     try { buildSidebar(); } catch(e){/*ignore*/ }
     wireSearch();
     bindGlobalOpClicks();
     observeSwagger();
 
-    // populate right panel if op already open
+    // populate right panel if something already open
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
       if (open) {
         lastClickedOpblock = open;
         updateRightPanel(open);
-        highlightSidebarOp(open);
       }
     }, 350);
   }
