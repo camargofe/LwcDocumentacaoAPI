@@ -270,8 +270,9 @@
 
 <script>
 /* Mantive toda a lógica do seu arquivo funcional e acrescentei a remoção segura
-   do menu interno duplicado (quando presente) e reforço do scroll após clique.
-   Isso evita o "salto" do navegador para uma lista de tags inserida dentro do conteúdo. */
+   do menu interno duplicado (quando presente) e um bloqueio temporário de hashchange.
+   Assim evitamos o salto para a lista interna quando clicar na sidebar.
+*/
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 let lastClickedOpblock = null;
@@ -301,7 +302,7 @@ function waitForSwaggerReady(timeout = 15000) {
   });
 }
 
-/* Move H2s to top container */
+/* relocate H2s */
 function relocateH2s() {
   const ui = document.getElementById('swagger-ui');
   if (!ui) return;
@@ -322,43 +323,34 @@ function relocateH2s() {
   });
 }
 
-/* Remove duplicate inline tag list inside swagger content (safe heuristic).
-   Called when swagger renders, when rebuilding the sidebar and before navigation.
-*/
+/* remove inline list heuristic */
 function removeInlineTagList() {
   const ui = document.getElementById('swagger-ui');
   if (!ui) return;
-
   const tagEls = $qsa('.opblock-tag h3 span');
   const tagNames = tagEls.map(s => s.textContent.trim()).filter(Boolean);
   if (!tagNames.length) return;
-
   const candidates = ui.querySelectorAll('.info ul, .markdown ul, .wrapper ul, .description ul');
   candidates.forEach(ul => {
     const lis = Array.from(ul.querySelectorAll('li'));
     if (lis.length < 4) return;
     const texts = lis.map(li => (li.textContent || '').trim());
     let matches = 0;
-    for (const t of tagNames) {
-      if (texts.find(x => x.includes(t))) matches++;
-    }
+    for (const t of tagNames) if (texts.find(x => x.includes(t))) matches++;
     const threshold = Math.min(3, Math.max(1, Math.round(tagNames.length * 0.2)));
     if (matches >= threshold) {
       const parent = ul.closest('.markdown') || ul.closest('.info') || ul.closest('.wrapper') || ul.parentNode;
-      if (parent) parent.remove();
-      else ul.remove();
+      if (parent) parent.remove(); else ul.remove();
     }
   });
 }
 
-/* Build sidebar (kept from your working file), but call removeInlineTagList BEFORE navigation
-   and re-assert correct scroll AFTER navigation to avoid jumping to the inline list. */
+/* Build sidebar (kept) */
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
   if (!menu) return;
   menu.innerHTML = '';
 
-  // sections (h2)
   const h2s = $qsa('#swagger-ui h2');
   if (h2s.length) {
     const section = document.createElement('li');
@@ -385,7 +377,6 @@ function buildSidebar() {
     menu.appendChild(section);
   }
 
-  // tags + ops
   const tags = $qsa('.opblock-tag');
   tags.forEach(tagEl => {
     const titleSpan = tagEl.querySelector('h3 span');
@@ -418,32 +409,39 @@ function buildSidebar() {
                        </div>`;
 
       btn.addEventListener('click', () => {
-        // ensure any inline tag list is removed BEFORE navigating (avoids browser jumping)
-        try { removeInlineTagList(); } catch (e) { /* ignore */ }
+        // remove inline list before navigate
+        try { removeInlineTagList(); } catch(e) { /*ignore*/ }
 
         const opblock = op.closest('.opblock');
         if (!opblock) return;
         const summary = opblock.querySelector('.opblock-summary');
         if (summary) {
-          // scroll to target, trigger swagger open, then re-assert scroll and clear any hash
-          summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Temporarily block hashchange default jump by remembering scroll, then restoring
+          const prevScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+
+          // Listen one-time for hashchange and immediately remove hash to prevent jump
+          const onHash = () => {
+            try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /*ignore*/ }
+            // restore scroll to where we want
+            window.scrollTo(window.scrollX, prevScrollY);
+            window.removeEventListener('hashchange', onHash);
+          };
+          window.addEventListener('hashchange', onHash, { once: true });
+
+          // Trigger swagger open
           summary.click();
           lastClickedOpblock = opblock;
 
-          // after swagger does its work, force the scroll again to the opblock center
+          // After a brief delay let swagger render then force scroll to opblock and update panel
           setTimeout(() => {
-            try {
-              // remove any in-page hash that may point to the inline list
-              if (location.hash) {
-                history.replaceState(null, '', location.pathname + location.search);
-              }
-            } catch (e) { /* ignore */ }
-
-            try { removeInlineTagList(); } catch (e) { /* ignore */ }
-            opblock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            try { removeInlineTagList(); } catch(e){/*ignore*/}
+            // clear any hash that might have been created
+            try { history.replaceState(null, '', location.pathname + location.search); } catch(e){/*ignore*/}
+            // scroll to the opblock (center)
+            try { opblock.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e){ /* fallback */ window.scrollTo(0, prevScrollY); }
             updateRightPanel(opblock);
             highlightSidebarOp(opblock);
-          }, 240);
+          }, 220);
         }
       });
 
@@ -463,7 +461,11 @@ function buildSidebar() {
   });
 }
 
-/* Sidebar search */
+/* wireSearch, highlightSidebarOp, bindGlobalOpClicks, observeSwagger,
+   extractResponseExamples, updateRightPanel, escapeHtml remain exactly
+   as in your working version. (Kept below for completeness.)
+*/
+
 function wireSearch() {
   const input = document.getElementById('sidebar-search');
   if (!input) return;
@@ -486,7 +488,6 @@ function wireSearch() {
   });
 }
 
-/* Highlight corresponding op in the sidebar */
 function highlightSidebarOp(opblock) {
   if (!opblock) return;
   const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
@@ -507,7 +508,6 @@ function highlightSidebarOp(opblock) {
   });
 }
 
-/* capture clicks anywhere on opblock summaries */
 function bindGlobalOpClicks() {
   document.addEventListener('click', (e) => {
     const summary = e.target.closest('.opblock-summary');
@@ -535,7 +535,6 @@ function bindGlobalOpClicks() {
   });
 }
 
-/* Observe swagger UI mutations to rebuild sidebar & relocate H2s & remove inline lists */
 function observeSwagger() {
   const uiRoot = document.querySelector('#swagger-ui');
   if (!uiRoot) return;
@@ -570,7 +569,6 @@ function observeSwagger() {
   mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
-/* extract response examples (kept) */
 function extractResponseExamples(opblock) {
   const out = [];
   let responseNodes = opblock.querySelectorAll('.responses-wrapper .response');
@@ -615,7 +613,6 @@ function extractResponseExamples(opblock) {
   return unique;
 }
 
-/* Update right panel (kept from previous layout) */
 function updateRightPanel(preferredOpblock) {
   const methodEl = document.getElementById('code-method');
   const pathEl = document.getElementById('code-path');
