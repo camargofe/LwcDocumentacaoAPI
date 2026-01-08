@@ -22,6 +22,7 @@
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
     overflow-x: hidden; /* evita scroll horizontal */
+    overflow-y: auto;   /* permite rolagem vertical da página */
   }
 
   :root{
@@ -34,6 +35,7 @@
     --panel-bg: #12171a;
     --panel-card: #0f1617;
     --accent: #14b8a6;
+    --page-gutter: 18px;
   }
 
   /* ===== LAYOUT ===== */
@@ -43,6 +45,8 @@
     gap: 0;
     min-height: 100vh;
     align-items: start;
+    padding: var(--page-gutter);
+    column-gap: 18px;
   }
 
   /* ===== SIDEBAR ===== */
@@ -54,6 +58,10 @@
     flex-direction:column;
     gap:14px;
     position: relative;
+    /* make sidebar scrollable independently while keeping it visible */
+    max-height: calc(100vh - (var(--page-gutter) * 2));
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .brand { display:flex; align-items:center; gap:12px; padding-bottom:6px; border-bottom:1px solid rgba(2,6,23,0.03); }
@@ -129,7 +137,8 @@
   /* ===== CONTENT ===== */
   .content {
     background: transparent;
-    padding: 28px 42px;
+    padding: 0; /* page padding is on .layout */
+    min-width: 0; /* prevent overflow */
   }
 
   .swagger-ui {
@@ -139,7 +148,8 @@
     box-shadow: 0 10px 30px rgba(9,30,66,0.06);
     color: #0b1220;
     overflow: visible !important;
-    max-width: none;
+    width: 100%;
+    min-width: 0; /* important to avoid overflow */
   }
 
   /* Make swagger internals more predictable and avoid broken layouts */
@@ -169,7 +179,10 @@
 
   .swagger-ui .opblock { border: none; box-shadow: none; margin-bottom: 14px; }
 
-  /* ===== RIGHT PANEL ===== */
+  /* ===== RIGHT PANEL =====
+     Make the panel sticky and visible: it will stay on-screen while the main content scrolls.
+     The panel itself becomes scrollable when its content exceeds the viewport height.
+  */
   .code-panel {
     background: linear-gradient(180deg,var(--panel-bg),#0c1113);
     border-left: 1px solid rgba(255,255,255,0.03);
@@ -178,13 +191,17 @@
     display:flex;
     flex-direction:column;
     gap:18px;
-    position: relative;
+    position: sticky;
+    top: var(--page-gutter);
     align-self: start;
-    overflow: visible;
+    max-height: calc(100vh - (var(--page-gutter) * 2));
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    min-width: 0; /* avoid forcing horizontal scroll */
   }
 
-  .endpoint-header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
-  .endpoint-title { display:flex; align-items:center; gap:8px; }
+  .endpoint-header { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-shrink: 0; }
+  .endpoint-title { display:flex; align-items:center; gap:8px; min-width: 0; }
 
   .method-pill { padding:6px 10px; border-radius:8px; font-weight:800; font-size:12px; color:#fff; }
   .method-pill.get { background:#16a34a; }
@@ -192,9 +209,9 @@
   .method-pill.put { background:#f59e0b; color:#0b1220; }
   .method-pill.delete { background:#ef4444; }
 
-  .path-text { color: rgba(255,255,255,0.96); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; }
+  .path-text { color: rgba(255,255,255,0.96); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
 
-  .controls { display:flex; gap:8px; align-items:center; }
+  .controls { display:flex; gap:8px; align-items:center; flex-shrink: 0; }
   .btn {
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.03);
@@ -211,7 +228,7 @@
     border-radius:10px;
     padding:14px;
     color:#cfe8df;
-    overflow: visible; /* avoid internal scroll */
+    overflow: visible;
   }
 
   .responses-wrapper pre, .responses-wrapper code {
@@ -225,17 +242,18 @@
     overflow-wrap: anywhere;
   }
 
-  .response-badges { display:flex; gap:8px; margin-bottom:10px; }
+  .response-badges { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
   .response-badges .badge { padding:6px 8px; border-radius:8px; background: rgba(255,255,255,0.03); color:#cfe8df; font-weight:700; font-size:12px; }
 
   .panel-empty { color: rgba(255,255,255,0.65); font-size:13px; padding:8px; }
 
   /* Responsividade */
   @media (max-width: 1200px) {
-    .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 12px; }
     .code-panel { display: none; }
-    .sidebar { position: relative; width:100%; }
-    .content { padding: 20px; }
+    .sidebar { max-height: none; overflow: visible; position: relative; }
+    .content { padding-top: 12px; }
+    .swagger-ui { padding: 18px; }
   }
 
   @media (max-width: 880px) {
@@ -245,6 +263,9 @@
 
   .muted { color: var(--muted); font-size:12px; }
   .small { font-size:12px; color:var(--muted); }
+
+  /* Hide default Swagger horizontal overflow artifacts */
+  .swagger-ui .opblock .opblock-body { overflow: visible !important; }
 </style>
 </head>
 <body>
@@ -256,7 +277,6 @@
       <img src="https://developers-sandbox.bvopen.com.br/sites/default/files/apidoc_specs/API-PIX-V1/assets/images/logo.png" alt="Banco BV" class="brand-logo" />
       <div>
         <div class="brand-text">Banco BV</div>
-        <!-- subtítulo removido conforme solicitado -->
       </div>
     </div>
 
@@ -298,18 +318,13 @@
 
 <script>
 /*
-  Robust version:
-  - Detects swagger rendering reliably.
-  - Builds sidebar from H2 (sections) and tags.
-  - Captures clicks anywhere on opblock-summary children.
-  - More ways to find example/response blocks (robust fallback).
+  Keep previous robust behavior; no changes required here for the sticky panel.
+  The CSS ensures the sidebar and right panel are visible and scrollable when needed.
 */
-
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 let lastClickedOpblock = null;
 let sidebarBuilt = false;
 
-// Initialize Swagger UI
 SwaggerUIBundle({
   url: SWAGGER_URL,
   dom_id: "#swagger-ui",
@@ -318,7 +333,6 @@ SwaggerUIBundle({
   presets: [SwaggerUIBundle.presets.apis]
 });
 
-// helpers
 const $qs = (s, scope = document) => scope.querySelector(s);
 const $qsa = (s, scope = document) => Array.from((scope || document).querySelectorAll(s));
 
@@ -326,7 +340,6 @@ function waitForSwaggerReady(timeout = 15000) {
   return new Promise((resolve, reject) => {
     const start = Date.now();
     (function check() {
-      // prefer actual opblock summaries as a sign of readiness
       if ($qsa('.opblock-summary').length > 0 || $qsa('#swagger-ui h2').length > 0) return resolve();
       if (Date.now() - start > timeout) return reject(new Error('Swagger UI did not render in time'));
       requestAnimationFrame(check);
@@ -334,12 +347,12 @@ function waitForSwaggerReady(timeout = 15000) {
   });
 }
 
-/* Build sidebar: H2 sections + tags + ops (no "Seção" label) */
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
+  if (!menu) return;
   menu.innerHTML = '';
 
-  // add H2 sections (if any)
+  // H2 sections
   const h2s = $qsa('#swagger-ui h2');
   if (h2s.length) {
     const section = document.createElement('li');
@@ -368,7 +381,7 @@ function buildSidebar() {
     menu.appendChild(section);
   }
 
-  // collect tags and ops
+  // tags + ops
   const tags = $qsa('.opblock-tag');
   tags.forEach(tagEl => {
     const titleSpan = tagEl.querySelector('h3 span');
@@ -396,7 +409,6 @@ function buildSidebar() {
       const btn = document.createElement('button');
       btn.className = 'op-link';
       btn.type = 'button';
-      // simplified: display path once
       btn.innerHTML = `<div class="method-pill-left method-${method.toLowerCase()}">${escapeHtml(method)}</div>
                        <div style="display:flex;flex-direction:column;align-items:flex-start;">
                          <div style="font-size:13px;color:#0b1220;">${escapeHtml(path)}</div>
@@ -408,10 +420,8 @@ function buildSidebar() {
         const summary = opblock.querySelector('.opblock-summary');
         if (summary) {
           summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // trigger click on the actual summary to ensure Swagger opens it
           summary.click();
           lastClickedOpblock = opblock;
-          // update after a small delay to let swagger render the open content
           setTimeout(() => updateRightPanel(opblock), 260);
         }
       });
@@ -434,7 +444,6 @@ function buildSidebar() {
   sidebarBuilt = true;
 }
 
-/* wire search input */
 function wireSearch() {
   const input = document.getElementById('sidebar-search');
   if (!input) return;
@@ -457,7 +466,6 @@ function wireSearch() {
   });
 }
 
-/* capture clicks robustly on opblock summaries (document level) */
 function bindGlobalOpClicks() {
   document.addEventListener('click', (e) => {
     const summary = e.target.closest('.opblock-summary');
@@ -465,7 +473,6 @@ function bindGlobalOpClicks() {
     const opblock = summary.closest('.opblock');
     if (!opblock) return;
     lastClickedOpblock = opblock;
-    // Slight delay to allow swagger's internal expansions to complete
     setTimeout(() => updateRightPanel(opblock), 200);
   });
 
@@ -480,7 +487,6 @@ function bindGlobalOpClicks() {
   });
 }
 
-/* Observe DOM changes to rebuild sidebar when swagger renders new content */
 function observeSwagger() {
   const uiRoot = document.querySelector('#swagger-ui');
   if (!uiRoot) return;
@@ -507,7 +513,6 @@ function observeSwagger() {
   mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
-/* Stronger search for response/example blocks inside opblock */
 function findResponsesWrapper(opblockEl) {
   if (!opblockEl) return null;
 
@@ -529,7 +534,6 @@ function findResponsesWrapper(opblockEl) {
     if (node) return node;
   }
 
-  // try to find any <pre> or <code> inside
   const pre = opblockEl.querySelector('pre, code, .highlight');
   if (pre) {
     const wrapper = document.createElement('div');
@@ -541,7 +545,6 @@ function findResponsesWrapper(opblockEl) {
   return null;
 }
 
-/* update right panel (robust) */
 function updateRightPanel(preferredOpblock) {
   const panel = document.getElementById('code-view');
   if (!panel) return;
@@ -556,13 +559,11 @@ function updateRightPanel(preferredOpblock) {
   const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
   const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
 
-  // header update
   const codeMethodEl = document.getElementById('code-method');
   codeMethodEl.className = 'method-pill ' + (method ? method.toLowerCase() : 'default');
   codeMethodEl.textContent = method || 'OP';
   document.getElementById('code-path').textContent = path || '';
 
-  // find responses (with retries if not yet rendered)
   let responses = findResponsesWrapper(opblock);
   if (!responses && !opblock.classList.contains('is-open')) {
     panel.innerHTML = '<div class="panel-empty">Carregando exemplos...</div>';
@@ -574,13 +575,9 @@ function updateRightPanel(preferredOpblock) {
     return;
   }
 
-  // clone, sanitize and format
   const clone = responses.cloneNode(true);
   clone.classList.add('responses-wrapper');
-
   clone.querySelectorAll('.try-out, .execute, .btn, .model, .responses-request, .parameters, .tab, .tabbed').forEach(n => n.remove());
-
-  // force wrapping & highlight classes
   clone.querySelectorAll('pre, code').forEach(el => {
     el.style.whiteSpace = 'pre-wrap';
     el.style.wordBreak = 'break-word';
@@ -588,19 +585,16 @@ function updateRightPanel(preferredOpblock) {
     el.classList.add('hljs');
   });
 
-  // badges
   const badges = document.createElement('div');
   badges.className = 'response-badges';
   badges.innerHTML = `<div class="badge">200</div><div class="badge">4xx</div><div class="badge">5xx</div>`;
   panel.appendChild(badges);
   panel.appendChild(clone);
 
-  // highlight (safe)
   panel.querySelectorAll('pre code').forEach(block => {
     try { hljs.highlightElement(block); } catch(e) { /* ignore */ }
   });
 
-  // wire copy button
   const copyBtn = document.getElementById('code-copy');
   copyBtn.onclick = async () => {
     let text = '';
@@ -620,7 +614,6 @@ function updateRightPanel(preferredOpblock) {
     }
   };
 
-  // open button
   const openBtn = document.getElementById('code-open');
   openBtn.onclick = () => {
     opblock.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -630,35 +623,29 @@ function updateRightPanel(preferredOpblock) {
   };
 }
 
-/* Escape html */
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-/* Init: wait for swagger, then wire everything */
 (async function init() {
   try {
     await waitForSwaggerReady();
   } catch (e) {
     console.warn('Swagger UI may be slow to render:', e);
   } finally {
-    // attempt to build sidebar even if wait timed out
     try { buildSidebar(); } catch(e) { /* ignore */ }
     wireSearch();
     bindGlobalOpClicks();
     observeSwagger();
 
-    // if something already open, populate right panel
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
       if (open) {
         lastClickedOpblock = open;
         updateRightPanel(open);
       } else {
-        // try to pick first opblock-summary
         const first = document.querySelector('.opblock');
         if (first) {
-          // do not auto-open, but prepare sidebar highlight if matching
           try { updateRightPanel(first); } catch(e){/*ignore*/ }
         }
       }
