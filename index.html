@@ -19,11 +19,12 @@
     --right-bg: #263238;
     --right-card: #0e1416;
     --accent: #2dd4bf;
+    --fixed-panel-height: 720px; /* altura fixa para swagger-ui e code-panel (ajuste aqui) */
   }
 
   html, body {
     margin: 0;
-    height: 100%;
+    min-height: 100%;
     font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, Helvetica;
     background: var(--bg);
     color: #0b1220;
@@ -35,7 +36,8 @@
   .layout {
     display: grid;
     grid-template-columns: var(--sidebar-width) 1fr var(--right-width);
-    height: 100vh;
+    min-height: 100vh;
+    gap: 0;
   }
 
   /* ===== SIDEBAR ===== */
@@ -169,13 +171,18 @@
   /* ===== CONTENT ===== */
   .content {
     background: #fff;
-    overflow-y: auto;
+    /* removido overflow interno para evitar scroll dentro do painel principal */
+    overflow: visible;
   }
 
+  /* fixar a area do swagger em uma medida fixa e sem scroll interno */
   .swagger-ui {
     padding: 28px 42px;
     max-width: 900px;
     margin: 0 auto;
+    height: var(--fixed-panel-height);
+    overflow: visible; /* sem scroll interno */
+    box-sizing: border-box;
   }
 
   /* Make the default swagger opblocks spacing similar to screenshot */
@@ -190,10 +197,14 @@
     border-left: 1px solid rgba(255,255,255,0.03);
     padding: 18px;
     color: #fff;
-    overflow-y: auto;
+    /* removido overflow interno, altura fixa e sticky */
+    height: var(--fixed-panel-height);
+    overflow: visible;
     display:flex;
     flex-direction:column;
     gap:18px;
+    position: sticky;
+    top: 20px;
   }
 
   .endpoint-header {
@@ -241,6 +252,7 @@
     border-radius:6px;
     padding:16px;
     color:#cfe8df;
+    overflow: visible;
   }
 
   .responses-wrapper pre {
@@ -282,6 +294,9 @@
 
   /* small helpers */
   .muted { color: var(--muted); font-size:12px; }
+
+  /* fixed tag visual hint (optional) */
+  .tag-item.fixed .tag-head strong::after { content: " •"; color: var(--accent); font-weight:700; margin-left:6px; font-size:12px; }
 </style>
 </head>
 
@@ -332,18 +347,48 @@
 
 <script>
 /*
-  Enhanced sidebar that mirrors the layout in the provided screenshot:
-  - Lists tags with counts.
-  - Under each tag, lists operations with method pill + path.
-  - Clicking an operation scrolls to and opens the opblock (by dispatching a click on Swagger's .opblock-summary).
-  - Search filters tags & operations.
-  - Right panel remains the cloned response area.
+  Enhanced sidebar with:
+  - fixed menu items merged with auto-generated tags,
+  - fixed-size swagger UI and code panel (no internal scroll).
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 let lastClickedOpblock = null;
 
-// Initialize Swagger UI
+/* --- LIST OF FIXED TAGS (provided by user) --- */
+const FIXED_TAGS = [
+  "O que é o Pix?",
+  "SLAs",
+  "Idempotência",
+  "Releases",
+  "Operacional",
+  "Fluxos de tentativas no envio de pagamentos",
+  "Location",
+  "Gerenciamento de cobranças para pagamento imediato",
+  "Gerenciamento de cobranças com vencimento",
+  "Gerenciamento de cobranças com vencimento em lote",
+  "Notificação",
+  "Gerenciamento de Pix recebidos",
+  "Gerenciamento de Pix enviados",
+  "DICT",
+  "Notificação de Infração",
+  "QRCode",
+  "Reúne endpoints (locations) que retornam o Payload JSON que representa uma Cobrança",
+  "Solicitação de Devolução Especial",
+  "Pix Saque e Pix Troco",
+  "Participantes SPI",
+  "Gerenciamento de Notificações - Webhook",
+  "Iniciação de Pagamento",
+  "Políticas",
+  "Antifraude",
+  "Agendamentos",
+  "Pix Automático",
+  "Recuperação de Valores",
+  "Autenticação e Segurança",
+  "Iniciação Open Finance - ITP"
+];
+
+/* Initialize Swagger UI */
 SwaggerUIBundle({
   url: SWAGGER_URL,
   dom_id: "#swagger-ui",
@@ -367,30 +412,109 @@ function waitForSwaggerReady(timeout = 12000) {
   });
 }
 
-/* Build sidebar with tags and nested operations */
+/* Utility normalization for tag matching */
+function normalizeTagName(n) {
+  return String(n || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // remove diacritics
+}
+
+/* Build sidebar with fixed tags merged with Swagger tags */
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
   menu.innerHTML = '';
 
-  const tags = $qsa('.opblock-tag');
-  tags.forEach(tagEl => {
+  // collect swagger tag elements by normalized title
+  const swaggerTagEls = $qsa('.opblock-tag');
+  const tagMap = new Map(); // normName -> { el, title, operations }
+  swaggerTagEls.forEach(tagEl => {
     const titleSpan = tagEl.querySelector('h3 span');
     if (!titleSpan) return;
     const titleText = titleSpan.textContent.trim();
+    const norm = normalizeTagName(titleText);
+    const operations = Array.from(tagEl.querySelectorAll('.opblock-summary'));
+    tagMap.set(norm, { el: tagEl, title: titleText, ops: operations });
+  });
 
-    const operations = tagEl.querySelectorAll('.opblock-summary');
-    const count = operations.length;
+  const processed = new Set();
 
+  // First: add fixed tags in the given order, merging operations when available
+  FIXED_TAGS.forEach(fixedName => {
+    const norm = normalizeTagName(fixedName);
+    const found = tagMap.get(norm);
+    const li = document.createElement('li');
+    li.className = 'tag-item fixed';
+    li.tabIndex = 0;
+
+    const head = document.createElement('div');
+    head.className = 'tag-head';
+    const count = found ? found.ops.length : 0;
+    head.innerHTML = `<strong>${escapeHtml(fixedName)}</strong><div class="tag-count">${count}</div>`;
+    li.appendChild(head);
+
+    const opsContainer = document.createElement('div');
+    opsContainer.className = 'ops';
+
+    if (found && found.ops.length) {
+      found.ops.forEach(op => {
+        const method = op.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
+        const path = op.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
+        const btn = document.createElement('button');
+        btn.className = 'op-link';
+        btn.type = 'button';
+        btn.innerHTML = `<div class="method-pill-left method-${escapeHtml(method.toLowerCase())}">${escapeHtml(method)}</div>
+                         <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                           <div style="font-size:13px;color:#0b1220;">${escapeHtml(path)}</div>
+                           <div class="op-path" style="margin-top:2px">${escapeHtml(path)}</div>
+                         </div>`;
+        btn.addEventListener('click', () => {
+          const opblock = op.closest('.opblock');
+          if (!opblock) return;
+          const summary = opblock.querySelector('.opblock-summary');
+          if (summary) {
+            summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            summary.click();
+            lastClickedOpblock = opblock;
+            setTimeout(() => updateRightPanel(opblock), 220);
+          }
+        });
+        opsContainer.appendChild(btn);
+      });
+    } else {
+      // placeholder: no operations found for this fixed tag in Swagger
+      const placeholder = document.createElement('div');
+      placeholder.className = 'muted';
+      placeholder.style.padding = '6px 8px';
+      placeholder.textContent = 'Sem endpoints visíveis para este tópico.';
+      opsContainer.appendChild(placeholder);
+    }
+
+    li.appendChild(opsContainer);
+
+    head.addEventListener('click', () => {
+      const isActive = li.classList.contains('active');
+      Array.from(menu.children).forEach(n => n.classList.remove('active'));
+      if (!isActive) li.classList.add('active');
+      // scroll corresponding swagger tag into view if available
+      if (found && found.el) found.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    menu.appendChild(li);
+    if (found) processed.add(norm);
+  });
+
+  // Then: add any remaining swagger tags that were not in the fixed list
+  for (const [norm, info] of tagMap.entries()) {
+    if (processed.has(norm)) continue;
+    const titleText = info.title;
+    const operations = info.ops;
     const li = document.createElement('li');
     li.className = 'tag-item';
     li.tabIndex = 0;
 
     const head = document.createElement('div');
     head.className = 'tag-head';
-    head.innerHTML = `<strong>${escapeHtml(titleText)}</strong><div class="tag-count">${count}</div>`;
+    head.innerHTML = `<strong>${escapeHtml(titleText)}</strong><div class="tag-count">${operations.length}</div>`;
     li.appendChild(head);
 
-    // operations list
     const opsContainer = document.createElement('div');
     opsContainer.className = 'ops';
 
@@ -400,24 +524,20 @@ function buildSidebar() {
       const btn = document.createElement('button');
       btn.className = 'op-link';
       btn.type = 'button';
-      btn.innerHTML = `<div class="method-pill-left method-${method.toLowerCase()}">${escapeHtml(method)}</div>
+      btn.innerHTML = `<div class="method-pill-left method-${escapeHtml(method.toLowerCase())}">${escapeHtml(method)}</div>
                        <div style="display:flex;flex-direction:column;align-items:flex-start;">
                          <div style="font-size:13px;color:#0b1220;">${escapeHtml(path)}</div>
                          <div class="op-path" style="margin-top:2px">${escapeHtml(path)}</div>
                        </div>`;
 
-      // wire click: simulate click on corresponding swagger opblock-summary element to open it
       btn.addEventListener('click', () => {
         const opblock = op.closest('.opblock');
         if (!opblock) return;
-
-        // prefer to invoke Swagger's summary click to ensure correct behavior
         const summary = opblock.querySelector('.opblock-summary');
         if (summary) {
           summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
           summary.click();
           lastClickedOpblock = opblock;
-          // update right panel after a small delay to allow Swagger to render examples
           setTimeout(() => updateRightPanel(opblock), 220);
         }
       });
@@ -427,18 +547,15 @@ function buildSidebar() {
 
     li.appendChild(opsContainer);
 
-    // expand/collapse by clicking tag head
     head.addEventListener('click', () => {
       const isActive = li.classList.contains('active');
-      // collapse all
       Array.from(menu.children).forEach(n => n.classList.remove('active'));
       if (!isActive) li.classList.add('active');
-      // scroll tag into view
-      tagEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (info.el) info.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
     menu.appendChild(li);
-  });
+  }
 }
 
 /* Set active tag visually (keeps minimal behavior like screenshot) */
@@ -474,8 +591,7 @@ function wireSearch() {
   });
 }
 
-/* Bind clicks on opblock summaries (delegation) to capture last clicked opblock
-   We DO NOT prevent default: let Swagger open the block so examples render. */
+/* Bind clicks on opblock summaries (delegation) to capture last clicked opblock */
 function bindEndpointClicks() {
   const container = document.getElementById('swagger-ui');
   if (!container) return;
@@ -515,7 +631,6 @@ function observeOpblockOpenEvents() {
         if (target.classList && target.classList.contains('opblock') && target.classList.contains('is-open')) {
           const preferred = lastClickedOpblock || target;
           setTimeout(() => updateRightPanel(preferred), 80);
-          // also update sidebar active op visually
           highlightSidebarOp(preferred);
         }
       }
@@ -540,13 +655,11 @@ function highlightSidebarOp(opblock) {
   const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
   const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
 
-  // find matching op-link
   const ops = $qsa('#sidebar-menu .op-link');
   ops.forEach(op => {
     const text = op.textContent || '';
     const isMatch = text.includes(path) && text.includes(method);
     op.classList.toggle('active', isMatch);
-    // ensure parent tag is active/expanded
     if (isMatch) {
       const tagItem = op.closest('.tag-item');
       if (tagItem) {
@@ -561,18 +674,15 @@ function highlightSidebarOp(opblock) {
 function findResponsesWrapper(opblockEl) {
   if (!opblockEl) return null;
 
-  // Common directly available wrapper
   let node = opblockEl.querySelector('.responses-wrapper');
   if (node) return node;
 
-  // Some swagger versions place responses inside sections
   node = opblockEl.querySelector('.opblock-body .responses-wrapper');
   if (node) return node;
 
   node = opblockEl.querySelector('.opblock-section .responses-wrapper');
   if (node) return node;
 
-  // Examples can be under .response or inside tables; try to find <pre> blocks
   const pre = opblockEl.querySelector('pre');
   if (pre) {
     const wrapper = document.createElement('div');
@@ -581,7 +691,6 @@ function findResponsesWrapper(opblockEl) {
     return wrapper;
   }
 
-  // No responses found
   return null;
 }
 
@@ -590,28 +699,22 @@ function updateRightPanel(preferredOpblock) {
   const panel = document.getElementById('code-view');
   panel.innerHTML = '';
 
-  // Determine target opblock: prefer provided, then lastClickedOpblock, then first open
   let opblock = preferredOpblock || lastClickedOpblock || document.querySelector('.opblock.is-open');
   if (!opblock) {
-    // nothing to show
     panel.innerHTML = '<div class="panel-empty">Abra uma operação (clicando em um endpoint) para ver exemplos de respostas e códigos aqui.</div>';
     return;
   }
 
-  // If the opblock is not open yet (no .is-open) we still try, but prefer that the user click so Swagger renders content.
   const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
   const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
 
-  // Header
   const codeMethodEl = document.getElementById('code-method');
   codeMethodEl.className = 'method-pill ' + (method ? method.toLowerCase() : 'default');
   codeMethodEl.textContent = method || 'OP';
   document.getElementById('code-path').textContent = path || '';
 
-  // Try to find responses
   let responses = findResponsesWrapper(opblock);
 
-  // If not found, but the opblock is not open, give Swagger a small moment (sometimes rendering is slightly delayed)
   if (!responses && !opblock.classList.contains('is-open')) {
     setTimeout(() => updateRightPanel(opblock), 240);
     panel.innerHTML = '<div class="panel-empty">Carregando exemplos...</div>';
@@ -623,21 +726,17 @@ function updateRightPanel(preferredOpblock) {
     return;
   }
 
-  // Clone responses for the right panel
   const clone = responses.cloneNode(true);
   clone.classList.add('responses-wrapper');
 
-  // Remove interactive elements not useful in the right panel
   clone.querySelectorAll('.try-out, .execute, .btn, .model, .responses-request, .parameters, .tab, .tabbed').forEach(n => n.remove());
 
-  // Normalize any pre/code blocks for highlight.js
   clone.querySelectorAll('pre, code').forEach(el => {
     el.style.whiteSpace = 'pre';
     el.style.wordBreak = 'break-word';
     el.classList.add('hljs');
   });
 
-  // Add simple response badges like screenshot
   const badges = document.createElement('div');
   badges.className = 'response-badges';
   badges.innerHTML = `<div class="badge">200</div><div class="badge">403</div><div class="badge">503</div>`;
@@ -645,12 +744,10 @@ function updateRightPanel(preferredOpblock) {
 
   panel.appendChild(clone);
 
-  // Highlight code blocks inside panel
   panel.querySelectorAll('pre code').forEach(block => {
     try { hljs.highlightElement(block); } catch(e) { /* ignore */ }
   });
 
-  // Setup copy button to copy concatenated code blocks or panel text
   const copyBtn = document.getElementById('code-copy');
   copyBtn.onclick = async () => {
     let text = '';
@@ -670,7 +767,6 @@ function updateRightPanel(preferredOpblock) {
     }
   };
 
-  // When "Ir ao endpoint" is clicked, scroll to the opblock and briefly highlight it
   const openBtn = document.getElementById('code-open');
   openBtn.onclick = () => {
     opblock.scrollIntoView({ behavior: 'smooth', block: 'center' });
