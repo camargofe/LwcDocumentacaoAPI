@@ -172,7 +172,7 @@
 
   .swagger-ui .opblock { border: none; box-shadow: none; margin-bottom: 12px; }
 
-  /* ===== RIGHT PANEL - NEW DARK LAYOUT (matches provided screenshot) ===== */
+  /* ===== RIGHT PANEL - DARK LAYOUT ===== */
   .code-panel {
     background: var(--panel-bg);
     border-left: 1px solid rgba(255,255,255,0.03);
@@ -202,7 +202,6 @@
     gap:10px;
   }
   .panel-header .try-badge {
-    background:#2c7; /* light but subtle - will be adjusted by method color visually */
     background: #6a9fb0;
     color: #eaf6f5;
     padding: 4px 8px;
@@ -338,6 +337,7 @@
     .swagger-ui { max-height: none; overflow: visible; padding: 16px; }
   }
 
+  .swagger-ui .opblock .opblock-body { overflow: visible !important; }
 </style>
 </head>
 <body>
@@ -413,22 +413,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
 <script>
-/*
-  Enhanced right panel presentation:
-  - New dark header bar (try + method + path)
-  - Structured "Request samples" and "Response samples" sections
-  - Copy / Expand / Collapse controls per section
-  - Response code badges to switch displayed example
-  - Attempts to extract request example(s) and response example(s) from the opblock.
-  - Graceful fallbacks when examples are not present.
-*/
-
+/* Combined: functional sidebar + new code-panel behavior */
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 let lastClickedOpblock = null;
-let responseExamples = []; // {status, contentType, text}
-let requestExample = null;  // {contentType, text}
+let responseExamples = [];
+let requestExample = null;
 
-// Initialize Swagger UI
+/* Initialize Swagger UI */
 SwaggerUIBundle({
   url: SWAGGER_URL,
   dom_id: "#swagger-ui",
@@ -437,7 +428,7 @@ SwaggerUIBundle({
   presets: [SwaggerUIBundle.presets.apis]
 });
 
-// helpers
+/* helpers */
 const $qs = (s, scope = document) => (scope || document).querySelector(s);
 const $qsa = (s, scope = document) => Array.from((scope || document).querySelectorAll(s));
 
@@ -452,7 +443,7 @@ function waitForSwaggerReady(timeout = 15000) {
   });
 }
 
-/* Move floating H2s into top container */
+/* Move H2s to top container to avoid floating titles in content */
 function relocateH2s() {
   const ui = document.getElementById('swagger-ui');
   if (!ui) return;
@@ -474,12 +465,13 @@ function relocateH2s() {
   });
 }
 
-/* Build sidebar (H2 + tags + ops) */
+/* Build sidebar: H2 sections + tags + operations (robust) */
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
   if (!menu) return;
   menu.innerHTML = '';
 
+  // 1) H2 sections
   const h2s = $qsa('#swagger-ui h2');
   if (h2s.length) {
     const section = document.createElement('li');
@@ -489,6 +481,7 @@ function buildSidebar() {
     list.style.display = 'flex';
     list.style.flexDirection = 'column';
     list.style.gap = '6px';
+
     h2s.forEach(h2 => {
       const text = (h2.textContent || '').trim();
       const btn = document.createElement('button');
@@ -502,10 +495,12 @@ function buildSidebar() {
       });
       list.appendChild(btn);
     });
+
     section.appendChild(list);
     menu.appendChild(section);
   }
 
+  // 2) Tags + operations
   const tags = $qsa('.opblock-tag');
   tags.forEach(tagEl => {
     const titleSpan = tagEl.querySelector('h3 span');
@@ -517,6 +512,7 @@ function buildSidebar() {
 
     const li = document.createElement('li');
     li.className = 'menu-section';
+    li.tabIndex = 0;
 
     const head = document.createElement('div');
     head.className = 'menu-heading';
@@ -537,6 +533,7 @@ function buildSidebar() {
                          <div style="font-size:13px;color:#0b1220;">${escapeHtml(path)}</div>
                        </div>`;
 
+      // clicking the sidebar item should open the opblock in swagger and update panel
       btn.addEventListener('click', () => {
         const opblock = op.closest('.opblock');
         if (!opblock) return;
@@ -565,7 +562,7 @@ function buildSidebar() {
   });
 }
 
-/* Basic search */
+/* Sidebar search */
 function wireSearch() {
   const input = document.getElementById('sidebar-search');
   if (!input) return;
@@ -588,7 +585,28 @@ function wireSearch() {
   });
 }
 
-/* Capture clicks on opblocks */
+/* Highlight corresponding op in the sidebar */
+function highlightSidebarOp(opblock) {
+  if (!opblock) return;
+  const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
+  const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
+
+  const ops = $qsa('#sidebar-menu .op-link');
+  ops.forEach(op => {
+    const text = op.textContent || '';
+    const isMatch = text.includes(path) && text.includes(method);
+    op.classList.toggle('active', isMatch);
+    if (isMatch) {
+      const tagItem = op.closest('.menu-section');
+      if (tagItem) {
+        Array.from(document.querySelectorAll('#sidebar-menu .menu-section')).forEach(t => t.classList.remove('active'));
+        tagItem.classList.add('active');
+      }
+    }
+  });
+}
+
+/* capture clicks anywhere on opblock summaries */
 function bindGlobalOpClicks() {
   document.addEventListener('click', (e) => {
     const summary = e.target.closest('.opblock-summary');
@@ -596,7 +614,10 @@ function bindGlobalOpClicks() {
     const opblock = summary.closest('.opblock');
     if (!opblock) return;
     lastClickedOpblock = opblock;
-    setTimeout(() => updateRightPanel(opblock), 200);
+    setTimeout(() => {
+      updateRightPanel(opblock);
+      highlightSidebarOp(opblock);
+    }, 200);
   });
 
   document.addEventListener('keydown', (e) => {
@@ -606,11 +627,14 @@ function bindGlobalOpClicks() {
     const opblock = summary.closest('.opblock');
     if (!opblock) return;
     lastClickedOpblock = opblock;
-    setTimeout(() => updateRightPanel(opblock), 200);
+    setTimeout(() => {
+      updateRightPanel(opblock);
+      highlightSidebarOp(opblock);
+    }, 200);
   });
 }
 
-/* Observe swagger render & rebuild sidebar + relocate h2s */
+/* Observe swagger UI mutations to rebuild sidebar & relocate H2s */
 function observeSwagger() {
   const uiRoot = document.querySelector('#swagger-ui');
   if (!uiRoot) return;
@@ -622,7 +646,10 @@ function observeSwagger() {
         const t = m.target;
         if (t.classList && t.classList.contains('opblock') && t.classList.contains('is-open')) {
           const preferred = lastClickedOpblock || t;
-          setTimeout(() => updateRightPanel(preferred), 80);
+          setTimeout(() => {
+            updateRightPanel(preferred);
+            highlightSidebarOp(preferred);
+          }, 80);
         }
       }
     }
@@ -641,9 +668,8 @@ function observeSwagger() {
   mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
-/* Try to extract request example from opblock */
+/* Heuristics to find request & response example content */
 function extractRequestExample(opblock) {
-  // heuristics - try common places
   const selectors = [
     '.opblock-body .request-body pre',
     '.opblock-body .request-body code',
@@ -652,7 +678,7 @@ function extractRequestExample(opblock) {
     '.opblock-body .parameter__examples pre',
     '.opblock-section .example pre',
     '.opblock-section .example code',
-    '.try-out .microlight', // sometimes used
+    '.try-out .microlight',
   ];
   for (const sel of selectors) {
     const node = opblock.querySelector(sel);
@@ -661,7 +687,6 @@ function extractRequestExample(opblock) {
     }
   }
 
-  // as fallback, check for a request textarea (swagger try it) and read its value
   const textarea = opblock.querySelector('textarea');
   if (textarea && textarea.value.trim()) {
     return { contentType: 'application/json', text: textarea.value.trim() };
@@ -670,58 +695,41 @@ function extractRequestExample(opblock) {
   return null;
 }
 
-/* Extract response examples from opblock; returns array of {status, contentType, text} */
 function extractResponseExamples(opblock) {
   const out = [];
-
-  // try structured responses first
   let responseNodes = opblock.querySelectorAll('.responses-wrapper .response');
   if (!responseNodes || responseNodes.length === 0) {
     responseNodes = opblock.querySelectorAll('.response');
   }
-
-  responseNodes = Array.from(responseNodes);
-  // dedupe nodes that are inside other opblocks
-  responseNodes = responseNodes.filter(n => opblock.contains(n));
-
+  responseNodes = Array.from(responseNodes).filter(n => opblock.contains(n));
   for (const node of responseNodes) {
-    // find status text
     let status = (node.querySelector('.response-col_status')?.textContent ||
                   node.querySelector('.response__status')?.textContent ||
                   node.querySelector('.response-status-code')?.textContent ||
                   node.querySelector('h4')?.textContent ||
                   node.querySelector('.response_status')?.textContent ||
                   '').trim();
-
-    // normalize numeric code using regex
     const m = status.match(/(\d{3})/);
     if (m) status = m[1];
     else {
-      // try to find from node heading or label
       const fallback = node.textContent.match(/(^|\s)(\d{3})(\b)/);
       status = fallback ? fallback[2] : 'default';
     }
-
-    // find example content inside node
     const pre = node.querySelector('pre') || node.querySelector('code') || node.querySelector('.microlight');
     const text = pre ? pre.innerText.trim() : null;
-    const contentType = node.querySelector('.response-col_description') ? 'application/json' : 'application/json';
+    const contentType = 'application/json';
     if (text) out.push({ status, contentType, text });
   }
 
-  // if nothing found, fallback: look for any pre/code under opblock (common)
   if (out.length === 0) {
-    const pres = opblock.querySelectorAll('pre, code');
-    // choose those inside responses-wrapper first
     const presInResponses = opblock.querySelectorAll('.responses-wrapper pre, .responses-wrapper code');
-    const chosen = presInResponses.length ? presInResponses : pres;
+    const chosen = presInResponses.length ? presInResponses : opblock.querySelectorAll('pre, code');
     Array.from(chosen).forEach((p, idx) => {
       const txt = p.innerText.trim();
       if (txt) out.push({ status: (idx === 0 ? '200' : 'example' + idx), contentType: 'application/json', text: txt });
     });
   }
 
-  // uniq by status (keep first)
   const seen = new Set();
   const unique = [];
   for (const e of out) {
@@ -734,7 +742,7 @@ function extractResponseExamples(opblock) {
   return unique;
 }
 
-/* Update the right panel with structured UI */
+/* Update right panel (uses new dark layout structure) */
 function updateRightPanel(preferredOpblock) {
   const panelHeaderMethod = document.getElementById('code-method');
   const panelHeaderPath = document.getElementById('code-path');
@@ -742,14 +750,13 @@ function updateRightPanel(preferredOpblock) {
   const requestSection = document.getElementById('request-section');
   const requestContentType = document.getElementById('request-content-type');
   const requestCodeArea = document.getElementById('request-code-area');
-  const requestCard = document.getElementById('request-card');
 
   const responseSection = document.getElementById('response-section');
   const responseCodes = document.getElementById('response-codes');
   const responseContentType = document.getElementById('response-content-type');
   const responseCodeArea = document.getElementById('response-code-area');
 
-  // reset
+  // reset UI
   requestSection.style.display = 'none';
   responseSection.style.display = 'none';
   responseCodes.innerHTML = '';
@@ -774,47 +781,38 @@ function updateRightPanel(preferredOpblock) {
   panelHeaderPath.textContent = path || '';
 
   // extract examples
-  try {
-    requestExample = extractRequestExample(opblock);
-  } catch (e) { requestExample = null; }
-  try {
-    responseExamples = extractResponseExamples(opblock);
-  } catch (e) { responseExamples = []; }
+  try { requestExample = extractRequestExample(opblock); } catch(e){ requestExample = null; }
+  try { responseExamples = extractResponseExamples(opblock); } catch(e){ responseExamples = []; }
 
-  // Render request section (if present)
+  // Render request example if available
   if (requestExample && requestExample.text) {
     requestSection.style.display = '';
     requestContentType.textContent = requestExample.contentType || 'application/json';
     requestCodeArea.querySelector('pre code').textContent = requestExample.text || '';
-    // highlight if any
     try { hljs.highlightElement(requestCodeArea.querySelector('pre code')); } catch(e){/*ignore*/ }
   } else {
     requestSection.style.display = 'none';
   }
 
-  // Render response section
+  // Render response examples
   if (responseExamples && responseExamples.length) {
     responseSection.style.display = '';
-    // build badges
     responseExamples.forEach((ex, idx) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'code-badge';
       btn.textContent = ex.status;
       btn.addEventListener('click', () => {
-        // set active
         Array.from(responseCodes.children).forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         responseContentType.textContent = ex.contentType || 'application/json';
         responseCodeArea.querySelector('pre code').textContent = ex.text || '';
         try { hljs.highlightElement(responseCodeArea.querySelector('pre code')); } catch(e){/*ignore*/ }
       });
-      // select first by default
       if (idx === 0) btn.classList.add('active');
       responseCodes.appendChild(btn);
     });
 
-    // populate first example
     const first = responseExamples[0];
     responseContentType.textContent = first.contentType || 'application/json';
     responseCodeArea.querySelector('pre code').textContent = first.text || '';
@@ -823,7 +821,7 @@ function updateRightPanel(preferredOpblock) {
     responseSection.style.display = 'none';
   }
 
-  // Wire copy/expand/collapse for request
+  // wire controls for request
   const rCopy = document.getElementById('request-copy');
   const rExpand = document.getElementById('request-expand');
   const rCollapse = document.getElementById('request-collapse');
@@ -840,18 +838,10 @@ function updateRightPanel(preferredOpblock) {
       }
     };
   }
-  if (rExpand) {
-    rExpand.onclick = () => {
-      requestCodeArea.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre');
-    };
-  }
-  if (rCollapse) {
-    rCollapse.onclick = () => {
-      requestCodeArea.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre-wrap');
-    };
-  }
+  if (rExpand) rExpand.onclick = () => requestCodeArea.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre');
+  if (rCollapse) rCollapse.onclick = () => requestCodeArea.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre-wrap');
 
-  // Wire copy/expand/collapse for response
+  // wire controls for response
   const respCopy = document.getElementById('response-copy');
   const respExpand = document.getElementById('response-expand');
   const respCollapse = document.getElementById('response-collapse');
@@ -868,29 +858,22 @@ function updateRightPanel(preferredOpblock) {
       }
     };
   }
-  if (respExpand) {
-    respExpand.onclick = () => {
-      responseCodeArea.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre');
-    };
-  }
-  if (respCollapse) {
-    respCollapse.onclick = () => {
-      responseCodeArea.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre-wrap');
-    };
-  }
+  if (respExpand) respExpand.onclick = () => responseCodeArea.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre');
+  if (respCollapse) respCollapse.onclick = () => responseCodeArea.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre-wrap');
+
 }
 
-/* Utility: escape html */
+/* Escape html helper */
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-/* Init sequence */
+/* Init: wait for swagger, relocate H2s, build sidebar, wire everything */
 (async function init() {
   try {
     await waitForSwaggerReady();
-  } catch (err) {
-    console.warn('Swagger UI may be slow to render:', err);
+  } catch (e) {
+    console.warn('Swagger UI may be slow to render:', e);
   } finally {
     try { relocateH2s(); } catch(e){/*ignore*/ }
     try { buildSidebar(); } catch(e){/*ignore*/ }
@@ -898,12 +881,13 @@ function escapeHtml(str) {
     bindGlobalOpClicks();
     observeSwagger();
 
-    // initial populate if an op is already open
+    // populate right panel if op already open
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
       if (open) {
         lastClickedOpblock = open;
         updateRightPanel(open);
+        highlightSidebarOp(open);
       }
     }, 350);
   }
