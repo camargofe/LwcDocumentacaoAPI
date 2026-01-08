@@ -22,7 +22,7 @@
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
     overflow-x: hidden;
-    overflow-y: auto; /* página pode rolar verticalmente */
+    overflow-y: auto;
   }
 
   :root{
@@ -38,10 +38,7 @@
     --page-gutter: 16px;
   }
 
-  /* ===== LAYOUT =====
-     Grid com colunas fixas; conteúdo central terá rolagem própria (limitado à viewport),
-     enquanto o painel direito fica sticky e sempre visível.
-  */
+  /* ===== LAYOUT ===== */
   .layout {
     display: grid;
     grid-template-columns: var(--sidebar-width) 1fr var(--right-width);
@@ -126,10 +123,7 @@
   .method-put { background:#f59e0b; color:#0b1220; }
   .method-delete { background:#ef4444; }
 
-  /* ===== CONTENT (central) =====
-     Tornar o conteúdo central com altura limitada e rolável internamente.
-     Isso libera espaço vertical para o painel direito sticky ser totalmente visível.
-  */
+  /* ===== CONTENT (central) ===== */
   .content {
     min-width: 0;
     max-height: calc(100vh - (var(--page-gutter) * 2));
@@ -145,9 +139,21 @@
     color: #0b1220;
     width: 100%;
     min-width: 0;
-    /* limitar a altura do swagger para caber na viewport */
     max-height: calc(100vh - (var(--page-gutter) * 2) - 12px);
     overflow: auto;
+  }
+
+  /* Container where H2s moved to top will live */
+  .swagger-top-h2s {
+    margin: 8px 0 14px 0;
+    padding-left: 6px;
+  }
+  .swagger-top-h2s h2.moved-h2 {
+    font-size: 20px;
+    margin: 8px 0;
+    font-weight: 800;
+    color: #0b1220;
+    line-height: 1.15;
   }
 
   /* tornar internos previsíveis */
@@ -169,8 +175,7 @@
 
   .swagger-ui .opblock { border: none; box-shadow: none; margin-bottom: 12px; }
 
-  /* ===== RIGHT PANEL =====
-     Sticky, com altura limitada e scroll interno se necessário. */
+  /* ===== RIGHT PANEL ===== */
   .code-panel {
     background: linear-gradient(180deg,var(--panel-bg),#0c1113);
     border-left: 1px solid rgba(255,255,255,0.03);
@@ -197,7 +202,6 @@
   .method-pill.put { background:#f59e0b; color:#0b1220; }
   .method-pill.delete { background:#ef4444; }
 
-  /* reduzir largura do path para caber no cabeçalho e evitar quebra do layout */
   .path-text { color: rgba(255,255,255,0.96); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
 
   .controls { display:flex; gap:8px; align-items:center; flex-shrink: 0; }
@@ -304,7 +308,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
 <script>
-/* Script funcional (mantido da versão anterior) */
+/*
+  Mantive a lógica robusta anterior e acrescentei relocateH2s() para mover h2s flutuantes
+  para o topo da documentação e aplicar estilo consistente.
+*/
+
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 let lastClickedOpblock = null;
 
@@ -331,6 +339,33 @@ function waitForSwaggerReady(timeout = 15000) {
   });
 }
 
+/* Move any H2s rendered by swagger into a top container inside .swagger-ui */
+function relocateH2s() {
+  const ui = document.getElementById('swagger-ui');
+  if (!ui) return;
+  let container = ui.querySelector('.swagger-top-h2s');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'swagger-top-h2s';
+    // insert after .info (if present) or at the top of .swagger-ui
+    const info = ui.querySelector('.info');
+    if (info && info.parentNode) info.parentNode.insertBefore(container, info.nextSibling);
+    else ui.insertBefore(container, ui.firstChild);
+  }
+
+  const h2s = Array.from(ui.querySelectorAll('h2'));
+  h2s.forEach(h2 => {
+    // skip ones already moved
+    if (container.contains(h2)) return;
+    // skip h2s that are inside opblocks or other UI widgets (if any)
+    if (h2.closest('.opblock') || h2.closest('.swagger-top-h2s')) return;
+    // move the element (keeps events/ids intact)
+    container.appendChild(h2);
+    h2.classList.add('moved-h2');
+  });
+}
+
+/* Build sidebar from H2 (sections) + tags + ops */
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
   if (!menu) return;
@@ -423,6 +458,8 @@ function buildSidebar() {
   });
 }
 
+/* search, clicks, observer, findResponsesWrapper, updateRightPanel (mantidos) */
+
 function wireSearch() {
   const input = document.getElementById('sidebar-search');
   if (!input) return;
@@ -484,7 +521,11 @@ function observeSwagger() {
     if (shouldRebuild) {
       clearTimeout(window._rebuild_sidebar);
       window._rebuild_sidebar = setTimeout(() => {
-        try { buildSidebar(); wireSearch(); } catch(e){/*ignore*/ }
+        try {
+          relocateH2s();
+          buildSidebar();
+          wireSearch();
+        } catch(e){/*ignore*/ }
       }, 140);
     }
   });
@@ -602,16 +643,22 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
+/* Init sequence: wait for swagger, relocate H2s, build sidebar, wire interactions */
 (async function init() {
   try {
     await waitForSwaggerReady();
   } catch (e) {
     console.warn('Swagger UI may be slow to render:', e);
   } finally {
+    // relocate H2s first so sidebar sees them in the right place
+    try { relocateH2s(); } catch(e){/*ignore*/}
+
     try { buildSidebar(); } catch(e){/*ignore*/ }
     wireSearch();
     bindGlobalOpClicks();
     observeSwagger();
+
+    // populate right panel if something already open
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
       if (open) {
