@@ -413,7 +413,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
 <script>
-/* Combined: functional sidebar + new code-panel behavior */
+/* Combined: functional sidebar + new code-panel behavior + removal of inline tag list */
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 let lastClickedOpblock = null;
 let responseExamples = [];
@@ -462,6 +462,35 @@ function relocateH2s() {
     if (h2.closest('.opblock') || h2.closest('.swagger-top-h2s')) return;
     container.appendChild(h2);
     h2.classList.add('moved-h2');
+  });
+}
+
+/* Remove duplicate inline tag list inside swagger content (the "other sidebar" shown inside the docs) */
+function removeInlineTagList() {
+  const ui = document.getElementById('swagger-ui');
+  if (!ui) return;
+
+  // collect known tag names from opblock-tags
+  const tagEls = $qsa('.opblock-tag h3 span');
+  const tagNames = tagEls.map(s => s.textContent.trim()).filter(Boolean);
+
+  // candidate ULs inside markdown/info sections
+  const candidates = ui.querySelectorAll('.info ul, .markdown ul, .wrapper ul');
+  candidates.forEach(ul => {
+    const lis = Array.from(ul.querySelectorAll('li'));
+    if (lis.length < 5) return; // too small to be the tag list
+    const texts = lis.map(li => li.textContent.trim());
+    // count how many tag names appear in the list items
+    let matches = 0;
+    for (const t of tagNames) {
+      if (texts.find(x => x.includes(t))) matches++;
+    }
+    // if we match a few tags (or the majority), remove the containing block
+    if (matches >= Math.min(3, Math.max(1, Math.round(tagNames.length * 0.2)))) {
+      const parent = ul.closest('.markdown') || ul.closest('.info') || ul.parentNode;
+      if (parent) parent.remove();
+      else ul.remove();
+    }
   });
 }
 
@@ -634,7 +663,7 @@ function bindGlobalOpClicks() {
   });
 }
 
-/* Observe swagger UI mutations to rebuild sidebar & relocate H2s */
+/* Observe swagger UI mutations to rebuild sidebar & relocate H2s & remove inline lists */
 function observeSwagger() {
   const uiRoot = document.querySelector('#swagger-ui');
   if (!uiRoot) return;
@@ -658,6 +687,7 @@ function observeSwagger() {
       window._rebuild_sidebar = setTimeout(() => {
         try {
           relocateH2s();
+          removeInlineTagList();
           buildSidebar();
           wireSearch();
         } catch(e){/*ignore*/ }
@@ -868,7 +898,7 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-/* Init: wait for swagger, relocate H2s, build sidebar, wire everything */
+/* Init: wait for swagger, relocate H2s, remove inline tag list, build sidebar, wire everything */
 (async function init() {
   try {
     await waitForSwaggerReady();
@@ -876,6 +906,7 @@ function escapeHtml(str) {
     console.warn('Swagger UI may be slow to render:', e);
   } finally {
     try { relocateH2s(); } catch(e){/*ignore*/ }
+    try { removeInlineTagList(); } catch(e){/*ignore*/ }
     try { buildSidebar(); } catch(e){/*ignore*/ }
     wireSearch();
     bindGlobalOpClicks();
