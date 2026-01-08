@@ -1,4 +1,3 @@
-```html name=index.html
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -33,16 +32,15 @@
     --muted: #6b7280;
     --bg: #f5f7fb;
     --card: #ffffff;
-    --panel-bg: #0f262a;       /* darker teal for panel background */
-    --panel-card: #0b1416;     /* code card background */
+    --panel-bg: #243033;    /* panel background (dark slate) */
+    --panel-card: #0f1616;   /* code block background */
+    --panel-inner: #121618;  /* inner darker */
     --accent: #14b8a6;
     --page-gutter: 16px;
   }
 
   /* ===== LAYOUT =====
-     Grid com colunas fixas; conteúdo central terá rolagem própria (limitado à viewport),
-     enquanto o painel direito fica sticky e sempre visível.
-  */
+     Grid with fixed columns. */
   .layout {
     display: grid;
     grid-template-columns: var(--sidebar-width) 1fr var(--right-width);
@@ -127,10 +125,7 @@
   .method-put { background:#f59e0b; color:#0b1220; }
   .method-delete { background:#ef4444; }
 
-  /* ===== CONTENT (central) =====
-     Tornar o conteúdo central com altura limitada e rolável internamente.
-     Isso libera espaço vertical para o painel direito sticky ser totalmente visível.
-  */
+  /* ===== CONTENT (central) ===== */
   .content {
     min-width: 0;
     max-height: calc(100vh - (var(--page-gutter) * 2));
@@ -146,34 +141,23 @@
     color: #0b1220;
     width: 100%;
     min-width: 0;
-    /* limitar a altura do swagger para caber na viewport */
     max-height: calc(100vh - (var(--page-gutter) * 2) - 12px);
     overflow: auto;
   }
 
-  /* tornar internos previsíveis */
-  .swagger-ui .wrapper, .swagger-ui .info, .swagger-ui .opblock, .swagger-ui .block, .swagger-ui .content {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
+  /* fix H2 relocation container */
+  .swagger-top-h2s { margin: 8px 0 14px 0; padding-left: 6px; }
+  .swagger-top-h2s h2.moved-h2 { font-size: 20px; margin: 8px 0; font-weight: 800; color: #0b1220; line-height: 1.15; }
 
-  /* evitar horizontais indesejadas */
-  .swagger-ui .opblock .opblock-summary-path,
-  .swagger-ui .opblock .opblock-summary-method,
-  .swagger-ui .opblock pre,
-  .swagger-ui .opblock code,
-  .swagger-ui .opblock .opblock-title,
-  .swagger-ui .markdown {
-    word-break: break-word;
-    white-space: normal !important;
-  }
-
+  /* make swagger internals stable */
+  .swagger-ui .wrapper, .swagger-ui .info, .swagger-ui .opblock, .swagger-ui .block, .swagger-ui .content { width: 100% !important; max-width: 100% !important; }
+  .swagger-ui .opblock .opblock-summary-path, .swagger-ui .opblock .opblock-summary-method, .swagger-ui .opblock pre, .swagger-ui .opblock code, .swagger-ui .opblock .opblock-title, .swagger-ui .markdown { word-break: break-word; white-space: normal !important; }
   .swagger-ui .opblock { border: none; box-shadow: none; margin-bottom: 12px; }
 
-  /* ===== NEW CODE PANEL LAYOUT (matches screenshot) ===== */
+  /* ===== CODE PANEL (updated to match screenshot) ===== */
   .code-panel {
     background: var(--panel-bg);
-    border-left: 1px solid rgba(255,255,255,0.03);
+    border-left: 1px solid rgba(0,0,0,0.35);
     padding: 12px;
     color: #e6fbf4;
     display:flex;
@@ -189,113 +173,62 @@
     border-radius: 6px;
   }
 
-  /* top bar similar to screenshot: try + method + path dark bar */
+  /* top dark strip with try + method + path */
   .panel-header {
-    background: rgba(0,0,0,0.35);
-    padding: 8px 12px;
-    border-radius: 4px;
+    background: #0b1112;
     display:flex;
     align-items:center;
     gap:10px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    color: #fff;
   }
-  .panel-header .try {
-    background: rgba(255,255,255,0.06);
-    color: #dff6f2;
-    padding: 4px 8px;
-    border-radius:4px;
-    font-weight:700;
-    font-size:12px;
-    text-transform:lowercase;
-  }
-  .panel-header .method-pill {
-    padding:6px 10px;
-    border-radius:6px;
-    font-weight:800;
-    font-size:12px;
-    color:#fff;
-  }
+  .panel-header .try { background:#2b3b3d; color:#dff6f1; padding:6px 8px; border-radius:4px; font-weight:700; text-transform:lowercase; font-size:12px; }
+  .panel-header .method-pill { padding:6px 10px; border-radius:6px; font-weight:800; font-size:12px; color:#fff; }
   .panel-header .method-pill.get { background:#16a34a; }
   .panel-header .method-pill.post { background:#0ea5e9; }
   .panel-header .method-pill.put { background:#f59e0b; color:#0b1220; }
   .panel-header .method-pill.delete { background:#ef4444; }
-  .panel-header .path {
-    color:#e6fbf4;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
-    font-size: 13px;
-    opacity: 0.95;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  .panel-header .path { color:#dff6f1; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; opacity:0.95; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-  .section-title {
-    color: #e6fbf4;
-    font-size: 18px;
-    margin: 6px 0;
-    font-weight: 700;
-  }
+  .section-title { color:#e6fbf4; font-size:18px; margin:8px 0 6px 0; font-weight:700; }
 
+  /* badges row */
+  .response-badges { display:flex; gap:8px; margin-bottom:8px; }
+  .response-badges .badge { background:#0f2a2a; color:#9be1cc; padding:6px 10px; border-radius:6px; font-weight:700; cursor:pointer; border: 1px solid rgba(255,255,255,0.03); }
+  .response-badges .badge.active { background: linear-gradient(90deg,#2aa1a6,#2db4a6); color:#041417; }
+
+  /* code-card like screenshot: dark inner box with top row: content-type (left) and controls (right) */
   .code-card {
-    background: rgba(0,0,0,0.25);
+    background: var(--panel-card);
     border-radius: 4px;
-    border: 1px solid rgba(0,0,0,0.45);
     overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.5);
   }
 
-  .code-card .content-type {
-    background: rgba(0,0,0,0.18);
-    color: #b9dcd6;
-    padding: 8px 12px;
-    font-size: 13px;
-    border-bottom: 1px solid rgba(255,255,255,0.03);
-  }
-
-  .code-card .card-controls {
+  .code-card .top-row {
     display:flex;
-    gap:12px;
-    justify-content:flex-end;
-    padding: 8px 12px;
-    color: #cfe8df;
-    font-size: 13px;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 12px;
+    background: rgba(0,0,0,0.12);
   }
-
-  .code-card .card-controls button {
-    background: transparent;
-    color: #cfe8df;
-    border: none;
-    cursor: pointer;
-    font-weight:600;
-    padding: 4px 8px;
-  }
+  .code-card .content-type { color:#9bdacb; font-size:13px; background:transparent; padding:0; }
+  .code-card .controls { display:flex; gap:12px; align-items:center; color:#bcded6; font-size:13px; }
+  .code-card .controls button { background:transparent; border:none; color:#bcded6; cursor:pointer; padding:4px 8px; border-radius:4px; font-weight:600; }
+  .code-card .controls button:hover { background: rgba(255,255,255,0.03); }
 
   .code-card .code-area {
-    padding: 12px;
-    color: #9be1cc;
+    padding:12px;
+    color:#9be1cc;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
-    font-size: 13px;
+    font-size:13px;
     white-space: pre-wrap;
     word-break: break-word;
     max-height: 340px;
-    overflow: auto;
+    overflow:auto;
   }
-
-  .response-badges {
-    display:flex;
-    gap:8px;
-    margin-bottom:10px;
-  }
-  .response-badges .badge {
-    padding:6px 10px;
-    border-radius:6px;
-    background:#0e2a2b;
-    color:#9be1cc;
-    font-weight:700;
-    cursor:pointer;
-  }
-  .response-badges .badge.active {
-    background: linear-gradient(90deg,#1f9aa0,#2db4a6);
-    color: #041417;
-  }
+  .code-card .code-area pre { margin:0; background:transparent; color:inherit; }
 
   .panel-empty { color: rgba(255,255,255,0.65); font-size:13px; padding:8px; }
 
@@ -314,7 +247,7 @@
 <body>
 <div class="layout">
 
-  <!-- SIDEBAR -->
+  <!-- SIDEBAR (unchanged, functional) -->
   <aside class="sidebar" id="sidebar" role="navigation" aria-label="Sidebar">
     <div class="brand" aria-hidden="false">
       <img src="https://developers-sandbox.bvopen.com.br/sites/default/files/apidoc_specs/API-PIX-V1/assets/images/logo.png" alt="Banco BV" class="brand-logo" />
@@ -332,52 +265,47 @@
     </nav>
   </aside>
 
-  <!-- CONTENT -->
+  <!-- CONTENT (unchanged) -->
   <main class="content" id="content">
     <div id="swagger-ui" class="swagger-ui"></div>
   </main>
 
-  <!-- RIGHT PANEL (updated layout only) -->
+  <!-- RIGHT CODE PANEL: updated layout only -->
   <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true">
-    <!-- header -->
     <div class="panel-header" id="panel-header">
       <div class="try">try</div>
       <div id="code-method" class="method-pill get">GET</div>
       <div id="code-path" class="path">/policies</div>
     </div>
 
-    <!-- Response section (matches screenshot) -->
     <div>
       <div class="section-title">Response samples</div>
-      <div id="response-badges" class="response-badges">
-        <!-- badges injected dynamically -->
-      </div>
 
-      <div class="code-card" style="margin-top:8px;">
-        <div class="content-type" id="response-content-type">application/json</div>
-        <div class="card-controls" id="response-card-controls">
-          <button id="response-copy">Copy</button>
-          <button id="response-expand">Expand all</button>
-          <button id="response-collapse">Collapse all</button>
+      <div id="response-badges" class="response-badges" aria-hidden="false"></div>
+
+      <div class="code-card" id="response-card">
+        <div class="top-row">
+          <div class="content-type" id="response-content-type">application/json</div>
+          <div class="controls" id="response-controls">
+            <button id="response-copy">Copy</button>
+            <button id="response-expand">Expand all</button>
+            <button id="response-collapse">Collapse all</button>
+          </div>
         </div>
-        <div class="code-area" id="response-code-area"><pre><code></code></pre></div>
+        <div class="code-area" id="response-code-area"><pre><code>// No response example loaded</code></pre></div>
       </div>
     </div>
   </aside>
 
 </div>
 
-<!-- scripts -->
+<!-- scripts (sidebar behavior kept from your original functional version) -->
 <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
 <script>
-/*
-  This file is the exact functional version you provided, with only the code-panel
-  markup, CSS and updateRightPanel logic replaced to render the dark "Response samples"
-  layout seen in your screenshot. Sidebar and all original behaviors are preserved.
-*/
-
+/* Keep your sidebar logic exactly as before; only updateRightPanel was adapted to fill
+   the new panel layout (badges + content-type + controls + code area). */
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 let lastClickedOpblock = null;
 let responseExamples = [];
@@ -406,7 +334,7 @@ function waitForSwaggerReady(timeout = 15000) {
   });
 }
 
-/* relocateH2s (keeps header tidy) */
+/* Relocate H2s (keeps content tidy) */
 function relocateH2s() {
   const ui = document.getElementById('swagger-ui');
   if (!ui) return;
@@ -418,7 +346,6 @@ function relocateH2s() {
     if (info && info.parentNode) info.parentNode.insertBefore(container, info.nextSibling);
     else ui.insertBefore(container, ui.firstChild);
   }
-
   const h2s = Array.from(ui.querySelectorAll('h2'));
   h2s.forEach(h2 => {
     if (container.contains(h2)) return;
@@ -428,7 +355,7 @@ function relocateH2s() {
   });
 }
 
-/* Build sidebar (unchanged from your functional version) */
+/* Build sidebar (copied/kept from your working file) */
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
   if (!menu) return;
@@ -521,7 +448,7 @@ function buildSidebar() {
   });
 }
 
-/* Search (unchanged) */
+/* Search */
 function wireSearch() {
   const input = document.getElementById('sidebar-search');
   if (!input) return;
@@ -544,7 +471,7 @@ function wireSearch() {
   });
 }
 
-/* Highlight corresponding op in the sidebar (unchanged) */
+/* Highlight corresponding op in sidebar */
 function highlightSidebarOp(opblock) {
   if (!opblock) return;
   const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
@@ -565,7 +492,7 @@ function highlightSidebarOp(opblock) {
   });
 }
 
-/* capture clicks anywhere on opblock summaries (unchanged) */
+/* capture clicks on swagger summaries */
 function bindGlobalOpClicks() {
   document.addEventListener('click', (e) => {
     const summary = e.target.closest('.opblock-summary');
@@ -593,7 +520,7 @@ function bindGlobalOpClicks() {
   });
 }
 
-/* Observe swagger UI mutations to rebuild sidebar & relocate H2s */
+/* Observe swagger UI to rebuild sidebar/relocate H2s */
 function observeSwagger() {
   const uiRoot = document.querySelector('#swagger-ui');
   if (!uiRoot) return;
@@ -627,13 +554,11 @@ function observeSwagger() {
   mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
-/* Helper to find response example(s) inside opblock (robust) */
+/* extract response examples (robust) */
 function extractResponseExamples(opblock) {
   const out = [];
   let responseNodes = opblock.querySelectorAll('.responses-wrapper .response');
-  if (!responseNodes || responseNodes.length === 0) {
-    responseNodes = opblock.querySelectorAll('.response');
-  }
+  if (!responseNodes || responseNodes.length === 0) responseNodes = opblock.querySelectorAll('.response');
   responseNodes = Array.from(responseNodes).filter(n => opblock.contains(n));
   for (const node of responseNodes) {
     let status = (node.querySelector('.response-col_status')?.textContent ||
@@ -674,17 +599,16 @@ function extractResponseExamples(opblock) {
   return unique;
 }
 
-/* Update right panel to match screenshot layout (dark, badges, content-type, controls) */
+/* UpdateRightPanel: populate badges, content-type, code area, wire controls */
 function updateRightPanel(preferredOpblock) {
   const methodEl = document.getElementById('code-method');
   const pathEl = document.getElementById('code-path');
-  const responseBadgesEl = document.getElementById('response-badges');
-  const responseContentTypeEl = document.getElementById('response-content-type');
-  const responseCodeAreaEl = document.getElementById('response-code-area');
+  const badgesEl = document.getElementById('response-badges');
+  const contentTypeEl = document.getElementById('response-content-type');
+  const codeAreaEl = document.getElementById('response-code-area');
 
-  // reset
-  if (responseBadgesEl) responseBadgesEl.innerHTML = '';
-  if (responseCodeAreaEl) responseCodeAreaEl.querySelector('pre code').textContent = '';
+  if (badgesEl) badgesEl.innerHTML = '';
+  if (codeAreaEl) codeAreaEl.querySelector('pre code').textContent = '';
 
   responseExamples = [];
 
@@ -695,16 +619,15 @@ function updateRightPanel(preferredOpblock) {
     return;
   }
 
-  // header update
+  // header
   const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
   const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
   if (methodEl) { methodEl.className = 'method-pill ' + (method ? method.toLowerCase() : 'default'); methodEl.textContent = method || 'OP'; }
   if (pathEl) pathEl.textContent = path || '';
 
-  // extract response examples
+  // examples
   try { responseExamples = extractResponseExamples(opblock); } catch(e){ responseExamples = []; }
 
-  // render badges and first example
   if (responseExamples && responseExamples.length) {
     responseExamples.forEach((ex, idx) => {
       const b = document.createElement('button');
@@ -712,46 +635,47 @@ function updateRightPanel(preferredOpblock) {
       b.className = 'badge';
       b.textContent = ex.status;
       b.onclick = () => {
-        Array.from(responseBadgesEl.children).forEach(c => c.classList.remove('active'));
+        Array.from(badgesEl.children).forEach(c => c.classList.remove('active'));
         b.classList.add('active');
-        responseContentTypeEl.textContent = ex.contentType || 'application/json';
-        responseCodeAreaEl.querySelector('pre code').textContent = ex.text || '';
-        try { hljs.highlightElement(responseCodeAreaEl.querySelector('pre code')); } catch(e){/*ignore*/ }
+        contentTypeEl.textContent = ex.contentType || 'application/json';
+        codeAreaEl.querySelector('pre code').textContent = ex.text || '';
+        try { hljs.highlightElement(codeAreaEl.querySelector('pre code')); } catch(e){/*ignore*/ }
       };
       if (idx === 0) b.classList.add('active');
-      responseBadgesEl.appendChild(b);
+      badgesEl.appendChild(b);
     });
 
-    // show the first by default
+    // populate first
     const first = responseExamples[0];
-    responseContentTypeEl.textContent = first.contentType || 'application/json';
-    responseCodeAreaEl.querySelector('pre code').textContent = first.text || '';
-    try { hljs.highlightElement(responseCodeAreaEl.querySelector('pre code')); } catch(e){/*ignore*/ }
+    contentTypeEl.textContent = first.contentType || 'application/json';
+    codeAreaEl.querySelector('pre code').textContent = first.text || '';
+    try { hljs.highlightElement(codeAreaEl.querySelector('pre code')); } catch(e){/*ignore*/ }
   } else {
-    // fallback: show a friendly message
-    responseContentTypeEl.textContent = 'application/json';
-    responseCodeAreaEl.querySelector('pre code').textContent = '// No response example found for this endpoint';
+    // fallback message
+    contentTypeEl.textContent = 'application/json';
+    codeAreaEl.querySelector('pre code').textContent = '// Nenhum exemplo de resposta encontrado para este endpoint';
   }
 
-  // wire card controls (Copy / Expand / Collapse)
-  const respCopy = document.getElementById('response-copy');
-  const respExpand = document.getElementById('response-expand');
-  const respCollapse = document.getElementById('response-collapse');
-  if (respCopy) {
-    respCopy.onclick = async () => {
-      const text = responseCodeAreaEl.querySelector('pre code')?.innerText || '';
+  // wire controls
+  const copyBtn = document.getElementById('response-copy');
+  const expandBtn = document.getElementById('response-expand');
+  const collapseBtn = document.getElementById('response-collapse');
+
+  if (copyBtn) {
+    copyBtn.onclick = async () => {
+      const text = codeAreaEl.querySelector('pre code')?.innerText || '';
       try {
         await navigator.clipboard.writeText(text);
-        respCopy.textContent = 'Copied ✓';
-        setTimeout(()=> respCopy.textContent = 'Copy', 1200);
+        copyBtn.textContent = 'Copied ✓';
+        setTimeout(()=> copyBtn.textContent = 'Copy', 1200);
       } catch {
-        respCopy.textContent = 'Error';
-        setTimeout(()=> respCopy.textContent = 'Copy', 1200);
+        copyBtn.textContent = 'Error';
+        setTimeout(()=> copyBtn.textContent = 'Copy', 1200);
       }
     };
   }
-  if (respExpand) respExpand.onclick = () => responseCodeAreaEl.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre');
-  if (respCollapse) respCollapse.onclick = () => responseCodeAreaEl.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre-wrap');
+  if (expandBtn) expandBtn.onclick = () => codeAreaEl.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre');
+  if (collapseBtn) collapseBtn.onclick = () => codeAreaEl.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre-wrap');
 }
 
 /* Escape helper */
@@ -759,7 +683,7 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-/* Init */
+/* Init: keep previous behavior and wire everything */
 (async function init() {
   try {
     await waitForSwaggerReady();
@@ -772,6 +696,7 @@ function escapeHtml(str) {
     bindGlobalOpClicks();
     observeSwagger();
 
+    // populate if open
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
       if (open) {
@@ -785,4 +710,3 @@ function escapeHtml(str) {
 </script>
 </body>
 </html>
-```
