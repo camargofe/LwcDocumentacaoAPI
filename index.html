@@ -84,94 +84,49 @@
 
   .menu-section { margin-bottom:8px; }
 
-  /* Tag heading: compact, shows caret at right */
-  .menu-heading {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:8px;
-    margin-bottom:6px;
-    color:var(--muted);
-    font-weight:600;
-    font-size:13px;
-    padding:6px 8px;
-    border-radius:6px;
+  .menu-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; color:var(--muted); font-weight:600; font-size:13px; }
+  .menu-heading .count { background: rgba(15,111,178,0.08); color:var(--brand); padding:3px 8px; border-radius:999px; font-size:12px; }
+
+  .tag-item {
+    display:block;
+    margin-bottom:8px;
+    border-radius:8px;
     cursor:pointer;
+    font-size:13px;
+    color:#0b1220;
+    transition: background .12s, transform .06s;
+    padding: 8px;
+    border: 1px solid transparent;
+    text-align: left;
   }
-  .menu-heading:hover { background: rgba(15, 23, 42, 0.03); }
+  .tag-item:hover { background: rgba(2,6,23,0.03); transform: translateY(-1px); }
+  .tag-item.active { background: linear-gradient(180deg,#f2f8ff,#ffffff); border:1px solid rgba(15,111,178,0.06); box-shadow: 0 6px 18px rgba(12,37,63,0.04); }
 
-  .menu-heading .title { color:#1b5db9; font-weight:600; font-size:13px; } /* link-blue title like screenshot */
-  .menu-heading .count { display:none; } /* hide numeric count to match screenshot */
+  .ops { margin-top:6px; padding-left:4px; display:flex; flex-direction:column; gap:6px; }
 
-  /* caret icon */
-  .menu-heading .caret {
-    width: 14px;
-    height: 14px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    color: var(--muted);
-    transform: rotate(0deg);
-    transition: transform .18s;
-    font-size:12px;
-  }
-  .menu-section.expanded .menu-heading .caret { transform: rotate(90deg); color: var(--brand); }
-
-  /* OPS - collapsed by default (matches provided screenshot) */
-  .ops {
-    display: none;
-    margin-top:6px;
-    padding-left:6px;
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-  }
-  .menu-section.expanded .ops { display:flex; }
-
-  /* op-link: small method pill + path on the right (compact) */
   .op-link {
     display:flex;
     gap:10px;
     align-items:center;
-    padding:6px 8px;
-    border-radius:6px;
+    padding:8px;
+    border-radius:8px;
     font-size:13px;
-    color:#374151;
+    color:#263238;
     background: transparent;
     border: none;
     text-align:left;
     cursor:pointer;
   }
-  .op-link:hover { background: rgba(15,23,42,0.03); color:#0b1220; }
-  .op-link .method-pill-left {
-    padding:5px 8px;
-    border-radius:6px;
-    font-weight:800;
-    font-size:11px;
-    color:#fff;
-    min-width:44px;
-    text-align:center;
-  }
-  .op-link .path {
-    color:#1b5db9; /* blue link color from screenshot */
-    font-size:13px;
-    text-align:left;
-    white-space:normal;
-  }
+  .op-link:hover { background: rgba(2,6,23,0.03); transform: translateY(-1px); }
+  .op-link.active { background: rgba(2,6,23,0.04); box-shadow: inset 3px 0 0 var(--brand); color:#0b1220; font-weight:700; }
 
-  /* method colors */
+  .method-pill-left { padding:6px 10px; border-radius:8px; font-weight:800; font-size:11px; color:#fff; min-width:52px; text-align:center; }
   .method-get { background:#16a34a; }
-  .method-post { background:#2563eb; } /* slightly darker blue for POST pill to match screenshot */
-  .method-patch { background:#d97706; } /* amber/orange for PATCH */
+  .method-post { background:#0ea5e9; }
+  .method-put { background:#f59e0b; color:#0b1220; }
   .method-delete { background:#ef4444; }
 
-  /* active op highlight */
-  .op-link.active { background: rgba(15,23,42,0.04); box-shadow: inset 3px 0 0 var(--brand); color:#0b1220; font-weight:700; }
-
-  /* small adjustments for compact look */
-  .menu-section { padding-left:2px; padding-right:2px; }
-
-  /* other app styles unchanged (kept as in final) */
+  /* ===== CONTENT (central) ===== */
   .content {
     min-width: 0;
     max-height: calc(100vh - (var(--page-gutter) * 2));
@@ -187,11 +142,31 @@
     color: #0b1220;
     width: 100%;
     min-width: 0;
+    /* limitar a altura do swagger para caber na viewport */
     max-height: calc(100vh - (var(--page-gutter) * 2) - 12px);
     overflow: auto;
   }
 
-  /* RIGHT PANEL kept unchanged (final layout) */
+  /* tornar internos previsíveis */
+  .swagger-ui .wrapper, .swagger-ui .info, .swagger-ui .opblock, .swagger-ui .block, .swagger-ui .content {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* evitar horizontais indesejadas */
+  .swagger-ui .opblock .opblock-summary-path,
+  .swagger-ui .opblock .opblock-summary-method,
+  .swagger-ui .opblock pre,
+  .swagger-ui .opblock code,
+  .swagger-ui .opblock .opblock-title,
+  .swagger-ui .markdown {
+    word-break: break-word;
+    white-space: normal !important;
+  }
+
+  .swagger-ui .opblock { border: none; box-shadow: none; margin-bottom: 12px; }
+
+  /* ===== RIGHT PANEL - layout do screenshot ===== */
   .code-panel {
     background: var(--panel-bg);
     border-left: 1px solid rgba(255,255,255,0.03);
@@ -221,12 +196,17 @@
   }
   .panel-header .try { background: rgba(255,255,255,0.05); color: #dff6f2; padding: 4px 8px; border-radius:4px; font-weight:700; font-size:12px; text-transform:lowercase; }
   .panel-header .method-pill { padding:6px 10px; border-radius:6px; font-weight:800; font-size:12px; color:#fff; }
+  .panel-header .method-pill.get { background:#16a34a; }
+  .panel-header .method-pill.post { background:#0ea5e9; }
+  .panel-header .method-pill.put { background:#f59e0b; color:#0b1220; }
+  .panel-header .method-pill.delete { background:#ef4444; }
   .panel-header .path { color:#e6fbf4; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .section-title { color: #e6fbf4; font-size:16px; font-weight:700; margin: 6px 0 4px; }
 
   .response-badges { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
   .response-badges .badge { background:#101b1b; color:#9be1cc; padding:6px 10px; border-radius:6px; font-weight:700; cursor:pointer; border: 1px solid rgba(255,255,255,0.02); }
+  .response-badges .badge.active { background: linear-gradient(90deg,#1f9aa0,#2db4a6); color:#041417; }
 
   .code-card {
     background: var(--panel-card);
@@ -234,12 +214,29 @@
     overflow: hidden;
     border: 1px solid rgba(255,255,255,0.03);
   }
-  .code-card .top-row { display:flex; justify-content:space-between; align-items:center; padding: 10px 12px; background: rgba(0,0,0,0.08); }
+
+  .code-card .top-row {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.08);
+  }
   .code-card .content-type { color:#9bdacb; font-size:13px; }
   .code-card .card-controls { display:flex; gap:12px; align-items:center; color:#cfe8df; font-size:13px; }
   .code-card .card-controls button { background: transparent; border: none; color: #cfe8df; cursor:pointer; padding: 4px 8px; border-radius:4px; font-weight:700; }
-  .code-card .code-area { padding: 12px; color: #9be1cc; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size: 13px; white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow: auto; }
+  .code-card .code-area {
+    padding: 12px;
+    color: #9be1cc;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+    font-size: 13px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 320px;
+    overflow: auto;
+  }
   .code-card .code-area pre { margin:0; background:transparent; color:inherit; }
+
   .panel-empty { color: rgba(255,255,255,0.65); font-size:13px; padding:8px; }
 
   /* Responsividade */
@@ -269,9 +266,7 @@
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar" role="navigation" aria-label="Sidebar">
     <div class="brand" aria-hidden="false">
-      <img src="https://developers-sandbox.bvopen.com.br/sites/default/files/apidoc_specs/API-PIX-V1/assets/images/logo.png" alt="Banco BV" class="brand-logo" />
       <div>
-        <div class="brand-text">Banco BV</div>
       </div>
     </div>
 
@@ -289,7 +284,7 @@
     <div id="swagger-ui" class="swagger-ui"></div>
   </main>
 
-  <!-- RIGHT PANEL (kept) -->
+  <!-- RIGHT PANEL (novo layout) -->
   <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true">
     <div class="panel-header" id="panel-header" aria-hidden="false">
       <div class="try">try</div>
@@ -323,13 +318,8 @@
 
 <script>
 /*
-  Kept the working behavior from your final version, changed only:
-   - sidebar rendering and interactions to match the compact layout in your screenshot:
-     * collapsed tag sections with caret
-     * compact op rows with small method pill + blue path text
-     * collapsible/expandable tags
-   - removeZeroCounts() was left out intentionally because your final said zeros were removed already.
-   - everything else (panel, extraction, observers) preserved.
+  Mantive todo o funcionamento original da versão 5 (buildSidebar, wireSearch, observeSwagger, etc.)
+  e adicionei apenas a função removeZeroCounts() para eliminar os "0" que apareciam ao lado do sidebar.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
@@ -359,48 +349,53 @@ function waitForSwaggerReady(timeout = 15000) {
   });
 }
 
-/* Build sidebar: compact, collapsed tags with caret, compact ops */
+/* --- NOVO: remove pequenos nós com texto '0' dentro do sidebar-menu --- */
+function removeZeroCounts() {
+  const menu = document.getElementById('sidebar-menu');
+  if (!menu) return;
+  // Seleciona elementos que não têm filhos e cujo texto é exatamente "0"
+  const candidates = Array.from(menu.querySelectorAll('*')).filter(el => {
+    const txt = (el.textContent || '').trim();
+    return el.children.length === 0 && txt === '0';
+  });
+  candidates.forEach(n => n.remove());
+}
+/* --------------------------------------------------------------- */
+
+/* Build sidebar (idêntico à versão 5) */
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
   if (!menu) return;
   menu.innerHTML = '';
 
-  // sections (h2) - left as a collapsed list of headings
+  // sections (h2)
   const h2s = $qsa('#swagger-ui h2');
   if (h2s.length) {
     const section = document.createElement('li');
     section.className = 'menu-section';
-    section.innerHTML = `<div class="menu-heading"><div class="title">Seções</div><div class="count">${h2s.length}</div><div class="caret">▸</div></div>`;
+    section.innerHTML = `<div class="menu-heading"><div style="font-weight:700">Seções</div><div class="count">${h2s.length}</div></div>`;
     const list = document.createElement('div');
-    list.className = 'ops';
-    list.style.display = 'none';
-    list.style.paddingLeft = '6px';
+    list.style.display = 'flex';
+    list.style.flexDirection = 'column';
+    list.style.gap = '6px';
     h2s.forEach(h2 => {
       const text = (h2.textContent || '').trim();
       const btn = document.createElement('button');
-      btn.className = 'op-link';
+      btn.className = 'tag-item';
       btn.type = 'button';
-      btn.innerHTML = `<div class="method-pill-left" style="visibility:hidden"></div><div class="path">${escapeHtml(text)}</div>`;
+      btn.innerHTML = `<strong>${escapeHtml(text)}</strong>`;
       btn.addEventListener('click', () => {
         h2.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        Array.from(menu.querySelectorAll('.op-link')).forEach(n => n.classList.remove('active'));
+        Array.from(menu.querySelectorAll('.tag-item')).forEach(n => n.classList.remove('active'));
         btn.classList.add('active');
       });
       list.appendChild(btn);
     });
     section.appendChild(list);
-
-    // toggle behavior
-    const head = section.querySelector('.menu-heading');
-    head.addEventListener('click', () => {
-      const expanded = section.classList.toggle('expanded');
-      section.querySelector('.ops').style.display = expanded ? 'flex' : 'none';
-    });
-
     menu.appendChild(section);
   }
 
-  // tags + ops (main)
+  // tags + ops
   const tags = $qsa('.opblock-tag');
   tags.forEach(tagEl => {
     const titleSpan = tagEl.querySelector('h3 span');
@@ -415,12 +410,11 @@ function buildSidebar() {
 
     const head = document.createElement('div');
     head.className = 'menu-heading';
-    head.innerHTML = `<div class="title">${escapeHtml(titleText)}</div><div class="count">${count}</div><div class="caret">▸</div>`;
+    head.innerHTML = `<div style="font-weight:700">${escapeHtml(titleText)}</div><div class="count">${count}</div>`;
     li.appendChild(head);
 
     const opsContainer = document.createElement('div');
     opsContainer.className = 'ops';
-    opsContainer.style.display = 'none';
 
     operations.forEach(op => {
       const method = op.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
@@ -428,31 +422,21 @@ function buildSidebar() {
       const btn = document.createElement('button');
       btn.className = 'op-link';
       btn.type = 'button';
-
-      // pick pill class (PATCH often used)
-      const mclass = 'method-' + (method.toLowerCase() || 'get').replace(' ', '-');
-      btn.innerHTML = `<div class="method-pill-left ${mclass}">${escapeHtml(method || '')}</div>
-                       <div class="path">${escapeHtml(path)}</div>`;
+      btn.innerHTML = `<div class="method-pill-left method-${method.toLowerCase()}">${escapeHtml(method)}</div>
+                       <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                         <div style="font-size:13px;color:#0b1220;">${escapeHtml(path)}</div>
+                       </div>`;
 
       btn.addEventListener('click', () => {
         const opblock = op.closest('.opblock');
         if (!opblock) return;
         const summary = opblock.querySelector('.opblock-summary');
         if (summary) {
-          // ensure the tag is expanded so user sees which group clicked
-          if (!li.classList.contains('expanded')) {
-            li.classList.add('expanded');
-            opsContainer.style.display = 'flex';
-          }
-          // open operation in swagger
           summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
           summary.click();
           lastClickedOpblock = opblock;
           setTimeout(() => {
             updateRightPanel(opblock);
-            // highlight this op in sidebar
-            Array.from(opsContainer.querySelectorAll('.op-link')).forEach(n => n.classList.remove('active'));
-            btn.classList.add('active');
           }, 260);
         }
       });
@@ -460,32 +444,20 @@ function buildSidebar() {
       opsContainer.appendChild(btn);
     });
 
-    // toggle expand/collapse on head click
-    head.addEventListener('click', (e) => {
-      // if click landed on an element inside head, toggle expand
-      const isActive = li.classList.toggle('expanded');
-      opsContainer.style.display = isActive ? 'flex' : 'none';
-      // prevent accidental scrolling to swagger content
-      e.stopPropagation();
+    li.appendChild(opsContainer);
+
+    head.addEventListener('click', () => {
+      const isActive = li.classList.contains('active');
+      Array.from(menu.children).forEach(n => n.classList.remove('active'));
+      if (!isActive) li.classList.add('active');
+      tagEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
-    li.appendChild(opsContainer);
     menu.appendChild(li);
   });
 
-  // remove any tiny stray "0" nodes (defensive)
-  removeZeroCounts();
-}
-
-/* Remove elements with text exactly "0" inside sidebar-menu */
-function removeZeroCounts() {
-  const menu = document.getElementById('sidebar-menu');
-  if (!menu) return;
-  const candidates = Array.from(menu.querySelectorAll('*')).filter(el => {
-    const txt = (el.textContent || '').trim();
-    return el.children.length === 0 && txt === '0';
-  });
-  candidates.forEach(n => n.remove());
+  // remove zeros indesejados logo após construir
+  try { removeZeroCounts(); } catch(e){/*ignore*/}
 }
 
 function wireSearch() {
@@ -495,7 +467,7 @@ function wireSearch() {
     const q = input.value.trim().toLowerCase();
     const items = $qsa('#sidebar-menu .menu-section');
     items.forEach(item => {
-      const heading = item.querySelector('.menu-heading > .title')?.textContent?.toLowerCase() || '';
+      const heading = item.querySelector('.menu-heading > div')?.textContent?.toLowerCase() || '';
       const ops = Array.from(item.querySelectorAll('.op-link'));
       let anyOpMatch = false;
       ops.forEach(op => {
@@ -506,15 +478,7 @@ function wireSearch() {
       });
       const sectionMatch = q === '' || heading.includes(q);
       item.style.display = (sectionMatch || anyOpMatch) ? '' : 'none';
-      // if matches some ops ensure expanded so user sees results
-      if (anyOpMatch) {
-        item.classList.add('expanded');
-        const opsEl = item.querySelector('.ops');
-        if (opsEl) opsEl.style.display = 'flex';
-      }
     });
-    // remove zeros just in case search reintroduces some (defensive)
-    removeZeroCounts();
   });
 }
 
@@ -557,7 +521,7 @@ function observeSwagger() {
     if (shouldRebuild) {
       clearTimeout(window._rebuild_sidebar);
       window._rebuild_sidebar = setTimeout(() => {
-        try { buildSidebar(); wireSearch(); } catch(e){/*ignore*/ }
+        try { buildSidebar(); wireSearch(); removeZeroCounts(); } catch(e){/*ignore*/ }
       }, 140);
     }
   });
@@ -565,7 +529,6 @@ function observeSwagger() {
   mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
-/* findResponsesWrapper kept as before */
 function findResponsesWrapper(opblockEl) {
   if (!opblockEl) return null;
   const selectors = [
@@ -692,6 +655,8 @@ function escapeHtml(str) {
     console.warn('Swagger UI may be slow to render:', e);
   } finally {
     try { buildSidebar(); } catch(e){/*ignore*/ }
+    // remove zeros logo após build
+    try { removeZeroCounts(); } catch(e){/*ignore*/ }
     wireSearch();
     bindGlobalOpClicks();
     observeSwagger();
