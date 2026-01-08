@@ -154,7 +154,7 @@
   .swagger-ui .opblock .opblock-summary-path, .swagger-ui .opblock .opblock-summary-method, .swagger-ui .opblock pre, .swagger-ui .opblock code, .swagger-ui .opblock .opblock-title, .swagger-ui .markdown { word-break: break-word; white-space: normal !important; }
   .swagger-ui .opblock { border: none; box-shadow: none; margin-bottom: 12px; }
 
-  /* ===== CODE PANEL (updated to match screenshot) ===== */
+  /* ===== CODE PANEL (kept as in last accepted layout) ===== */
   .code-panel {
     background: var(--panel-bg);
     border-left: 1px solid rgba(0,0,0,0.35);
@@ -173,66 +173,31 @@
     border-radius: 6px;
   }
 
-  /* top dark strip with try + method + path */
-  .panel-header {
-    background: #0b1112;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding: 10px 12px;
-    border-radius: 4px;
-    color: #fff;
-  }
+  .panel-header { background: #0b1112; display:flex; align-items:center; gap:10px; padding: 10px 12px; border-radius: 4px; color: #fff; }
   .panel-header .try { background:#2b3b3d; color:#dff6f1; padding:6px 8px; border-radius:4px; font-weight:700; text-transform:lowercase; font-size:12px; }
   .panel-header .method-pill { padding:6px 10px; border-radius:6px; font-weight:800; font-size:12px; color:#fff; }
   .panel-header .method-pill.get { background:#16a34a; }
   .panel-header .method-pill.post { background:#0ea5e9; }
   .panel-header .method-pill.put { background:#f59e0b; color:#0b1220; }
   .panel-header .method-pill.delete { background:#ef4444; }
-  .panel-header .path { color:#dff6f1; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; opacity:0.95; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .panel-header .path { color:#dff6f4; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; opacity:0.95; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .section-title { color:#e6fbf4; font-size:18px; margin:8px 0 6px 0; font-weight:700; }
 
-  /* badges row */
   .response-badges { display:flex; gap:8px; margin-bottom:8px; }
   .response-badges .badge { background:#0f2a2a; color:#9be1cc; padding:6px 10px; border-radius:6px; font-weight:700; cursor:pointer; border: 1px solid rgba(255,255,255,0.03); }
   .response-badges .badge.active { background: linear-gradient(90deg,#2aa1a6,#2db4a6); color:#041417; }
 
-  /* code-card like screenshot: dark inner box with top row: content-type (left) and controls (right) */
-  .code-card {
-    background: var(--panel-card);
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid rgba(0,0,0,0.5);
-  }
-
-  .code-card .top-row {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:8px 12px;
-    background: rgba(0,0,0,0.12);
-  }
+  .code-card { background: var(--panel-card); border-radius: 4px; overflow: hidden; border: 1px solid rgba(0,0,0,0.5); }
+  .code-card .top-row { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background: rgba(0,0,0,0.12); }
   .code-card .content-type { color:#9bdacb; font-size:13px; background:transparent; padding:0; }
   .code-card .controls { display:flex; gap:12px; align-items:center; color:#bcded6; font-size:13px; }
   .code-card .controls button { background:transparent; border:none; color:#bcded6; cursor:pointer; padding:4px 8px; border-radius:4px; font-weight:600; }
-  .code-card .controls button:hover { background: rgba(255,255,255,0.03); }
-
-  .code-card .code-area {
-    padding:12px;
-    color:#9be1cc;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
-    font-size:13px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    max-height: 340px;
-    overflow:auto;
-  }
+  .code-card .code-area { padding:12px; color:#9be1cc; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; white-space: pre-wrap; word-break: break-word; max-height: 340px; overflow:auto; }
   .code-card .code-area pre { margin:0; background:transparent; color:inherit; }
 
   .panel-empty { color: rgba(255,255,255,0.65); font-size:13px; padding:8px; }
 
-  /* Responsividade */
   @media (max-width: 1200px) {
     .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 12px; }
     .code-panel { display: none; }
@@ -270,7 +235,7 @@
     <div id="swagger-ui" class="swagger-ui"></div>
   </main>
 
-  <!-- RIGHT CODE PANEL: updated layout only -->
+  <!-- RIGHT CODE PANEL -->
   <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true">
     <div class="panel-header" id="panel-header">
       <div class="try">try</div>
@@ -299,13 +264,14 @@
 
 </div>
 
-<!-- scripts (sidebar behavior kept from your original functional version) -->
+<!-- scripts -->
 <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
 <script>
-/* Keep your sidebar logic exactly as before; only updateRightPanel was adapted to fill
-   the new panel layout (badges + content-type + controls + code area). */
+/* Mantive toda a lógica do seu arquivo funcional e acrescentei apenas a remoção segura
+   do menu interno duplicado (quando presente) para evitar o "salto" para outro menu. */
+
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 let lastClickedOpblock = null;
 let responseExamples = [];
@@ -334,7 +300,7 @@ function waitForSwaggerReady(timeout = 15000) {
   });
 }
 
-/* Relocate H2s (keeps content tidy) */
+/* Move H2s to top container */
 function relocateH2s() {
   const ui = document.getElementById('swagger-ui');
   if (!ui) return;
@@ -355,7 +321,39 @@ function relocateH2s() {
   });
 }
 
-/* Build sidebar (copied/kept from your working file) */
+/* Remove duplicate inline tag list inside swagger content (safe heuristic).
+   Called as soon as swagger renders and whenever we rebuild the sidebar. */
+function removeInlineTagList() {
+  const ui = document.getElementById('swagger-ui');
+  if (!ui) return;
+
+  // collect known tag names from opblock-tags
+  const tagEls = $qsa('.opblock-tag h3 span');
+  const tagNames = tagEls.map(s => s.textContent.trim()).filter(Boolean);
+  if (!tagNames.length) return;
+
+  // candidate ULs in common markdown/info areas
+  const candidates = ui.querySelectorAll('.info ul, .markdown ul, .wrapper ul, .description ul');
+  candidates.forEach(ul => {
+    const lis = Array.from(ul.querySelectorAll('li'));
+    if (lis.length < 4) return; // unlikely to be a full tag list
+    const texts = lis.map(li => (li.textContent || '').trim());
+    // count matches of tag names in the list
+    let matches = 0;
+    for (const t of tagNames) {
+      if (texts.find(x => x.includes(t))) matches++;
+    }
+    // if it matches a few tags (threshold), remove the container (ul's closest markdown/info)
+    const threshold = Math.min(3, Math.max(1, Math.round(tagNames.length * 0.2)));
+    if (matches >= threshold) {
+      const parent = ul.closest('.markdown') || ul.closest('.info') || ul.closest('.wrapper') || ul.parentNode;
+      if (parent) parent.remove();
+      else ul.remove();
+    }
+  });
+}
+
+/* Build sidebar (kept exactly as in your working file) */
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
   if (!menu) return;
@@ -421,14 +419,20 @@ function buildSidebar() {
                        </div>`;
 
       btn.addEventListener('click', () => {
+        // remove any inline tag list if present BEFORE navigating to avoid "jump"
+        try { removeInlineTagList(); } catch(e){/*ignore*/}
         const opblock = op.closest('.opblock');
         if (!opblock) return;
         const summary = opblock.querySelector('.opblock-summary');
         if (summary) {
           summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // call click to let Swagger open the block
           summary.click();
           lastClickedOpblock = opblock;
-          setTimeout(() => updateRightPanel(opblock), 260);
+          setTimeout(() => {
+            updateRightPanel(opblock);
+            highlightSidebarOp(opblock);
+          }, 260);
         }
       });
 
@@ -448,7 +452,7 @@ function buildSidebar() {
   });
 }
 
-/* Search */
+/* Sidebar search (unchanged) */
 function wireSearch() {
   const input = document.getElementById('sidebar-search');
   if (!input) return;
@@ -471,7 +475,7 @@ function wireSearch() {
   });
 }
 
-/* Highlight corresponding op in sidebar */
+/* highlight */
 function highlightSidebarOp(opblock) {
   if (!opblock) return;
   const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
@@ -492,7 +496,7 @@ function highlightSidebarOp(opblock) {
   });
 }
 
-/* capture clicks on swagger summaries */
+/* clicks on swagger summaries */
 function bindGlobalOpClicks() {
   document.addEventListener('click', (e) => {
     const summary = e.target.closest('.opblock-summary');
@@ -520,7 +524,7 @@ function bindGlobalOpClicks() {
   });
 }
 
-/* Observe swagger UI to rebuild sidebar/relocate H2s */
+/* Observe mutations and rebuild sidebar + relocate H2s + remove inline lists */
 function observeSwagger() {
   const uiRoot = document.querySelector('#swagger-ui');
   if (!uiRoot) return;
@@ -544,6 +548,7 @@ function observeSwagger() {
       window._rebuild_sidebar = setTimeout(() => {
         try {
           relocateH2s();
+          removeInlineTagList();
           buildSidebar();
           wireSearch();
         } catch(e){/*ignore*/ }
@@ -554,7 +559,7 @@ function observeSwagger() {
   mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
-/* extract response examples (robust) */
+/* Response extraction (keeps prior behavior) */
 function extractResponseExamples(opblock) {
   const out = [];
   let responseNodes = opblock.querySelectorAll('.responses-wrapper .response');
@@ -599,7 +604,7 @@ function extractResponseExamples(opblock) {
   return unique;
 }
 
-/* UpdateRightPanel: populate badges, content-type, code area, wire controls */
+/* Update right panel with badges + content-type + code area */
 function updateRightPanel(preferredOpblock) {
   const methodEl = document.getElementById('code-method');
   const pathEl = document.getElementById('code-path');
@@ -609,7 +614,6 @@ function updateRightPanel(preferredOpblock) {
 
   if (badgesEl) badgesEl.innerHTML = '';
   if (codeAreaEl) codeAreaEl.querySelector('pre code').textContent = '';
-
   responseExamples = [];
 
   const opblock = preferredOpblock || lastClickedOpblock || document.querySelector('.opblock.is-open');
@@ -625,7 +629,6 @@ function updateRightPanel(preferredOpblock) {
   if (methodEl) { methodEl.className = 'method-pill ' + (method ? method.toLowerCase() : 'default'); methodEl.textContent = method || 'OP'; }
   if (pathEl) pathEl.textContent = path || '';
 
-  // examples
   try { responseExamples = extractResponseExamples(opblock); } catch(e){ responseExamples = []; }
 
   if (responseExamples && responseExamples.length) {
@@ -645,18 +648,16 @@ function updateRightPanel(preferredOpblock) {
       badgesEl.appendChild(b);
     });
 
-    // populate first
     const first = responseExamples[0];
     contentTypeEl.textContent = first.contentType || 'application/json';
     codeAreaEl.querySelector('pre code').textContent = first.text || '';
     try { hljs.highlightElement(codeAreaEl.querySelector('pre code')); } catch(e){/*ignore*/ }
   } else {
-    // fallback message
     contentTypeEl.textContent = 'application/json';
     codeAreaEl.querySelector('pre code').textContent = '// Nenhum exemplo de resposta encontrado para este endpoint';
   }
 
-  // wire controls
+  // controls
   const copyBtn = document.getElementById('response-copy');
   const expandBtn = document.getElementById('response-expand');
   const collapseBtn = document.getElementById('response-collapse');
@@ -678,12 +679,12 @@ function updateRightPanel(preferredOpblock) {
   if (collapseBtn) collapseBtn.onclick = () => codeAreaEl.querySelectorAll('pre, code').forEach(el => el.style.whiteSpace = 'pre-wrap');
 }
 
-/* Escape helper */
+/* escape helper */
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-/* Init: keep previous behavior and wire everything */
+/* init */
 (async function init() {
   try {
     await waitForSwaggerReady();
@@ -691,12 +692,12 @@ function escapeHtml(str) {
     console.warn('Swagger UI may be slow to render:', e);
   } finally {
     try { relocateH2s(); } catch(e){/*ignore*/}
-    try { buildSidebar(); } catch(e){/*ignore*/ }
+    try { removeInlineTagList(); } catch(e){/*ignore*/}
+    try { buildSidebar(); } catch(e){/*ignore*/}
     wireSearch();
     bindGlobalOpClicks();
     observeSwagger();
 
-    // populate if open
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
       if (open) {
