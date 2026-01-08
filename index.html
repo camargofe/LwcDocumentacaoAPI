@@ -319,7 +319,7 @@
 <script>
 /*
   Mantive todo o funcionamento original da versão 5 (buildSidebar, wireSearch, observeSwagger, etc.)
-  e substituí a função updateRightPanel para popular o novo painel (badges + content-type + code card).
+  e adicionei apenas a função removeZeroCounts() para eliminar os "0" que apareciam ao lado do sidebar.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
@@ -348,6 +348,19 @@ function waitForSwaggerReady(timeout = 15000) {
     })();
   });
 }
+
+/* --- NOVO: remove pequenos nós com texto '0' dentro do sidebar-menu --- */
+function removeZeroCounts() {
+  const menu = document.getElementById('sidebar-menu');
+  if (!menu) return;
+  // Seleciona elementos que não têm filhos e cujo texto é exatamente "0"
+  const candidates = Array.from(menu.querySelectorAll('*')).filter(el => {
+    const txt = (el.textContent || '').trim();
+    return el.children.length === 0 && txt === '0';
+  });
+  candidates.forEach(n => n.remove());
+}
+/* --------------------------------------------------------------- */
 
 /* Build sidebar (idêntico à versão 5) */
 function buildSidebar() {
@@ -442,6 +455,9 @@ function buildSidebar() {
 
     menu.appendChild(li);
   });
+
+  // remove zeros indesejados logo após construir
+  try { removeZeroCounts(); } catch(e){/*ignore*/}
 }
 
 function wireSearch() {
@@ -505,7 +521,7 @@ function observeSwagger() {
     if (shouldRebuild) {
       clearTimeout(window._rebuild_sidebar);
       window._rebuild_sidebar = setTimeout(() => {
-        try { buildSidebar(); wireSearch(); } catch(e){/*ignore*/ }
+        try { buildSidebar(); wireSearch(); removeZeroCounts(); } catch(e){/*ignore*/ }
       }, 140);
     }
   });
@@ -513,7 +529,6 @@ function observeSwagger() {
   mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
-/* findResponsesWrapper kept as in v5 */
 function findResponsesWrapper(opblockEl) {
   if (!opblockEl) return null;
   const selectors = [
@@ -542,13 +557,10 @@ function findResponsesWrapper(opblockEl) {
   return null;
 }
 
-/* NEW helper: attempt to extract multiple response examples with status codes */
 function extractResponseExamples(opblock) {
   const examples = [];
-  // Try to find structured response nodes first
   const responseNodes = Array.from(opblock.querySelectorAll('.responses-wrapper .response, .response'));
   for (const node of responseNodes) {
-    // find status
     let status = (node.querySelector('.response-col_status')?.textContent ||
                   node.querySelector('.response__status')?.textContent ||
                   node.querySelector('.response-status-code')?.textContent ||
@@ -561,7 +573,6 @@ function extractResponseExamples(opblock) {
     if (text) examples.push({ status, contentType: 'application/json', text });
   }
 
-  // fallback to any pre/code inside the opblock (if no structured responses found)
   if (examples.length === 0) {
     const pres = Array.from(opblock.querySelectorAll('.responses-wrapper pre, .responses-wrapper code, pre, code'));
     pres.forEach((p, idx) => {
@@ -570,7 +581,6 @@ function extractResponseExamples(opblock) {
     });
   }
 
-  // uniq by status keep first
   const seen = new Set();
   return examples.filter(e => {
     if (seen.has(e.status)) return false;
@@ -579,7 +589,6 @@ function extractResponseExamples(opblock) {
   });
 }
 
-/* UPDATED updateRightPanel: populates the new panel layout (badges + content-type + code card) */
 function updateRightPanel(preferredOpblock) {
   const methodEl = document.getElementById('code-method');
   const pathEl = document.getElementById('code-path');
@@ -587,7 +596,6 @@ function updateRightPanel(preferredOpblock) {
   const contentTypeEl = document.getElementById('response-content-type');
   const codeAreaEl = document.getElementById('response-code-area');
 
-  // reset panel
   badgesContainer.innerHTML = '';
   codeAreaEl.querySelector('pre code').textContent = '';
 
@@ -599,20 +607,14 @@ function updateRightPanel(preferredOpblock) {
     return;
   }
 
-  // update header
   const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
   const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
   methodEl.className = 'method-pill ' + (method ? method.toLowerCase() : 'default');
   methodEl.textContent = method || 'OP';
   pathEl.textContent = path || '';
 
-  // extract examples
   let examples = [];
-  try {
-    examples = extractResponseExamples(opblock);
-  } catch (e) {
-    examples = [];
-  }
+  try { examples = extractResponseExamples(opblock); } catch (e) { examples = []; }
 
   if (examples.length === 0) {
     contentTypeEl.textContent = 'application/json';
@@ -620,7 +622,6 @@ function updateRightPanel(preferredOpblock) {
     return;
   }
 
-  // build badges
   examples.forEach((ex, idx) => {
     const b = document.createElement('button');
     b.type = 'button';
@@ -637,19 +638,16 @@ function updateRightPanel(preferredOpblock) {
     badgesContainer.appendChild(b);
   });
 
-  // populate first
   const first = examples[0];
   contentTypeEl.textContent = first.contentType || 'application/json';
   codeAreaEl.querySelector('pre code').textContent = first.text || '';
   try { hljs.highlightElement(codeAreaEl.querySelector('pre code')); } catch(e) {/*ignore*/}
 }
 
-/* helpers left unchanged */
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-/* Init (keeps same behavior: wait render, build sidebar, wire search/clicks/observer) */
 (async function init() {
   try {
     await waitForSwaggerReady();
@@ -657,6 +655,8 @@ function escapeHtml(str) {
     console.warn('Swagger UI may be slow to render:', e);
   } finally {
     try { buildSidebar(); } catch(e){/*ignore*/ }
+    // remove zeros logo após build
+    try { removeZeroCounts(); } catch(e){/*ignore*/ }
     wireSearch();
     bindGlobalOpClicks();
     observeSwagger();
