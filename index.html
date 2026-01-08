@@ -36,7 +36,6 @@
     --panel-card: #0b1416;     /* fundo do código */
     --accent: #14b8a6;
     --page-gutter: 16px;
-    --mobile-topbar-height: 56px;
   }
 
   /* ===== LAYOUT =====
@@ -65,10 +64,7 @@
     overflow: auto;
     -webkit-overflow-scrolling: touch;
     min-width: 0;
-    transition: transform .22s ease;
   }
-
-  .sidebar.open { transform: translateX(0); }
 
   .brand { display:flex; align-items:center; gap:10px; padding-bottom:6px; border-bottom:1px solid rgba(2,6,23,0.03); }
   .brand-logo { height:40px; width:auto; display:block; }
@@ -245,43 +241,16 @@
 
   /* Responsividade */
   @media (max-width: 1200px) {
-    /* switch to single-column layout */
     .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 12px; }
-    /* hide desktop right panel (we keep it hidden on small, user can scroll to content) */
     .code-panel { display: none; }
-    /* sidebar becomes overlay (off-canvas) */
-    .sidebar {
-      position: fixed;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 76%;
-      max-width: 380px;
-      transform: translateX(-120%);
-      transition: transform .22s ease;
-      z-index: 140;
-      box-shadow: 8px 0 32px rgba(2,6,23,0.12);
-    }
-    .sidebar.open { transform: translateX(0); }
-
-    /* Add a simple backdrop for the sidebar */
-    #sidebar-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(2,6,23,0.28);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .18s;
-      z-index: 120;
-    }
-    #sidebar-backdrop.visible { opacity: 1; pointer-events: auto; }
-
-    /* push swagger content down if topbar is added by consumer (we don't add topbar here) */
-    .content { padding-top: 0; }
+    .sidebar { max-height: none; overflow: visible; position: relative; }
+    .content { max-height: none; overflow: visible; }
+    .swagger-ui { max-height: none; overflow: visible; padding: 16px; }
   }
 
   @media (max-width: 880px) {
-    .sidebar { width: 80%; max-width: 320px; }
+    .sidebar { position: fixed; left:0; top:0; bottom:0; width:76%; max-width:380px; transform: translateX(-120%); transition:transform .22s; z-index:90; box-shadow:8px 0 32px rgba(2,6,23,0.12); }
+    .sidebar.open { transform: translateX(0); }
   }
 
   .muted { color: var(--muted); font-size:12px; }
@@ -292,9 +261,6 @@
 </style>
 </head>
 <body>
-  <!-- Backdrop for mobile sidebar (hidden until needed) -->
-  <div id="sidebar-backdrop" aria-hidden="true"></div>
-
 <div class="layout">
 
   <!-- SIDEBAR -->
@@ -314,7 +280,7 @@
   </aside>
 
   <!-- CONTENT -->
-  <main class="content" id="content" tabindex="-1">
+  <main class="content" id="content">
     <div id="swagger-ui" class="swagger-ui"></div>
   </main>
 
@@ -352,11 +318,8 @@
 
 <script>
 /*
-  Mobile adaptation added without changing desktop behavior or feature set:
-  - sidebar becomes an off-canvas overlay on small screens;
-  - a backdrop element toggles with the sidebar;
-  - small JS below toggles .open and backdrop visibility when needed.
-  All existing logic (buildSidebar, updateRightPanel, etc.) is preserved verbatim.
+  Mantive todo o funcionamento original da versão 5 (buildSidebar, wireSearch, observeSwagger, etc.)
+  e adicionei apenas a função removeZeroCounts() para eliminar os "0" que apareciam ao lado do sidebar.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
@@ -390,6 +353,7 @@ function waitForSwaggerReady(timeout = 15000) {
 function removeZeroCounts() {
   const menu = document.getElementById('sidebar-menu');
   if (!menu) return;
+  // Seleciona elementos que não têm filhos e cujo texto é exatamente "0"
   const candidates = Array.from(menu.querySelectorAll('*')).filter(el => {
     const txt = (el.textContent || '').trim();
     return el.children.length === 0 && txt === '0';
@@ -424,7 +388,6 @@ function buildSidebar() {
         h2.scrollIntoView({ behavior: 'smooth', block: 'center' });
         Array.from(menu.querySelectorAll('.tag-item')).forEach(n => n.classList.remove('active'));
         btn.classList.add('active');
-        closeSidebarIfMobile();
       });
       list.appendChild(btn);
     });
@@ -474,7 +437,6 @@ function buildSidebar() {
           lastClickedOpblock = opblock;
           setTimeout(() => {
             updateRightPanel(opblock);
-            closeSidebarIfMobile();
           }, 260);
         }
       });
@@ -686,38 +648,6 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-/* Mobile toggles: open/close sidebar and backdrop handling */
-const sidebar = document.getElementById('sidebar');
-const backdrop = document.getElementById('sidebar-backdrop');
-
-function openSidebar() {
-  if (!sidebar) return;
-  sidebar.classList.add('open');
-  if (backdrop) backdrop.classList.add('visible');
-}
-function closeSidebar() {
-  if (!sidebar) return;
-  sidebar.classList.remove('open');
-  if (backdrop) backdrop.classList.remove('visible');
-}
-function closeSidebarIfMobile() {
-  if (window.matchMedia('(max-width:1200px)').matches) closeSidebar();
-}
-
-backdrop?.addEventListener('click', closeSidebar);
-
-// Also close sidebar on Escape key (mobile)
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeSidebar();
-});
-
-// Optional: open sidebar when user focuses the search on mobile
-const sidebarSearch = document.getElementById('sidebar-search');
-sidebarSearch?.addEventListener('focus', () => {
-  if (window.matchMedia('(max-width:1200px)').matches) openSidebar();
-});
-
-/* Init */
 (async function init() {
   try {
     await waitForSwaggerReady();
@@ -725,6 +655,7 @@ sidebarSearch?.addEventListener('focus', () => {
     console.warn('Swagger UI may be slow to render:', e);
   } finally {
     try { buildSidebar(); } catch(e){/*ignore*/ }
+    // remove zeros logo após build
     try { removeZeroCounts(); } catch(e){/*ignore*/ }
     wireSearch();
     bindGlobalOpClicks();
