@@ -90,6 +90,7 @@
     padding: 8px;
     border: 1px solid transparent;
     text-align: left;
+    white-space: normal;
   }
   .tag-item:hover { background: rgba(2,6,23,0.03); transform: translateY(-1px); }
   .tag-item.active { background: linear-gradient(180deg,#f2f8ff,#ffffff); border:1px solid rgba(15,111,178,0.06); box-shadow: 0 6px 18px rgba(12,37,63,0.04); }
@@ -107,10 +108,11 @@
     border: none;
     text-align:left;
     cursor:pointer;
+    white-space: normal;
   }
   .op-link:hover { background: rgba(2,6,23,0.03); transform: translateY(-1px); }
   .op-link.active { background: rgba(2,6,23,0.04); box-shadow: inset 3px 0 0 var(--brand); color:#0b1220; font-weight:700; }
-  .method-pill-left { padding:6px 10px; border-radius:8px; font-weight:800; font-size:11px; color:#fff; min-width:52px; text-align:center; }
+  .method-pill-left { padding:6px 10px; border-radius:8px; font-weight:800; font-size:11px; color:#fff; min-width:52px; text-align:center; flex-shrink:0; }
   .method-get { background:#16a34a; }
   .method-post { background:#0ea5e9; }
   .method-put { background:#f59e0b; color:#0b1220; }
@@ -141,19 +143,19 @@
     max-width: 100% !important;
   }
 
-  .swagger-ui .opblock .opblock-summary-path,
-  .swagger-ui .opblock .opblock-summary-method,
-  .swagger-ui .opblock pre,
-  .swagger-ui .opblock code,
-  .swagger-ui .opblock .opblock-title,
-  .swagger-ui .markdown {
-    word-break: break-word;
-    white-space: normal !important;
+  /* Normal text wrapping for readability (avoid over-aggressive breaks) */
+  .swagger-ui h1, .swagger-ui h2, .swagger-ui h3, .swagger-ui h4, .swagger-ui p, .swagger-ui .markdown {
+    overflow-wrap: break-word;
+    word-break: normal;
+    white-space: normal;
+    text-align: left;
   }
 
+  /* Code blocks: keep preformatted but allow wrapping */
   .swagger-ui pre, .swagger-ui code {
-    overflow-wrap: anywhere;
-    word-break: break-word;
+    white-space: pre-wrap !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
     max-width: 100%;
   }
 
@@ -224,26 +226,50 @@
 
   .panel-empty { color: rgba(255,255,255,0.65); font-size:13px; padding:8px; }
 
-  /* MOBILE ADJUSTMENTS
-     - code-panel: hidden by default on mobile; only opens when user explicitly clicks a code block inside swagger UI
-     - remove "PIX API" label and mobile Try button text from mobile UI
-     - ensure all text wraps and aligns left for readability
-  */
+  /* MOBILE ADJUSTMENTS */
   @media (max-width: 1200px) {
     .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 12px; }
 
-    /* On mobile the panel remains hidden unless opened programmatically (class 'open' added) */
+    /* Minimized panel on mobile: a small unobtrusive handle that expands on demand.
+       Default state = minimized (small circle at bottom-right). When user expands we add 'open_mobile'
+       which shows the full overlay; when closed we return to 'minimized'. */
     .code-panel {
-      display: none !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-      opacity: 0 !important;
-      transform: none !important;
-      height: 0 !important;
-      max-height: 0 !important;
+      /* keep base styles but transform into minimized state with .minimized class (set by JS) */
+      display: none;
     }
-    /* When opened programmatically we temporarily override the rules by adding a mobile-only overlay
-       This element will be created/managed in JS; we keep .code-panel.open_mobile for that state. */
+
+    .code-panel.minimized {
+      display: flex !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      position: fixed !important;
+      right: 12px !important;
+      bottom: 12px !important;
+      width: 56px !important;
+      height: 56px !important;
+      padding: 0 !important;
+      border-radius: 999px !important;
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 140 !important;
+      box-shadow: 0 12px 32px rgba(2,6,23,0.24) !important;
+      background: var(--panel-bg) !important;
+      border: 1px solid rgba(255,255,255,0.04) !important;
+      color: #9be1cc;
+      cursor: pointer;
+    }
+    .code-panel.minimized .panel-header,
+    .code-panel.minimized .code-card {
+      display: none !important;
+    }
+    .code-panel.minimized::after {
+      content: "⇵";
+      font-size: 18px;
+      color: #9be1cc;
+      line-height: 1;
+    }
+
+    /* expanded mobile overlay */
     .code-panel.open_mobile {
       display: flex !important;
       visibility: visible !important;
@@ -253,14 +279,17 @@
       left: 12px !important;
       right: 12px !important;
       bottom: 12px !important;
-      height: 46vh !important;
+      height: 56vh !important;
       max-height: calc(100vh - 92px) !important;
       z-index: 140 !important;
       border-radius: 12px !important;
+      flex-direction: column !important;
       transform: translateY(0) !important;
       transition: transform .20s ease !important;
       box-shadow: 0 18px 46px rgba(2,6,23,0.28) !important;
       background: var(--panel-bg) !important;
+      padding: 12px !important;
+      overflow: auto !important;
     }
 
     /* hide mobile topbar title and Try button text as requested */
@@ -270,21 +299,21 @@
     /* hide PIX API text in the sidebar brand on mobile */
     .brand-text { display: none !important; }
 
-    /* also hide the 'try' label inside code-panel header on mobile */
+    /* hide the 'try' label inside code-panel header on mobile expanded view */
     .code-panel .try { display: none !important; }
 
-    /* readability: force left alignment and wrap */
+    /* readability: force left alignment and wrap (use normal wrapping, not 'anywhere') */
     .swagger-ui { padding: 14px; max-height: none; overflow: visible; text-align: left; }
     .swagger-ui h1, .swagger-ui h2, .swagger-ui h3, .swagger-ui h4, .swagger-ui p, .swagger-ui .markdown {
-      overflow-wrap: anywhere;
-      word-break: break-word;
+      overflow-wrap: break-word;
+      word-break: normal;
       white-space: normal !important;
       text-align: left !important;
     }
     .swagger-ui pre, .swagger-ui code {
       white-space: pre-wrap !important;
-      overflow-wrap: anywhere !important;
-      word-break: break-word !important;
+      overflow-wrap: break-word !important;
+      word-break: normal !important;
       max-width: 100% !important;
     }
 
@@ -712,19 +741,27 @@ function bindMobileControls() {
     if (window.innerWidth <= 1200) {
       mobileTopbar.style.display = 'flex';
       mobileTopbar.setAttribute('aria-hidden', 'false');
+      // ensure minimized state on mobile
+      if (codePanel && !codePanel.classList.contains('open_mobile')) {
+        codePanel.classList.add('minimized');
+      }
     } else {
       mobileTopbar.style.display = 'none';
       mobileTopbar.setAttribute('aria-hidden', 'true');
       sidebar?.classList.remove('open');
       // ensure mobile panel closed when returning to desktop
       codePanel?.classList.remove('open_mobile');
+      codePanel?.classList.remove('minimized');
       tryFloating?.setAttribute('aria-expanded','false');
     }
   }
 
-  // Ensure closed state on load
+  // Ensure closed/minimized state on load
   sidebar?.classList.remove('open');
-  codePanel?.classList.remove('open_mobile');
+  if (codePanel) {
+    codePanel.classList.remove('open_mobile');
+    codePanel.classList.add('minimized');
+  }
   tryFloating?.setAttribute('aria-expanded','false');
 
   window.addEventListener('resize', () => {
@@ -732,6 +769,7 @@ function bindMobileControls() {
     if (window.innerWidth > 1200) {
       sidebar?.classList.remove('open');
       codePanel?.classList.remove('open_mobile');
+      codePanel?.classList.remove('minimized');
       tryFloating?.setAttribute('aria-expanded','false');
     }
   });
@@ -741,17 +779,17 @@ function bindMobileControls() {
     hamburger.addEventListener('click', (e) => {
       e.stopPropagation();
       sidebar?.classList.toggle('open');
-      // ensure mobile panel closed while menu open to avoid overlap
+      // ensure mobile panel minimized while menu open to avoid overlap
       if (sidebar?.classList.contains('open')) {
         codePanel?.classList.remove('open_mobile');
+        codePanel?.classList.add('minimized');
         tryFloating?.setAttribute('aria-expanded','false');
       }
     });
     hamburger.addEventListener('touchstart', (e) => { e.stopPropagation(); sidebar?.classList.toggle('open'); });
   }
 
-  // The floating Try button is hidden in mobile via CSS.
-  // Protect it so it does nothing on mobile (desktop behavior unchanged)
+  // Protect Try button on mobile (hidden in CSS); desktop behavior unchanged
   if (tryFloating) {
     tryFloating.addEventListener('click', (e) => {
       if (window.innerWidth <= 1200) {
@@ -759,7 +797,6 @@ function bindMobileControls() {
         return;
       }
       e.stopPropagation();
-      // desktop: fallback behavior (not used in mobile)
       const isOpen = codePanel?.classList.toggle('open');
       tryFloating.setAttribute('aria-expanded', String(!!isOpen));
     });
@@ -768,8 +805,12 @@ function bindMobileControls() {
   if (panelClose) {
     panelClose.addEventListener('click', (e) => {
       e.stopPropagation();
+      // on mobile close -> return to minimized state
       codePanel?.classList.remove('open_mobile');
+      codePanel?.classList.add('minimized');
       tryFloating?.setAttribute('aria-expanded','false');
+      // focus back to content
+      document.getElementById('content')?.focus?.();
     });
   }
 
@@ -791,47 +832,86 @@ function bindMobileControls() {
       return;
     }
     sidebar?.classList.remove('open');
-    codePanel?.classList.remove('open_mobile');
+    // minimize panel on outside click
+    if (codePanel) {
+      codePanel.classList.remove('open_mobile');
+      codePanel.classList.add('minimized');
+    }
     tryFloating?.setAttribute('aria-expanded','false');
   }
   document.addEventListener('click', handleOutsideInteraction);
   document.addEventListener('touchstart', handleOutsideInteraction);
 
-  // ESC closes both
+  // ESC closes both / minimize panel
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       sidebar?.classList.remove('open');
-      codePanel?.classList.remove('open_mobile');
+      if (codePanel) {
+        codePanel.classList.remove('open_mobile');
+        codePanel.classList.add('minimized');
+      }
       tryFloating?.setAttribute('aria-expanded','false');
     }
   });
 
-  /* NEW: open the mobile code-panel ONLY when the user clicks a code block inside the swagger UI.
-     This ensures the panel is inert and does not block the page unless user explicitly requested it.
-     We look for clicks on pre, code, .microlight or response example elements within an .opblock.
+  /* Open the mobile code-panel ONLY when:
+     - user clicks a code/pre/response example inside swagger UI (explicit intent), OR
+     - user clicks the minimized handle (codePanel.minimized)
+     The panel will expand (open_mobile). Closing returns it to minimized.
   */
+  function openMobilePanelForOpblock(opblock) {
+    if (!codePanel) return;
+    updateRightPanel(opblock);
+    codePanel.classList.remove('minimized');
+    codePanel.classList.add('open_mobile');
+    tryFloating?.setAttribute('aria-expanded','true');
+    // ensure sidebar closed to avoid overlap
+    sidebar?.classList.remove('open');
+  }
+
+  // click on code inside swagger triggers opening
   function handleSwaggerCodeClick(e) {
-    const el = e.target;
-    // only on mobile
+    // only for mobile
     if (window.innerWidth > 1200) return;
+    const el = e.target;
     const codeEl = el.closest('pre, code, .microlight, .responses-wrapper, .example');
     if (!codeEl) return;
     const opblock = el.closest('.opblock');
     if (!opblock) return;
-    // update panel content
-    updateRightPanel(opblock);
-    // show the panel in mobile using special class open_mobile
-    codePanel?.classList.add('open_mobile');
-    tryFloating?.setAttribute('aria-expanded','true');
-    // ensure sidebar closed to avoid overlap
-    sidebar?.classList.remove('open');
     e.stopPropagation();
+    openMobilePanelForOpblock(opblock);
   }
 
-  // listen for both click and touchstart to be responsive on mobile
   if (swaggerRoot) {
     swaggerRoot.addEventListener('click', handleSwaggerCodeClick);
     swaggerRoot.addEventListener('touchstart', handleSwaggerCodeClick);
+  }
+
+  // clicking the minimized handle expands the panel
+  function handleMinimizedClick(e) {
+    if (!codePanel) return;
+    if (!codePanel.classList.contains('minimized')) return;
+    // attempt to open with currently selected opblock, or fallback to first open opblock
+    const current = document.querySelector('.opblock.is-open') || lastClickedOpblock || document.querySelector('.opblock');
+    if (current) {
+      openMobilePanelForOpblock(current);
+    } else {
+      // still expand but without content (user can open an opblock after)
+      codePanel.classList.remove('minimized');
+      codePanel.classList.add('open_mobile');
+      tryFloating?.setAttribute('aria-expanded','true');
+    }
+    e.stopPropagation();
+  }
+
+  // minimize click handler
+  if (codePanel) {
+    codePanel.addEventListener('click', (e) => {
+      // if minimized, clicking anywhere on it should expand
+      if (codePanel.classList.contains('minimized')) {
+        handleMinimizedClick(e);
+      }
+    });
   }
 }
 
@@ -848,16 +928,21 @@ function bindMobileControls() {
     observeSwagger();
     bindMobileControls();
 
-    // ensure mobile panel closed by default
-    document.getElementById('sidebar')?.classList.remove('open');
-    document.getElementById('code-panel')?.classList.remove('open_mobile');
-    document.getElementById('try-floating')?.setAttribute('aria-expanded','false');
+    // ensure mobile panel minimized by default on load
+    const cp = document.getElementById('code-panel');
+    if (window.innerWidth <= 1200 && cp) {
+      cp.classList.remove('open_mobile');
+      cp.classList.add('minimized');
+    } else if (cp) {
+      cp.classList.remove('minimized');
+      cp.classList.remove('open_mobile');
+    }
 
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
       if (open) {
         lastClickedOpblock = open;
-        // only update internal data, do not auto-open the mobile panel
+        // update internal content but DO NOT auto-open mobile panel
         updateRightPanel(open);
       }
     }, 350);
