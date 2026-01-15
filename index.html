@@ -145,6 +145,7 @@
     /* limitar a altura do swagger para caber na viewport */
     max-height: calc(100vh - (var(--page-gutter) * 2) - 12px);
     overflow: auto;
+    text-align: left; /* forçar alinhamento à esquerda */
   }
 
   /* tornar internos previsíveis */
@@ -163,6 +164,14 @@
     word-break: break-word;
     white-space: normal !important;
   }
+
+  .swagger-ui pre, .swagger-ui code {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    max-width: 100%;
+  }
+
+  .swagger-ui img { max-width: 100%; height: auto; }
 
   .swagger-ui .opblock { border: none; box-shadow: none; margin-bottom: 12px; }
 
@@ -242,15 +251,49 @@
   /* Responsividade */
   @media (max-width: 1200px) {
     .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 12px; }
-    .code-panel { display: none; }
-    .sidebar { max-height: none; overflow: visible; position: relative; }
+    /* Mostrar o code-panel em mobile como drawer (oculto por padrão) e permitir abrir */
+    .code-panel {
+      display: flex;
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      height: 46vh;
+      max-height: calc(100vh - 92px);
+      z-index: 110;
+      border-radius: 12px;
+      transform: translateY(110%);
+      transition: transform .28s ease;
+      box-shadow: 0 18px 46px rgba(2,6,23,0.28);
+    }
+    .code-panel.open {
+      transform: translateY(0);
+    }
+    /* Mostrar um topo móvel com hambúrguer */
+    .mobile-topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+    .mobile-topbar .hamburger { display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; background:var(--card); border: 1px solid rgba(2,6,23,0.06); cursor:pointer; font-weight:700; }
+    .try-floating { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:var(--brand); color:#fff; cursor:pointer; border:none; font-weight:700; }
+    /* Sidebar becomes off-canvas at <=1200 */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 76%;
+      max-width: 380px;
+      transform: translateX(-120%);
+      transition: transform .22s;
+      z-index: 120;
+      box-shadow: 8px 0 32px rgba(2,6,23,0.12);
+    }
+    .sidebar.open { transform: translateX(0); }
+    /* Ajustes de layout para leitura */
+    .swagger-ui { padding: 14px; max-height: none; overflow: visible; }
     .content { max-height: none; overflow: visible; }
-    .swagger-ui { max-height: none; overflow: visible; padding: 16px; }
   }
 
   @media (max-width: 880px) {
-    .sidebar { position: fixed; left:0; top:0; bottom:0; width:76%; max-width:380px; transform: translateX(-120%); transition:transform .22s; z-index:90; box-shadow:8px 0 32px rgba(2,6,23,0.12); }
-    .sidebar.open { transform: translateX(0); }
+    /* regras já cobertas por <=1200; manter compatibilidade */
   }
 
   .muted { color: var(--muted); font-size:12px; }
@@ -263,10 +306,22 @@
 <body>
 <div class="layout">
 
+  <!-- MOBILE TOPBAR (visível apenas em telas pequenas) -->
+  <div class="mobile-topbar" style="display:none;" id="mobile-topbar" aria-hidden="true">
+    <button id="hamburger" class="hamburger" aria-label="Abrir menu">
+      ☰ Menu
+    </button>
+    <div style="font-weight:800">PIX API</div>
+    <button id="try-floating" class="try-floating" aria-controls="code-panel" aria-expanded="false">
+      Try
+    </button>
+  </div>
+
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar" role="navigation" aria-label="Sidebar">
     <div class="brand" aria-hidden="false">
       <div>
+        <span class="brand-text">PIX API</span>
       </div>
     </div>
 
@@ -285,11 +340,14 @@
   </main>
 
   <!-- RIGHT PANEL (novo layout) -->
-  <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true">
+  <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true" aria-hidden="false">
     <div class="panel-header" id="panel-header" aria-hidden="false">
       <div class="try">try</div>
       <div id="code-method" class="method-pill default">OP</div>
       <div id="code-path" class="path">/caminho/exemplo</div>
+      <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+        <button id="panel-close" aria-label="Fechar painel" style="background:transparent;border:none;color:#cfe8df;cursor:pointer;font-weight:700;">Fechar</button>
+      </div>
     </div>
 
     <div>
@@ -319,7 +377,7 @@
 <script>
 /*
   Mantive todo o funcionamento original da versão 5 (buildSidebar, wireSearch, observeSwagger, etc.)
-  e adicionei apenas a função removeZeroCounts() para eliminar os "0" que apareciam ao lado do sidebar.
+  e adicionei apenas a função removeZeroCounts() e comportamentos mobile (hamburger, try drawer).
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
@@ -437,6 +495,10 @@ function buildSidebar() {
           lastClickedOpblock = opblock;
           setTimeout(() => {
             updateRightPanel(opblock);
+            // se estiver em mobile, fechar sidebar para dar foco ao conteúdo
+            if (window.innerWidth <= 1200) {
+              document.getElementById('sidebar')?.classList.remove('open');
+            }
           }, 260);
         }
       });
@@ -648,6 +710,69 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
+/* --- MOBILE CONTROLS --- */
+function bindMobileControls() {
+  const hamburger = document.getElementById('hamburger');
+  const sidebar = document.getElementById('sidebar');
+  const mobileTopbar = document.getElementById('mobile-topbar');
+  const tryFloating = document.getElementById('try-floating');
+  const codePanel = document.getElementById('code-panel');
+  const panelClose = document.getElementById('panel-close');
+
+  function updateMobileTopbarVisibility() {
+    if (!mobileTopbar) return;
+    if (window.innerWidth <= 1200) {
+      mobileTopbar.style.display = 'flex';
+      mobileTopbar.setAttribute('aria-hidden', 'false');
+    } else {
+      mobileTopbar.style.display = 'none';
+      mobileTopbar.setAttribute('aria-hidden', 'true');
+      sidebar.classList.remove('open');
+      codePanel.classList.remove('open');
+      tryFloating?.setAttribute('aria-expanded','false');
+    }
+  }
+
+  window.addEventListener('resize', updateMobileTopbarVisibility);
+  updateMobileTopbarVisibility();
+
+  if (hamburger) {
+    hamburger.addEventListener('click', () => {
+      if (!sidebar) return;
+      sidebar.classList.toggle('open');
+    });
+  }
+
+  if (tryFloating) {
+    tryFloating.addEventListener('click', () => {
+      if (!codePanel) return;
+      const isOpen = codePanel.classList.toggle('open');
+      tryFloating.setAttribute('aria-expanded', String(isOpen));
+    });
+  }
+
+  if (panelClose) {
+    panelClose.addEventListener('click', () => {
+      codePanel?.classList.remove('open');
+      tryFloating?.setAttribute('aria-expanded','false');
+    });
+  }
+
+  // fechar painel ao clicar fora (mobile)
+  document.addEventListener('click', (e) => {
+    const cp = document.getElementById('code-panel');
+    const tf = document.getElementById('try-floating');
+    if (!cp || !tf) return;
+    if (window.innerWidth > 1200) return;
+    const inside = e.target.closest('#code-panel') || e.target.closest('#try-floating') || e.target.closest('#hamburger') || e.target.closest('#sidebar');
+    if (!inside) {
+      cp.classList.remove('open');
+      tf.setAttribute('aria-expanded','false');
+    }
+  });
+}
+
+/* --- INIT --- */
 (async function init() {
   try {
     await waitForSwaggerReady();
@@ -660,6 +785,8 @@ function escapeHtml(str) {
     wireSearch();
     bindGlobalOpClicks();
     observeSwagger();
+    bindMobileControls();
+
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
       if (open) {
