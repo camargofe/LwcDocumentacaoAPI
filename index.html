@@ -377,7 +377,7 @@
 <script>
 /*
   Mantive todo o funcionamento original da versão 5 (buildSidebar, wireSearch, observeSwagger, etc.)
-  e adicionei apenas a função removeZeroCounts() e comportamentos mobile (hamburger, try drawer).
+  e corrigi o comportamento mobile para fechamento/abertura do sidebar e do code-panel.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
@@ -710,7 +710,7 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-/* --- MOBILE CONTROLS --- */
+/* --- MOBILE CONTROLS (ajustadas) --- */
 function bindMobileControls() {
   const hamburger = document.getElementById('hamburger');
   const sidebar = document.getElementById('sidebar');
@@ -727,8 +727,9 @@ function bindMobileControls() {
     } else {
       mobileTopbar.style.display = 'none';
       mobileTopbar.setAttribute('aria-hidden', 'true');
-      sidebar.classList.remove('open');
-      codePanel.classList.remove('open');
+      // garantir estado "fechado" quando voltamos ao desktop
+      sidebar?.classList.remove('open');
+      codePanel?.classList.remove('open');
       tryFloating?.setAttribute('aria-expanded','false');
     }
   }
@@ -736,15 +737,21 @@ function bindMobileControls() {
   window.addEventListener('resize', updateMobileTopbarVisibility);
   updateMobileTopbarVisibility();
 
+  // garantir painel fechado por padrão no carregamento
+  sidebar?.classList.remove('open');
+  codePanel?.classList.remove('open');
+  tryFloating?.setAttribute('aria-expanded','false');
+
   if (hamburger) {
-    hamburger.addEventListener('click', () => {
-      if (!sidebar) return;
-      sidebar.classList.toggle('open');
+    hamburger.addEventListener('click', (e) => {
+      e.stopPropagation(); // evitar que o document click feche imediatamente
+      sidebar?.classList.toggle('open');
     });
   }
 
   if (tryFloating) {
-    tryFloating.addEventListener('click', () => {
+    tryFloating.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (!codePanel) return;
       const isOpen = codePanel.classList.toggle('open');
       tryFloating.setAttribute('aria-expanded', String(isOpen));
@@ -752,22 +759,43 @@ function bindMobileControls() {
   }
 
   if (panelClose) {
-    panelClose.addEventListener('click', () => {
+    panelClose.addEventListener('click', (e) => {
+      e.stopPropagation();
       codePanel?.classList.remove('open');
       tryFloating?.setAttribute('aria-expanded','false');
     });
   }
 
-  // fechar painel ao clicar fora (mobile)
+  // fechar sidebar / painel ao clicar fora (mobile)
   document.addEventListener('click', (e) => {
+    if (window.innerWidth > 1200) return; // só mobile
     const cp = document.getElementById('code-panel');
     const tf = document.getElementById('try-floating');
-    if (!cp || !tf) return;
-    if (window.innerWidth > 1200) return;
-    const inside = e.target.closest('#code-panel') || e.target.closest('#try-floating') || e.target.closest('#hamburger') || e.target.closest('#sidebar');
+    const hb = document.getElementById('hamburger');
+    const sb = document.getElementById('sidebar');
+    const inside = e.target.closest('#code-panel') || e.target.closest('#try-floating') || e.target.closest('#hamburger') || e.target.closest('#sidebar') || e.target.closest('.op-link');
     if (!inside) {
-      cp.classList.remove('open');
-      tf.setAttribute('aria-expanded','false');
+      cp?.classList.remove('open');
+      tf?.setAttribute('aria-expanded','false');
+      sb?.classList.remove('open');
+    }
+  });
+
+  // fechar com ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      sidebar?.classList.remove('open');
+      codePanel?.classList.remove('open');
+      tryFloating?.setAttribute('aria-expanded','false');
+    }
+  });
+
+  // se abrirmos um endpoint a partir da sidebar, fechar o sidebar (já havia, reforçar)
+  document.addEventListener('click', (e) => {
+    const op = e.target.closest('.op-link');
+    if (!op) return;
+    if (window.innerWidth <= 1200) {
+      sidebar?.classList.remove('open');
     }
   });
 }
