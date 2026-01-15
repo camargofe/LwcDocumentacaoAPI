@@ -224,27 +224,74 @@
 
   .panel-empty { color: rgba(255,255,255,0.65); font-size:13px; padding:8px; }
 
+  /* MOBILE ADJUSTMENTS
+     - code-panel: hidden by default on mobile; only opens when user explicitly clicks a code block inside swagger UI
+     - remove "PIX API" label and mobile Try button text from mobile UI
+     - ensure all text wraps and aligns left for readability
+  */
   @media (max-width: 1200px) {
     .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 12px; }
+
+    /* On mobile the panel remains hidden unless opened programmatically (class 'open' added) */
     .code-panel {
-      display: flex;
-      position: fixed;
-      left: 12px;
-      right: 12px;
-      bottom: 12px;
-      height: 46vh;
-      max-height: calc(100vh - 92px);
-      z-index: 110;
-      border-radius: 12px;
-      transform: translateY(110%);
-      transition: transform .28s ease;
-      box-shadow: 0 18px 46px rgba(2,6,23,0.28);
-      pointer-events: auto;
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      opacity: 0 !important;
+      transform: none !important;
+      height: 0 !important;
+      max-height: 0 !important;
     }
-    .code-panel.open { transform: translateY(0); }
+    /* When opened programmatically we temporarily override the rules by adding a mobile-only overlay
+       This element will be created/managed in JS; we keep .code-panel.open_mobile for that state. */
+    .code-panel.open_mobile {
+      display: flex !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      opacity: 1 !important;
+      position: fixed !important;
+      left: 12px !important;
+      right: 12px !important;
+      bottom: 12px !important;
+      height: 46vh !important;
+      max-height: calc(100vh - 92px) !important;
+      z-index: 140 !important;
+      border-radius: 12px !important;
+      transform: translateY(0) !important;
+      transition: transform .20s ease !important;
+      box-shadow: 0 18px 46px rgba(2,6,23,0.28) !important;
+      background: var(--panel-bg) !important;
+    }
+
+    /* hide mobile topbar title and Try button text as requested */
+    .mobile-topbar > .mobile-title { display: none !important; }
+    #try-floating { display: none !important; }
+
+    /* hide PIX API text in the sidebar brand on mobile */
+    .brand-text { display: none !important; }
+
+    /* also hide the 'try' label inside code-panel header on mobile */
+    .code-panel .try { display: none !important; }
+
+    /* readability: force left alignment and wrap */
+    .swagger-ui { padding: 14px; max-height: none; overflow: visible; text-align: left; }
+    .swagger-ui h1, .swagger-ui h2, .swagger-ui h3, .swagger-ui h4, .swagger-ui p, .swagger-ui .markdown {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      white-space: normal !important;
+      text-align: left !important;
+    }
+    .swagger-ui pre, .swagger-ui code {
+      white-space: pre-wrap !important;
+      overflow-wrap: anywhere !important;
+      word-break: break-word !important;
+      max-width: 100% !important;
+    }
+
     .mobile-topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
     .mobile-topbar .hamburger { display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; background:var(--card); border: 1px solid rgba(2,6,23,0.06); cursor:pointer; font-weight:700; }
     .try-floating { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:var(--brand); color:#fff; cursor:pointer; border:none; font-weight:700; }
+
     .sidebar {
       position: fixed;
       left: 0;
@@ -258,7 +305,6 @@
       box-shadow: 8px 0 32px rgba(2,6,23,0.12);
     }
     .sidebar.open { transform: translateX(0); }
-    .swagger-ui { padding: 14px; max-height: none; overflow: visible; }
     .content { max-height: none; overflow: visible; }
   }
 
@@ -273,7 +319,7 @@
   <!-- MOBILE TOPBAR -->
   <div class="mobile-topbar" style="display:none;" id="mobile-topbar" aria-hidden="true">
     <button id="hamburger" class="hamburger" aria-label="Abrir menu">☰ Menu</button>
-    <div style="font-weight:800">PIX API</div>
+    <div class="mobile-title" style="font-weight:800">PIX API</div>
     <button id="try-floating" class="try-floating" aria-controls="code-panel" aria-expanded="false">Try</button>
   </div>
 
@@ -294,7 +340,7 @@
   </main>
 
   <!-- RIGHT PANEL -->
-  <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true" aria-hidden="false">
+  <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true" aria-hidden="true">
     <div class="panel-header" id="panel-header" aria-hidden="false">
       <div class="try">try</div>
       <div id="code-method" class="method-pill default">OP</div>
@@ -426,7 +472,7 @@ function buildSidebar() {
                        </div>`;
 
       btn.addEventListener('click', (e) => {
-        e.stopPropagation(); // avoid bubbling to document click that would immediately close sidebar
+        e.stopPropagation();
         const opblock = op.closest('.opblock');
         if (!opblock) return;
         const summary = opblock.querySelector('.opblock-summary');
@@ -515,6 +561,7 @@ function observeSwagger() {
         const t = m.target;
         if (t.classList && t.classList.contains('opblock') && t.classList.contains('is-open')) {
           const preferred = lastClickedOpblock || t;
+          // update internal panel data but DO NOT auto-open mobile panel
           setTimeout(() => updateRightPanel(preferred), 80);
         }
       }
@@ -658,6 +705,7 @@ function bindMobileControls() {
   const codePanel = document.getElementById('code-panel');
   const panelClose = document.getElementById('panel-close');
   const sidebarMenu = document.getElementById('sidebar-menu');
+  const swaggerRoot = document.getElementById('swagger-ui');
 
   function updateMobileTopbarVisibility() {
     if (!mobileTopbar) return;
@@ -668,22 +716,22 @@ function bindMobileControls() {
       mobileTopbar.style.display = 'none';
       mobileTopbar.setAttribute('aria-hidden', 'true');
       sidebar?.classList.remove('open');
-      codePanel?.classList.remove('open');
+      // ensure mobile panel closed when returning to desktop
+      codePanel?.classList.remove('open_mobile');
       tryFloating?.setAttribute('aria-expanded','false');
     }
   }
 
   // Ensure closed state on load
   sidebar?.classList.remove('open');
-  codePanel?.classList.remove('open');
+  codePanel?.classList.remove('open_mobile');
   tryFloating?.setAttribute('aria-expanded','false');
 
   window.addEventListener('resize', () => {
     updateMobileTopbarVisibility();
-    // on resize to desktop, make sure everything is closed
     if (window.innerWidth > 1200) {
       sidebar?.classList.remove('open');
-      codePanel?.classList.remove('open');
+      codePanel?.classList.remove('open_mobile');
       tryFloating?.setAttribute('aria-expanded','false');
     }
   });
@@ -692,33 +740,35 @@ function bindMobileControls() {
   if (hamburger) {
     hamburger.addEventListener('click', (e) => {
       e.stopPropagation();
-      // toggle open
       sidebar?.classList.toggle('open');
-      // ensure panel closed when opening menu to avoid overlap
+      // ensure mobile panel closed while menu open to avoid overlap
       if (sidebar?.classList.contains('open')) {
-        codePanel?.classList.remove('open');
+        codePanel?.classList.remove('open_mobile');
         tryFloating?.setAttribute('aria-expanded','false');
       }
     });
-    // support touchstart to improve mobile responsiveness
     hamburger.addEventListener('touchstart', (e) => { e.stopPropagation(); sidebar?.classList.toggle('open'); });
   }
 
+  // The floating Try button is hidden in mobile via CSS.
+  // Protect it so it does nothing on mobile (desktop behavior unchanged)
   if (tryFloating) {
     tryFloating.addEventListener('click', (e) => {
+      if (window.innerWidth <= 1200) {
+        e.stopPropagation();
+        return;
+      }
       e.stopPropagation();
+      // desktop: fallback behavior (not used in mobile)
       const isOpen = codePanel?.classList.toggle('open');
-      // when opening panel, close sidebar so they don't overlap
-      if (isOpen) sidebar?.classList.remove('open');
       tryFloating.setAttribute('aria-expanded', String(!!isOpen));
     });
-    tryFloating.addEventListener('touchstart', (e) => { e.stopPropagation(); const isOpen = codePanel?.classList.toggle('open'); if (isOpen) sidebar?.classList.remove('open'); tryFloating.setAttribute('aria-expanded', String(!!isOpen)); });
   }
 
   if (panelClose) {
     panelClose.addEventListener('click', (e) => {
       e.stopPropagation();
-      codePanel?.classList.remove('open');
+      codePanel?.classList.remove('open_mobile');
       tryFloating?.setAttribute('aria-expanded','false');
     });
   }
@@ -728,7 +778,6 @@ function bindMobileControls() {
     sidebarMenu.addEventListener('click', (e) => {
       const op = e.target.closest('.op-link');
       if (op && window.innerWidth <= 1200) {
-        // small delay to allow the op handler to run (which opens the opblock)
         setTimeout(() => sidebar?.classList.remove('open'), 160);
       }
     });
@@ -738,12 +787,11 @@ function bindMobileControls() {
   function handleOutsideInteraction(e) {
     if (window.innerWidth > 1200) return;
     const target = e.target;
-    // ignore interactions inside these components
     if (target.closest('#sidebar') || target.closest('#hamburger') || target.closest('#code-panel') || target.closest('#try-floating')) {
       return;
     }
     sidebar?.classList.remove('open');
-    codePanel?.classList.remove('open');
+    codePanel?.classList.remove('open_mobile');
     tryFloating?.setAttribute('aria-expanded','false');
   }
   document.addEventListener('click', handleOutsideInteraction);
@@ -753,10 +801,38 @@ function bindMobileControls() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       sidebar?.classList.remove('open');
-      codePanel?.classList.remove('open');
+      codePanel?.classList.remove('open_mobile');
       tryFloating?.setAttribute('aria-expanded','false');
     }
   });
+
+  /* NEW: open the mobile code-panel ONLY when the user clicks a code block inside the swagger UI.
+     This ensures the panel is inert and does not block the page unless user explicitly requested it.
+     We look for clicks on pre, code, .microlight or response example elements within an .opblock.
+  */
+  function handleSwaggerCodeClick(e) {
+    const el = e.target;
+    // only on mobile
+    if (window.innerWidth > 1200) return;
+    const codeEl = el.closest('pre, code, .microlight, .responses-wrapper, .example');
+    if (!codeEl) return;
+    const opblock = el.closest('.opblock');
+    if (!opblock) return;
+    // update panel content
+    updateRightPanel(opblock);
+    // show the panel in mobile using special class open_mobile
+    codePanel?.classList.add('open_mobile');
+    tryFloating?.setAttribute('aria-expanded','true');
+    // ensure sidebar closed to avoid overlap
+    sidebar?.classList.remove('open');
+    e.stopPropagation();
+  }
+
+  // listen for both click and touchstart to be responsive on mobile
+  if (swaggerRoot) {
+    swaggerRoot.addEventListener('click', handleSwaggerCodeClick);
+    swaggerRoot.addEventListener('touchstart', handleSwaggerCodeClick);
+  }
 }
 
 (async function init() {
@@ -772,15 +848,16 @@ function bindMobileControls() {
     observeSwagger();
     bindMobileControls();
 
-    // ensure right panel not opened by default
+    // ensure mobile panel closed by default
     document.getElementById('sidebar')?.classList.remove('open');
-    document.getElementById('code-panel')?.classList.remove('open');
+    document.getElementById('code-panel')?.classList.remove('open_mobile');
     document.getElementById('try-floating')?.setAttribute('aria-expanded','false');
 
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
       if (open) {
         lastClickedOpblock = open;
+        // only update internal data, do not auto-open the mobile panel
         updateRightPanel(open);
       }
     }, 350);
