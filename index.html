@@ -7,10 +7,10 @@
 
 <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
 <link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.css" />
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" />
 
 <style>
-  /* Reset / box model */
+  /* ===== Base / Reset ===== */
   *,*::before,*::after { box-sizing: border-box; }
   html, body {
     margin: 0;
@@ -22,8 +22,15 @@
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
     overflow-x: hidden;
-    overflow-y: auto;
+    -webkit-tap-highlight-color: transparent;
   }
+
+  /* Responsive base font (keeps mobile readable) */
+  :root {
+    --fs-base: clamp(14px, 2.2vw, 16px);
+    --line-height: 1.45;
+  }
+  body { font-size: var(--fs-base); line-height: var(--line-height); }
 
   :root{
     --sidebar-width: 260px;
@@ -47,7 +54,7 @@
     align-items: start;
   }
 
-  /* Desktop sidebar */
+  /* ===== Sidebar (desktop) ===== */
   .sidebar {
     background: var(--card);
     border-right: 1px solid rgba(15,23,42,0.06);
@@ -67,11 +74,11 @@
 
   .sidebar .search input[type="search"] {
     width: 100%;
-    padding: 9px 10px;
+    padding: 10px 12px;
     border-radius: 8px;
     border: 1px solid rgba(2,6,23,0.06);
     background: #fbfdff;
-    font-size: 13px;
+    font-size: 0.95rem;
     outline: none;
   }
 
@@ -80,20 +87,23 @@
   .menu-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; color:var(--muted); font-weight:600; font-size:13px; }
   .menu-heading .count { background: rgba(15,111,178,0.08); color:var(--brand); padding:3px 8px; border-radius:999px; font-size:12px; }
 
+  /* ensure normal wrapping and readable touch targets */
   .tag-item {
     display:block;
     margin-bottom:8px;
     border-radius:8px;
     cursor:pointer;
-    font-size:13px;
+    font-size:0.95rem;
     color:#0b1220;
     transition: background .12s, transform .06s;
-    padding: 8px;
+    padding: 10px;
     border: 1px solid transparent;
     text-align: left;
     white-space: normal;
     overflow-wrap: break-word;
     word-break: normal;
+    min-height: 44px;             /* touch target */
+    align-items: center;
   }
   .tag-item:hover { background: rgba(2,6,23,0.03); transform: translateY(-1px); }
   .tag-item.active { background: linear-gradient(180deg,#f2f8ff,#ffffff); border:1px solid rgba(15,111,178,0.06); box-shadow: 0 6px 18px rgba(12,37,63,0.04); }
@@ -103,9 +113,9 @@
     display:flex;
     gap:10px;
     align-items:center;
-    padding:8px;
+    padding:10px;
     border-radius:8px;
-    font-size:13px;
+    font-size:0.95rem;
     color:#263238;
     background: transparent;
     border: none;
@@ -114,16 +124,19 @@
     white-space: normal;
     overflow-wrap: break-word;
     word-break: normal;
+    min-height: 44px;            /* touch target */
   }
   .op-link:hover { background: rgba(2,6,23,0.03); transform: translateY(-1px); }
   .op-link.active { background: rgba(2,6,23,0.04); box-shadow: inset 3px 0 0 var(--brand); color:#0b1220; font-weight:700; }
 
-  .method-pill-left { padding:6px 10px; border-radius:8px; font-weight:800; font-size:11px; color:#fff; min-width:52px; text-align:center; flex-shrink:0; }
+  .method-pill-left { padding:8px 10px; border-radius:8px; font-weight:800; font-size:12px; color:#fff; min-width:56px; text-align:center; flex-shrink:0; }
+
   .method-get { background:#16a34a; }
   .method-post { background:#0ea5e9; }
   .method-put { background:#f59e0b; color:#0b1220; }
   .method-delete { background:#ef4444; }
 
+  /* ===== Content ===== */
   .content {
     min-width: 0;
     max-height: calc(100vh - (var(--page-gutter) * 2));
@@ -149,12 +162,13 @@
     max-width: 100% !important;
   }
 
-  /* text rules to avoid single-letter vertical breaks */
+  /* readable text rules */
   .swagger-ui h1, .swagger-ui h2, .swagger-ui h3, .swagger-ui h4, .swagger-ui p, .swagger-ui .markdown {
     overflow-wrap: break-word;
     word-break: normal;
     white-space: normal;
     text-align: left;
+    hyphens: auto;
   }
   .swagger-ui pre, .swagger-ui code {
     white-space: pre-wrap !important;
@@ -163,6 +177,7 @@
     max-width: 100%;
   }
 
+  /* ===== Right code panel (desktop) ===== */
   .code-panel {
     background: var(--panel-bg);
     border-left: 1px solid rgba(255,255,255,0.03);
@@ -230,17 +245,16 @@
 
   .panel-empty { color: rgba(255,255,255,0.65); font-size:13px; padding:8px; }
 
-  /* MOBILE ADJUSTMENTS */
+  /* ===== MOBILE ADJUSTMENTS (<=1200px) ===== */
   @media (max-width: 1200px) {
     .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 12px; }
 
-    /* topbar: fixed at top, hamburger always visible on mobile */
+    /* fixed topbar - hamburger always visible */
     .mobile-topbar {
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
-      margin-bottom:8px;
       position: fixed;
       left: 0;
       right: 0;
@@ -248,7 +262,7 @@
       height: 56px;
       padding: 8px 12px;
       background: rgba(245,247,251,0.98);
-      z-index: 1200; /* topmost so hamburger clickable */
+      z-index: 1400; /* keep on top */
       border-bottom: 1px solid rgba(2,6,23,0.04);
     }
     .layout { padding-top: 72px; } /* prevent content under topbar */
@@ -263,10 +277,12 @@
       border: 1px solid rgba(2,6,23,0.06);
       cursor:pointer;
       font-weight:700;
-      z-index: 1210;
+      z-index: 1410;
+      min-width:44px;
+      min-height:44px;
     }
 
-    /* Sidebar becomes a dropdown panel (fixed overlay from left) */
+    /* Sidebar becomes fixed overlay from left (menu suspenso) */
     .sidebar {
       position: fixed !important;
       left: 0;
@@ -276,17 +292,16 @@
       max-width: 380px;
       transform: translateX(-120%);
       transition: transform .22s;
-      z-index: 1150; /* below topbar but above page */
+      z-index: 1350; /* below topbar */
       box-shadow: 8px 0 32px rgba(2,6,23,0.12);
       height: calc(100vh - 56px);
       overflow: auto;
       background: var(--card);
       padding-top: 12px;
-      -webkit-overflow-scrolling: touch;
     }
     .sidebar.open { transform: translateX(0); }
 
-    /* Menu overlay behind sidebar (below topbar) */
+    /* overlay (behind sidebar, below topbar) */
     .mobile-menu-overlay {
       display: none;
       position: fixed;
@@ -295,12 +310,12 @@
       right: 0;
       bottom: 0;
       background: rgba(2,6,23,0.28);
-      z-index: 1140; /* below sidebar and topbar */
+      z-index: 1340;
     }
     .mobile-menu-overlay.visible { display: block; }
 
-    /* Minimized code-panel handle fixed to bottom-right (footer area) */
-    .code-panel { display: none; } /* base hidden; will be controlled by classes */
+    /* minimized code-panel handle: fixed bottom-right (footer area) */
+    .code-panel { display: none; }
 
     .code-panel.minimized {
       display: flex !important;
@@ -308,14 +323,14 @@
       pointer-events: auto !important;
       position: fixed !important;
       right: 16px !important;
-      bottom: 16px !important; /* fixed to viewport footer/right */
+      bottom: 16px !important;
       width: 56px !important;
       height: 56px !important;
       padding: 0 !important;
       border-radius: 999px !important;
       align-items: center !important;
       justify-content: center !important;
-      z-index: 1250 !important; /* above topbar/sidebar/overlay */
+      z-index: 1450 !important; /* above topbar */
       box-shadow: 0 12px 32px rgba(2,6,23,0.24) !important;
       background: var(--panel-bg) !important;
       border: 1px solid rgba(255,255,255,0.04) !important;
@@ -345,7 +360,7 @@
       bottom: 12px !important;
       height: 56vh !important;
       max-height: calc(100vh - 96px) !important;
-      z-index: 1260 !important; /* on top of everything */
+      z-index: 1460 !important;
       border-radius: 12px !important;
       flex-direction: column !important;
       transform: translateY(0) !important;
@@ -356,37 +371,28 @@
       overflow: auto !important;
     }
 
-    .brand-text { display: none !important; }
+    .brand-text { display: none !important; } /* compact topbar */
 
+    /* readability on mobile */
     .swagger-ui { padding: 14px; max-height: none; overflow: visible; text-align: left; }
-    .swagger-ui h1, .swagger-ui h2, .swagger-ui h3, .swagger-ui h4, .swagger-ui p, .swagger-ui .markdown {
-      overflow-wrap: break-word;
-      word-break: normal;
-      white-space: normal !important;
-      text-align: left !important;
-    }
-    .swagger-ui pre, .swagger-ui code {
-      white-space: pre-wrap !important;
-      overflow-wrap: break-word !important;
-      word-break: normal !important;
-      max-width: 100% !important;
-    }
-
-    .content { max-height: none; overflow: visible; padding-bottom: 96px; } /* space for minimized handle */
+    .content { max-height: none; overflow: visible; padding-bottom: 96px; } /* space for handle */
   }
 
-  /* helper to prevent background scroll when mobile menu open */
+  /* prevent body scroll when overlay/menu is open */
   .no-scroll { overflow: hidden !important; height: 100% !important; }
 
-  .muted { color: var(--muted); font-size:12px; }
-  .small { font-size:12px; color:var(--muted); }
-  .swagger-ui .opblock .opblock-body { overflow: visible !important; }
+  /* accessibility focus outline */
+  button:focus, [role="button"]:focus, a:focus { outline: 3px solid rgba(20,103,178,0.18); outline-offset: 2px; }
+
+  /* reduce accidental overscroll bounce on mobile */
+  .no-overscroll { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+
 </style>
 </head>
 <body>
 <!-- MOBILE TOPBAR (always present on mobile) -->
 <div class="mobile-topbar" id="mobile-topbar" aria-hidden="true" style="display:none">
-  <button id="hamburger" class="hamburger" aria-label="Abrir menu" aria-expanded="false">☰</button>
+  <button id="hamburger" class="hamburger" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button>
   <div class="mobile-title" style="font-weight:800; visibility:hidden;">PIX API</div>
   <div style="width:36px"></div> <!-- spacer -->
 </div>
@@ -397,7 +403,7 @@
 <div class="layout" id="layout">
 
   <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Sidebar">
+  <aside class="sidebar no-overscroll" id="sidebar" role="navigation" aria-label="Sidebar">
     <div class="brand" aria-hidden="false"><div><span class="brand-text">PIX API</span></div></div>
     <div class="search" aria-hidden="false">
       <input id="sidebar-search" type="search" placeholder="Buscar endpoints, tags, títulos..." aria-label="Buscar" />
@@ -412,8 +418,8 @@
     <div id="swagger-ui" class="swagger-ui"></div>
   </main>
 
-  <!-- RIGHT PANEL (desktop) / Minimized handle & mobile overlay controlled by classes -->
-  <aside class="code-panel" id="code-panel" aria-live="polite" aria-atomic="true" aria-hidden="true">
+  <!-- RIGHT PANEL (desktop) / minimized handle on mobile -->
+  <aside class="code-panel" id="code-panel" role="region" aria-label="Painel de respostas" aria-live="polite" aria-atomic="true" aria-hidden="true">
     <div class="panel-header" id="panel-header" aria-hidden="false">
       <div class="try">try</div>
       <div id="code-method" class="method-pill default">OP</div>
@@ -431,9 +437,9 @@
         <div class="top-row">
           <div class="content-type" id="response-content-type">application/json</div>
           <div class="card-controls" id="response-controls">
-            <button id="response-copy">Copy</button>
-            <button id="response-expand">Expand all</button>
-            <button id="response-collapse">Collapse all</button>
+            <button id="response-copy" aria-label="Copiar resposta">Copy</button>
+            <button id="response-expand" aria-label="Expandir tudo">Expand all</button>
+            <button id="response-collapse" aria-label="Colapsar tudo">Collapse all</button>
           </div>
         </div>
         <div class="code-area" id="response-code-area"><pre><code></code></pre></div>
@@ -443,19 +449,22 @@
 
 </div>
 
+<!-- scripts -->
 <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
 <script>
-/*
- Mobile fixes requested:
- - Hamburger should open immediately on a normal tap/click (no press-and-hold).
- - Minimized code-panel handle must be fixed at the footer bottom-right of the viewport.
- - All changes apply to mobile only (<= 1200px); desktop behavior remains unchanged.
+/* ===== Behavior JS (improvements prioritized for mobile: Sprint 1) =====
+   - Immediate hamburger open on pointerdown (no press-and-hold).
+   - Overlay + no-scroll while menu open.
+   - Minimized code-panel handle fixed bottom-right; expands on tap or when tapping code blocks.
+   - Improved text wrapping / touch targets handled in CSS.
+   - Basic focus management: return focus to trigger on close; trap focus inside menu when open.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
 let lastClickedOpblock = null;
+let focusTrapCleanup = null;
 
 SwaggerUIBundle({
   url: SWAGGER_URL,
@@ -479,7 +488,7 @@ function waitForSwaggerReady(timeout = 15000) {
   });
 }
 
-/* Sidebar builder + helpers (unchanged logic) */
+/* Sidebar builder - same logic as before but ensures labels wrap properly */
 function removeZeroCounts() {
   const menu = document.getElementById('sidebar-menu');
   if (!menu) return;
@@ -489,11 +498,9 @@ function removeZeroCounts() {
   });
   candidates.forEach(n => n.remove());
 }
-
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
-
 function buildSidebar() {
   const menu = document.getElementById('sidebar-menu');
   if (!menu) return;
@@ -567,11 +574,11 @@ function buildSidebar() {
           lastClickedOpblock = opblock;
           setTimeout(() => {
             updateRightPanel(opblock);
-            // close mobile sidebar if open
             if (window.innerWidth <= 1200) {
               document.getElementById('sidebar')?.classList.remove('open');
               document.getElementById('mobile-menu-overlay')?.classList.remove('visible');
               document.body.classList.remove('no-scroll');
+              releaseFocusTrap();
             }
           }, 260);
         }
@@ -617,7 +624,7 @@ function wireSearch() {
   });
 }
 
-/* Response extraction / panel population (kept) */
+/* ===== Response extraction / update panel (same approach) ===== */
 function findResponsesWrapper(opblockEl) {
   if (!opblockEl) return null;
   const selectors = [
@@ -686,28 +693,28 @@ function updateRightPanel(preferredOpblock) {
   const codeAreaEl = document.getElementById('response-code-area');
 
   badgesContainer.innerHTML = '';
-  codeAreaEl.querySelector('pre code').textContent = '';
+  if (codeAreaEl) codeAreaEl.querySelector('pre code').textContent = '';
 
   const opblock = preferredOpblock || lastClickedOpblock || document.querySelector('.opblock.is-open');
   if (!opblock) {
-    methodEl.className = 'method-pill default';
-    methodEl.textContent = 'OP';
-    pathEl.textContent = '';
+    if (methodEl) methodEl.className = 'method-pill default';
+    if (methodEl) methodEl.textContent = 'OP';
+    if (pathEl) pathEl.textContent = '';
     return;
   }
 
   const method = opblock.querySelector('.opblock-summary-method')?.textContent?.trim() || '';
   const path = opblock.querySelector('.opblock-summary-path')?.textContent?.trim() || '';
-  methodEl.className = 'method-pill ' + (method ? method.toLowerCase() : 'default');
-  methodEl.textContent = method || 'OP';
-  pathEl.textContent = path || '';
+  if (methodEl) methodEl.className = 'method-pill ' + (method ? method.toLowerCase() : 'default');
+  if (methodEl) methodEl.textContent = method || 'OP';
+  if (pathEl) pathEl.textContent = path || '';
 
   let examples = [];
   try { examples = extractResponseExamples(opblock); } catch (e) { examples = []; }
 
   if (examples.length === 0) {
-    contentTypeEl.textContent = 'application/json';
-    codeAreaEl.querySelector('pre code').textContent = '// Nenhum exemplo de resposta encontrado.';
+    if (contentTypeEl) contentTypeEl.textContent = 'application/json';
+    if (codeAreaEl) codeAreaEl.querySelector('pre code').textContent = '// Nenhum exemplo de resposta encontrado.';
     return;
   }
 
@@ -733,7 +740,39 @@ function updateRightPanel(preferredOpblock) {
   try { hljs.highlightElement(codeAreaEl.querySelector('pre code')); } catch(e) {/*ignore*/}
 }
 
-/* MOBILE CONTROLS & BEHAVIOR */
+/* ===== Focus trap for accessibility (used while sidebar is open) ===== */
+function trapFocus(container) {
+  if (!container) return () => {};
+  const focusableSelectors = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const nodes = Array.from(container.querySelectorAll(focusableSelectors)).filter(n => n.offsetParent !== null);
+  if (nodes.length === 0) return () => {};
+  const first = nodes[0];
+  const last = nodes[nodes.length - 1];
+
+  function handler(e) {
+    if (e.key !== 'Tab') return;
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+  container.addEventListener('keydown', handler);
+  // return cleanup
+  return () => container.removeEventListener('keydown', handler);
+}
+
+/* Release focus trap if any */
+function releaseFocusTrap() {
+  if (typeof focusTrapCleanup === 'function') {
+    try { focusTrapCleanup(); } catch(e){/*ignore*/}
+  }
+  focusTrapCleanup = null;
+}
+
+/* ===== Mobile controls: hamburger, overlay, code-panel handle behavior ===== */
 function bindMobileControls() {
   const hamburger = document.getElementById('hamburger');
   const sidebar = document.getElementById('sidebar');
@@ -744,30 +783,29 @@ function bindMobileControls() {
   const sidebarMenu = document.getElementById('sidebar-menu');
   const swaggerRoot = document.getElementById('swagger-ui');
 
-  function isMobile() { return window.innerWidth <= 1200; }
+  const isMobile = () => window.innerWidth <= 1200;
 
-  function setNoScroll(enabled) {
-    if (enabled) document.body.classList.add('no-scroll');
-    else document.body.classList.remove('no-scroll');
-  }
+  const setNoScroll = (enabled) => {
+    if (enabled) document.documentElement.classList.add('no-scroll'), document.body.classList.add('no-scroll');
+    else document.documentElement.classList.remove('no-scroll'), document.body.classList.remove('no-scroll');
+  };
 
   function showMobileTopbarIfNeeded() {
     if (!mobileTopbar) return;
     if (isMobile()) {
       mobileTopbar.style.display = 'flex';
       mobileTopbar.setAttribute('aria-hidden', 'false');
-      if (codePanel && !codePanel.classList.contains('open_mobile')) {
-        codePanel.classList.add('minimized');
-      }
+      if (codePanel && !codePanel.classList.contains('open_mobile')) codePanel.classList.add('minimized');
     } else {
       mobileTopbar.style.display = 'none';
       mobileTopbar.setAttribute('aria-hidden', 'true');
       sidebar?.classList.remove('open');
       overlay?.classList.remove('visible');
       setNoScroll(false);
+      releaseFocusTrap();
       if (codePanel) {
-        codePanel.classList.remove('minimized');
         codePanel.classList.remove('open_mobile');
+        codePanel.classList.remove('minimized');
       }
     }
   }
@@ -775,79 +813,70 @@ function bindMobileControls() {
   showMobileTopbarIfNeeded();
   window.addEventListener('resize', showMobileTopbarIfNeeded);
 
-  /* IMPORTANT: Use pointerdown event for immediate response on modern devices.
-     This opens the menu on the first interaction (no press-and-hold).
-     We guard against duplicate events by tracking a small time window.
-  */
-  let lastHamburgerToggle = 0;
-  const HAMBURGER_DEBOUNCE = 300; // ms
+  // Debounce guard
+  let lastToggle = 0;
+  const DEBOUNCE = 250;
 
-  if (hamburger) {
-    const toggleMenu = (e) => {
-      if (!isMobile()) return;
-      e && e.stopPropagation();
-      const now = Date.now();
-      if (now - lastHamburgerToggle < HAMBURGER_DEBOUNCE) return; // debounce duplicates
-      lastHamburgerToggle = now;
-
-      const nowOpen = sidebar.classList.toggle('open');
-      hamburger.setAttribute('aria-expanded', String(nowOpen));
-      if (nowOpen) {
-        overlay.classList.add('visible');
-        setNoScroll(true);
-        if (codePanel) {
-          codePanel.classList.remove('open_mobile');
-          codePanel.classList.add('minimized');
-        }
-      } else {
-        overlay.classList.remove('visible');
-        setNoScroll(false);
-      }
-    };
-
-    // pointerdown triggers immediately on pointer (mouse/touch/stylus)
-    hamburger.addEventListener('pointerdown', toggleMenu, { passive: true });
-
-    // also keep click as fallback for older browsers; debounce prevents double toggle
-    hamburger.addEventListener('click', toggleMenu);
+  function openMenu() {
+    sidebar?.classList.add('open');
+    overlay?.classList.add('visible');
+    setNoScroll(true);
+    if (hamburger) hamburger.setAttribute('aria-expanded', 'true');
+    // trap focus inside sidebar for keyboard / screen reader users
+    releaseFocusTrap();
+    focusTrapCleanup = trapFocus(sidebar);
+  }
+  function closeMenu() {
+    sidebar?.classList.remove('open');
+    overlay?.classList.remove('visible');
+    setNoScroll(false);
+    if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
+    releaseFocusTrap();
+    // return focus to hamburger for accessibility
+    hamburger?.focus();
   }
 
-  // overlay closes menu
+  if (hamburger) {
+    const onPointer = (e) => {
+      if (!isMobile()) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const now = Date.now();
+      if (now - lastToggle < DEBOUNCE) return;
+      lastToggle = now;
+      if (sidebar?.classList.contains('open')) closeMenu(); else openMenu();
+    };
+    // use pointerdown for immediate response across input types; also keep click fallback
+    hamburger.addEventListener('pointerdown', onPointer, { passive: false });
+    hamburger.addEventListener('click', onPointer);
+  }
+
   if (overlay) {
     overlay.addEventListener('click', () => {
-      sidebar?.classList.remove('open');
-      overlay.classList.remove('visible');
-      setNoScroll(false);
-      if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
+      closeMenu();
     });
   }
 
-  // menu item click should close sidebar on mobile
+  // close sidebar on selecting a menu item (mobile)
   if (sidebarMenu) {
     sidebarMenu.addEventListener('click', (e) => {
       const op = e.target.closest('.op-link');
       if (op && isMobile()) {
-        setTimeout(() => {
-          sidebar?.classList.remove('open');
-          overlay?.classList.remove('visible');
-          setNoScroll(false);
-          if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
-        }, 160);
+        setTimeout(() => closeMenu(), 140);
       }
     });
   }
 
-  // open mobile panel when clicking code inside swagger
+  // open mobile panel when clicking a code block in swagger
   function openMobilePanelForOpblock(opblock) {
     if (!codePanel) return;
     updateRightPanel(opblock);
     codePanel.classList.remove('minimized');
     codePanel.classList.add('open_mobile');
-    sidebar?.classList.remove('open');
-    overlay?.classList.remove('visible');
-    setNoScroll(false);
+    codePanel.setAttribute('aria-hidden', 'false');
+    // ensure menu closed
+    closeMenu();
   }
-
   function handleSwaggerCodeClick(e) {
     if (!isMobile()) return;
     const el = e.target;
@@ -858,7 +887,6 @@ function bindMobileControls() {
     e.stopPropagation();
     openMobilePanelForOpblock(opblock);
   }
-
   if (swaggerRoot) {
     swaggerRoot.addEventListener('click', handleSwaggerCodeClick);
     swaggerRoot.addEventListener('touchstart', handleSwaggerCodeClick, { passive: true });
@@ -874,6 +902,7 @@ function bindMobileControls() {
         else {
           codePanel.classList.remove('minimized');
           codePanel.classList.add('open_mobile');
+          codePanel.setAttribute('aria-hidden', 'false');
         }
       }
     }, { passive: true });
@@ -886,42 +915,42 @@ function bindMobileControls() {
       e.stopPropagation();
       codePanel.classList.remove('open_mobile');
       codePanel.classList.add('minimized');
+      codePanel.setAttribute('aria-hidden', 'true');
+      // return focus to content
+      document.getElementById('content')?.focus?.();
     });
   }
 
   // clicking outside closes/minimizes
-  function handleDocumentInteraction(e) {
+  function handleDocInteraction(e) {
     if (!isMobile()) return;
     const tgt = e.target;
     if (tgt.closest('#sidebar') || tgt.closest('#hamburger') || tgt.closest('#code-panel')) return;
-    sidebar?.classList.remove('open');
-    overlay?.classList.remove('visible');
-    setNoScroll(false);
+    closeMenu();
     if (codePanel) {
       codePanel.classList.remove('open_mobile');
       codePanel.classList.add('minimized');
+      codePanel.setAttribute('aria-hidden', 'true');
     }
-    if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
   }
-  document.addEventListener('click', handleDocumentInteraction);
-  document.addEventListener('touchstart', handleDocumentInteraction, { passive: true });
+  document.addEventListener('click', handleDocInteraction);
+  document.addEventListener('touchstart', handleDocInteraction, { passive: true });
 
   // ESC closes/minimizes
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && isMobile()) {
-      sidebar?.classList.remove('open');
-      overlay?.classList.remove('visible');
-      setNoScroll(false);
+    if (!isMobile()) return;
+    if (e.key === 'Escape') {
+      closeMenu();
       if (codePanel) {
         codePanel.classList.remove('open_mobile');
         codePanel.classList.add('minimized');
+        codePanel.setAttribute('aria-hidden', 'true');
       }
-      if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
     }
   });
 }
 
-/* Global opblock bindings */
+/* Global clicks on opblock summary should update internal panel data */
 function bindGlobalOpClicks() {
   document.addEventListener('click', (e) => {
     const summary = e.target.closest('.opblock-summary');
@@ -943,7 +972,7 @@ function bindGlobalOpClicks() {
   });
 }
 
-/* Observe Swagger changes to rebuild sidebar when needed */
+/* Observe swagger to rebuild sidebar when necessary */
 function observeSwagger() {
   const uiRoot = document.querySelector('#swagger-ui');
   if (!uiRoot) return;
@@ -970,7 +999,7 @@ function observeSwagger() {
   mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
-/* INIT */
+/* ===== Init ===== */
 (async function init() {
   try {
     await waitForSwaggerReady();
@@ -988,12 +1017,14 @@ function observeSwagger() {
     const cp = document.getElementById('code-panel');
     if (window.innerWidth <= 1200 && cp) {
       cp.classList.add('minimized');
+      cp.setAttribute('aria-hidden', 'true');
     } else if (cp) {
       cp.classList.remove('minimized');
       cp.classList.remove('open_mobile');
+      cp.setAttribute('aria-hidden', 'false');
     }
 
-    // ensure mobile topbar visible if needed
+    // show mobile topbar if small screen
     const mt = document.getElementById('mobile-topbar');
     if (window.innerWidth <= 1200 && mt) mt.style.display = 'flex';
 
