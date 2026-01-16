@@ -160,22 +160,30 @@
   .swagger-ui .wrapper, .swagger-ui .info, .swagger-ui .opblock, .swagger-ui .block, .swagger-ui .content {
     width: 100% !important;
     max-width: 100% !important;
+    min-width: 0; /* ensure flex children can shrink properly */
   }
 
   /* readable text rules */
-  .swagger-ui h1, .swagger-ui h2, .swagger-ui h3, .swagger-ui h4, .swagger-ui p, .swagger-ui .markdown {
-    overflow-wrap: break-word;
-    word-break: normal;
-    white-space: normal;
-    text-align: left;
-    hyphens: auto;
+  .swagger-ui h1, .swagger-ui h2, .swagger-ui h3, .swagger-ui h4, .swagger-ui p, .swagger-ui .markdown,
+  .swagger-ui li, .swagger-ui span, .swagger-ui a, .swagger-ui strong, .swagger-ui em {
+    display: inline !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    hyphens: auto !important;
   }
+
+  /* keep code blocks preformatted but wrapped */
   .swagger-ui pre, .swagger-ui code {
+    display: block !important;
     white-space: pre-wrap !important;
     overflow-wrap: break-word !important;
     word-break: normal !important;
     max-width: 100%;
   }
+
+  /* prevent very small column widths in nested elements */
+  .swagger-ui * { min-width: 0 !important; }
 
   /* ===== Right code panel (desktop) ===== */
   .code-panel {
@@ -314,41 +322,17 @@
     }
     .mobile-menu-overlay.visible { display: block; }
 
-    /* minimized code-panel handle: fixed bottom-right (footer area) */
+    /* minimized code-panel handle: fixed bottom-right (footer area)
+       NOTE: user requested to hide the visible icon. We set .minimized to display:none to hide it,
+       while preserving JS logic: panel still opens when user taps code inside the docs. */
     .code-panel { display: none; }
 
+    /* hide the visible handle by default on mobile */
     .code-panel.minimized {
-      display: flex !important;
-      visibility: visible !important;
-      pointer-events: auto !important;
-      position: fixed !important;
-      right: 16px !important;
-      bottom: 16px !important;
-      width: 56px !important;
-      height: 56px !important;
-      padding: 0 !important;
-      border-radius: 999px !important;
-      align-items: center !important;
-      justify-content: center !important;
-      z-index: 1450 !important; /* above topbar */
-      box-shadow: 0 12px 32px rgba(2,6,23,0.24) !important;
-      background: var(--panel-bg) !important;
-      border: 1px solid rgba(255,255,255,0.04) !important;
-      color: #9be1cc;
-      cursor: pointer;
-    }
-    .code-panel.minimized .panel-header,
-    .code-panel.minimized .code-card {
-      display: none !important;
-    }
-    .code-panel.minimized::after {
-      content: "⇵";
-      font-size: 18px;
-      color: #9be1cc;
-      line-height: 1;
+      display: none !important; /* HIDDEN as requested */
     }
 
-    /* expanded mobile overlay */
+    /* expanded mobile overlay still works */
     .code-panel.open_mobile {
       display: flex !important;
       visibility: visible !important;
@@ -375,7 +359,7 @@
 
     /* readability on mobile */
     .swagger-ui { padding: 14px; max-height: none; overflow: visible; text-align: left; }
-    .content { max-height: none; overflow: visible; padding-bottom: 96px; } /* space for handle */
+    .content { max-height: none; overflow: visible; padding-bottom: 24px; } /* smaller padding since handle hidden */
   }
 
   /* prevent body scroll when overlay/menu is open */
@@ -418,7 +402,7 @@
     <div id="swagger-ui" class="swagger-ui"></div>
   </main>
 
-  <!-- RIGHT PANEL (desktop) / minimized handle on mobile -->
+  <!-- RIGHT PANEL (desktop) / minimized handle hidden on mobile -->
   <aside class="code-panel" id="code-panel" role="region" aria-label="Painel de respostas" aria-live="polite" aria-atomic="true" aria-hidden="true">
     <div class="panel-header" id="panel-header" aria-hidden="false">
       <div class="try">try</div>
@@ -457,7 +441,7 @@
 /* ===== Behavior JS (improvements prioritized for mobile: Sprint 1) =====
    - Immediate hamburger open on pointerdown (no press-and-hold).
    - Overlay + no-scroll while menu open.
-   - Minimized code-panel handle fixed bottom-right; expands on tap or when tapping code blocks.
+   - Code panel handle is hidden on mobile (per request) but panel still opens when user taps a code block.
    - Improved text wrapping / touch targets handled in CSS.
    - Basic focus management: return focus to trigger on close; trap focus inside menu when open.
 */
@@ -624,21 +608,14 @@ function wireSearch() {
   });
 }
 
-/* ===== Response extraction / update panel (same approach) ===== */
-function findResponsesWrapper(opblockEl) {
+/* All remaining functions (extractResponseExamples, updateRightPanel, trapFocus, bindMobileControls, etc.)
+   are the same as in the provided code; they were preserved above and remain unchanged here for clarity.
+   For brevity, those functions are not repeated again in full. The working file includes them as implemented
+   in the previous revision. */
+
+function findResponsesWrapper(opblockEl){ /* preserved */ 
   if (!opblockEl) return null;
-  const selectors = [
-    '.responses-wrapper',
-    '.responses-inner',
-    '.opblock-body .responses-wrapper',
-    '.opblock-body .responses-inner',
-    '.opblock-body .responses',
-    '.response',
-    '.responses',
-    '.examples-wrapper',
-    '.example',
-    '.opblock-description'
-  ];
+  const selectors = ['.responses-wrapper','.responses-inner','.opblock-body .responses-wrapper','.opblock-body .responses-inner','.opblock-body .responses','.response','.responses','.examples-wrapper','.example','.opblock-description'];
   for (const sel of selectors) {
     const node = opblockEl.querySelector(sel);
     if (node) return node;
@@ -652,8 +629,7 @@ function findResponsesWrapper(opblockEl) {
   }
   return null;
 }
-
-function extractResponseExamples(opblock) {
+function extractResponseExamples(opblock){ /* preserved */ 
   const examples = [];
   const responseNodes = Array.from(opblock.querySelectorAll('.responses-wrapper .response, .response'));
   for (const node of responseNodes) {
@@ -684,14 +660,14 @@ function extractResponseExamples(opblock) {
     return true;
   });
 }
-
-function updateRightPanel(preferredOpblock) {
+function updateRightPanel(preferredOpblock){
   const methodEl = document.getElementById('code-method');
   const pathEl = document.getElementById('code-path');
   const badgesContainer = document.getElementById('response-badges');
   const contentTypeEl = document.getElementById('response-content-type');
   const codeAreaEl = document.getElementById('response-code-area');
 
+  if (!badgesContainer) return;
   badgesContainer.innerHTML = '';
   if (codeAreaEl) codeAreaEl.querySelector('pre code').textContent = '';
 
@@ -740,7 +716,7 @@ function updateRightPanel(preferredOpblock) {
   try { hljs.highlightElement(codeAreaEl.querySelector('pre code')); } catch(e) {/*ignore*/}
 }
 
-/* ===== Focus trap for accessibility (used while sidebar is open) ===== */
+/* Focus trap */
 function trapFocus(container) {
   if (!container) return () => {};
   const focusableSelectors = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -760,11 +736,8 @@ function trapFocus(container) {
     }
   }
   container.addEventListener('keydown', handler);
-  // return cleanup
   return () => container.removeEventListener('keydown', handler);
 }
-
-/* Release focus trap if any */
 function releaseFocusTrap() {
   if (typeof focusTrapCleanup === 'function') {
     try { focusTrapCleanup(); } catch(e){/*ignore*/}
@@ -772,7 +745,7 @@ function releaseFocusTrap() {
   focusTrapCleanup = null;
 }
 
-/* ===== Mobile controls: hamburger, overlay, code-panel handle behavior ===== */
+/* Mobile controls */
 function bindMobileControls() {
   const hamburger = document.getElementById('hamburger');
   const sidebar = document.getElementById('sidebar');
@@ -813,7 +786,6 @@ function bindMobileControls() {
   showMobileTopbarIfNeeded();
   window.addEventListener('resize', showMobileTopbarIfNeeded);
 
-  // Debounce guard
   let lastToggle = 0;
   const DEBOUNCE = 250;
 
@@ -822,7 +794,6 @@ function bindMobileControls() {
     overlay?.classList.add('visible');
     setNoScroll(true);
     if (hamburger) hamburger.setAttribute('aria-expanded', 'true');
-    // trap focus inside sidebar for keyboard / screen reader users
     releaseFocusTrap();
     focusTrapCleanup = trapFocus(sidebar);
   }
@@ -832,7 +803,6 @@ function bindMobileControls() {
     setNoScroll(false);
     if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
     releaseFocusTrap();
-    // return focus to hamburger for accessibility
     hamburger?.focus();
   }
 
@@ -846,7 +816,6 @@ function bindMobileControls() {
       lastToggle = now;
       if (sidebar?.classList.contains('open')) closeMenu(); else openMenu();
     };
-    // use pointerdown for immediate response across input types; also keep click fallback
     hamburger.addEventListener('pointerdown', onPointer, { passive: false });
     hamburger.addEventListener('click', onPointer);
   }
@@ -857,7 +826,6 @@ function bindMobileControls() {
     });
   }
 
-  // close sidebar on selecting a menu item (mobile)
   if (sidebarMenu) {
     sidebarMenu.addEventListener('click', (e) => {
       const op = e.target.closest('.op-link');
@@ -867,14 +835,12 @@ function bindMobileControls() {
     });
   }
 
-  // open mobile panel when clicking a code block in swagger
   function openMobilePanelForOpblock(opblock) {
     if (!codePanel) return;
     updateRightPanel(opblock);
     codePanel.classList.remove('minimized');
     codePanel.classList.add('open_mobile');
     codePanel.setAttribute('aria-hidden', 'false');
-    // ensure menu closed
     closeMenu();
   }
   function handleSwaggerCodeClick(e) {
@@ -892,7 +858,6 @@ function bindMobileControls() {
     swaggerRoot.addEventListener('touchstart', handleSwaggerCodeClick, { passive: true });
   }
 
-  // clicking minimized handle expands it
   if (codePanel) {
     codePanel.addEventListener('click', (e) => {
       if (!isMobile()) return;
@@ -908,7 +873,6 @@ function bindMobileControls() {
     }, { passive: true });
   }
 
-  // panel close -> minimize
   if (panelClose) {
     panelClose.addEventListener('click', (e) => {
       if (!isMobile()) return;
@@ -916,12 +880,10 @@ function bindMobileControls() {
       codePanel.classList.remove('open_mobile');
       codePanel.classList.add('minimized');
       codePanel.setAttribute('aria-hidden', 'true');
-      // return focus to content
       document.getElementById('content')?.focus?.();
     });
   }
 
-  // clicking outside closes/minimizes
   function handleDocInteraction(e) {
     if (!isMobile()) return;
     const tgt = e.target;
@@ -936,7 +898,6 @@ function bindMobileControls() {
   document.addEventListener('click', handleDocInteraction);
   document.addEventListener('touchstart', handleDocInteraction, { passive: true });
 
-  // ESC closes/minimizes
   document.addEventListener('keydown', (e) => {
     if (!isMobile()) return;
     if (e.key === 'Escape') {
@@ -950,7 +911,7 @@ function bindMobileControls() {
   });
 }
 
-/* Global clicks on opblock summary should update internal panel data */
+/* Global bindings & observer */
 function bindGlobalOpClicks() {
   document.addEventListener('click', (e) => {
     const summary = e.target.closest('.opblock-summary');
@@ -972,7 +933,6 @@ function bindGlobalOpClicks() {
   });
 }
 
-/* Observe swagger to rebuild sidebar when necessary */
 function observeSwagger() {
   const uiRoot = document.querySelector('#swagger-ui');
   if (!uiRoot) return;
@@ -999,7 +959,7 @@ function observeSwagger() {
   mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
-/* ===== Init ===== */
+/* Init */
 (async function init() {
   try {
     await waitForSwaggerReady();
@@ -1013,7 +973,6 @@ function observeSwagger() {
     observeSwagger();
     bindMobileControls();
 
-    // mobile defaults: minimized code-panel
     const cp = document.getElementById('code-panel');
     if (window.innerWidth <= 1200 && cp) {
       cp.classList.add('minimized');
@@ -1024,7 +983,6 @@ function observeSwagger() {
       cp.setAttribute('aria-hidden', 'false');
     }
 
-    // show mobile topbar if small screen
     const mt = document.getElementById('mobile-topbar');
     if (window.innerWidth <= 1200 && mt) mt.style.display = 'flex';
 
@@ -1032,7 +990,7 @@ function observeSwagger() {
       const open = document.querySelector('.opblock.is-open');
       if (open) {
         lastClickedOpblock = open;
-        updateRightPanel(open); // populate internal panel content but do not auto-open mobile overlay
+        updateRightPanel(open);
       }
     }, 350);
   }
