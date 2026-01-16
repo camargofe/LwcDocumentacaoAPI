@@ -7,7 +7,7 @@
 
 <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
 <link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" />
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.css" />
 
 <style>
   /* Reset / box model */
@@ -47,7 +47,7 @@
     align-items: start;
   }
 
-  /* SIDEBAR (desktop) */
+  /* Desktop sidebar */
   .sidebar {
     background: var(--card);
     border-right: 1px solid rgba(15,23,42,0.06);
@@ -80,7 +80,6 @@
   .menu-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; color:var(--muted); font-weight:600; font-size:13px; }
   .menu-heading .count { background: rgba(15,111,178,0.08); color:var(--brand); padding:3px 8px; border-radius:999px; font-size:12px; }
 
-  /* ensure normal wrapping and readability */
   .tag-item {
     display:block;
     margin-bottom:8px;
@@ -120,7 +119,6 @@
   .op-link.active { background: rgba(2,6,23,0.04); box-shadow: inset 3px 0 0 var(--brand); color:#0b1220; font-weight:700; }
 
   .method-pill-left { padding:6px 10px; border-radius:8px; font-weight:800; font-size:11px; color:#fff; min-width:52px; text-align:center; flex-shrink:0; }
-
   .method-get { background:#16a34a; }
   .method-post { background:#0ea5e9; }
   .method-put { background:#f59e0b; color:#0b1220; }
@@ -165,7 +163,6 @@
     max-width: 100%;
   }
 
-  /* RIGHT PANEL (desktop) */
   .code-panel {
     background: var(--panel-bg);
     border-left: 1px solid rgba(255,255,255,0.03);
@@ -251,7 +248,7 @@
       height: 56px;
       padding: 8px 12px;
       background: rgba(245,247,251,0.98);
-      z-index: 600; /* topmost so hamburger clickable */
+      z-index: 1200; /* topmost so hamburger clickable */
       border-bottom: 1px solid rgba(2,6,23,0.04);
     }
     .layout { padding-top: 72px; } /* prevent content under topbar */
@@ -266,7 +263,7 @@
       border: 1px solid rgba(2,6,23,0.06);
       cursor:pointer;
       font-weight:700;
-      z-index: 610;
+      z-index: 1210;
     }
 
     /* Sidebar becomes a dropdown panel (fixed overlay from left) */
@@ -279,7 +276,7 @@
       max-width: 380px;
       transform: translateX(-120%);
       transition: transform .22s;
-      z-index: 540; /* below topbar but above page */
+      z-index: 1150; /* below topbar but above page */
       box-shadow: 8px 0 32px rgba(2,6,23,0.12);
       height: calc(100vh - 56px);
       overflow: auto;
@@ -289,7 +286,7 @@
     }
     .sidebar.open { transform: translateX(0); }
 
-    /* Menu overlay behind topbar (so topbar remains clickable) */
+    /* Menu overlay behind sidebar (below topbar) */
     .mobile-menu-overlay {
       display: none;
       position: fixed;
@@ -298,12 +295,12 @@
       right: 0;
       bottom: 0;
       background: rgba(2,6,23,0.28);
-      z-index: 530; /* below sidebar and topbar */
+      z-index: 1140; /* below sidebar and topbar */
     }
     .mobile-menu-overlay.visible { display: block; }
 
-    /* Minimized code-panel handle (bottom-right). Fixed to footer area. */
-    .code-panel { display: none; } /* base hidden; classes control visible states */
+    /* Minimized code-panel handle fixed to bottom-right (footer area) */
+    .code-panel { display: none; } /* base hidden; will be controlled by classes */
 
     .code-panel.minimized {
       display: flex !important;
@@ -311,14 +308,14 @@
       pointer-events: auto !important;
       position: fixed !important;
       right: 16px !important;
-      bottom: 16px !important; /* fixed to footer area */
+      bottom: 16px !important; /* fixed to viewport footer/right */
       width: 56px !important;
       height: 56px !important;
       padding: 0 !important;
       border-radius: 999px !important;
       align-items: center !important;
       justify-content: center !important;
-      z-index: 560 !important; /* above sidebar/overlay */
+      z-index: 1250 !important; /* above topbar/sidebar/overlay */
       box-shadow: 0 12px 32px rgba(2,6,23,0.24) !important;
       background: var(--panel-bg) !important;
       border: 1px solid rgba(255,255,255,0.04) !important;
@@ -348,7 +345,7 @@
       bottom: 12px !important;
       height: 56vh !important;
       max-height: calc(100vh - 96px) !important;
-      z-index: 570 !important; /* on top of everything */
+      z-index: 1260 !important; /* on top of everything */
       border-radius: 12px !important;
       flex-direction: column !important;
       transform: translateY(0) !important;
@@ -359,10 +356,8 @@
       overflow: auto !important;
     }
 
-    /* hide brand text to keep topbar compact */
     .brand-text { display: none !important; }
 
-    /* readability: ensure normal wrapping on mobile */
     .swagger-ui { padding: 14px; max-height: none; overflow: visible; text-align: left; }
     .swagger-ui h1, .swagger-ui h2, .swagger-ui h3, .swagger-ui h4, .swagger-ui p, .swagger-ui .markdown {
       overflow-wrap: break-word;
@@ -377,7 +372,7 @@
       max-width: 100% !important;
     }
 
-    .content { max-height: none; overflow: visible; padding-bottom: 84px; } /* space for minimized handle */
+    .content { max-height: none; overflow: visible; padding-bottom: 96px; } /* space for minimized handle */
   }
 
   /* helper to prevent background scroll when mobile menu open */
@@ -389,11 +384,11 @@
 </style>
 </head>
 <body>
-<!-- MOBILE TOPBAR (always visible on mobile) -->
+<!-- MOBILE TOPBAR (always present on mobile) -->
 <div class="mobile-topbar" id="mobile-topbar" aria-hidden="true" style="display:none">
-  <button id="hamburger" class="hamburger" aria-label="Abrir menu">☰</button>
-  <div class="mobile-title" style="font-weight:800; visibility:hidden;">PIX API</div> <!-- intentionally hidden on mobile -->
-  <div style="width:36px"></div> <!-- spacer to keep layout symmetrical -->
+  <button id="hamburger" class="hamburger" aria-label="Abrir menu" aria-expanded="false">☰</button>
+  <div class="mobile-title" style="font-weight:800; visibility:hidden;">PIX API</div>
+  <div style="width:36px"></div> <!-- spacer -->
 </div>
 
 <!-- overlay used on mobile to darken page when menu is open -->
@@ -453,13 +448,10 @@
 
 <script>
 /*
-  Fixes applied (mobile-only):
-   - hamburger always visible and fixed; opens a fixed sidebar overlay (menu suspenso).
-   - overlay is below topbar so hamburger remains clickable.
-   - when menu is open, background scrolling is disabled.
-   - code-panel minimized handle fixed to bottom-right of viewport (footer area).
-   - minimized handle expands to overlay when tapped or when user taps a code block inside Swagger.
-   - text wrapping adjusted to avoid single-letter vertical breaks.
+ Mobile fixes requested:
+ - Hamburger should open immediately on a normal tap/click (no press-and-hold).
+ - Minimized code-panel handle must be fixed at the footer bottom-right of the viewport.
+ - All changes apply to mobile only (<= 1200px); desktop behavior remains unchanged.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
@@ -487,7 +479,7 @@ function waitForSwaggerReady(timeout = 15000) {
   });
 }
 
-/* Sidebar / menu building (unchanged logic) */
+/* Sidebar builder + helpers (unchanged logic) */
 function removeZeroCounts() {
   const menu = document.getElementById('sidebar-menu');
   if (!menu) return;
@@ -625,7 +617,7 @@ function wireSearch() {
   });
 }
 
-/* Response extraction / right panel population (kept) */
+/* Response extraction / panel population (kept) */
 function findResponsesWrapper(opblockEl) {
   if (!opblockEl) return null;
   const selectors = [
@@ -783,16 +775,26 @@ function bindMobileControls() {
   showMobileTopbarIfNeeded();
   window.addEventListener('resize', showMobileTopbarIfNeeded);
 
-  // Hamburger toggles sidebar
+  /* IMPORTANT: Use pointerdown event for immediate response on modern devices.
+     This opens the menu on the first interaction (no press-and-hold).
+     We guard against duplicate events by tracking a small time window.
+  */
+  let lastHamburgerToggle = 0;
+  const HAMBURGER_DEBOUNCE = 300; // ms
+
   if (hamburger) {
-    hamburger.addEventListener('click', (e) => {
+    const toggleMenu = (e) => {
       if (!isMobile()) return;
-      e.stopPropagation();
+      e && e.stopPropagation();
+      const now = Date.now();
+      if (now - lastHamburgerToggle < HAMBURGER_DEBOUNCE) return; // debounce duplicates
+      lastHamburgerToggle = now;
+
       const nowOpen = sidebar.classList.toggle('open');
+      hamburger.setAttribute('aria-expanded', String(nowOpen));
       if (nowOpen) {
         overlay.classList.add('visible');
         setNoScroll(true);
-        // minimize panel to avoid overlap
         if (codePanel) {
           codePanel.classList.remove('open_mobile');
           codePanel.classList.add('minimized');
@@ -801,14 +803,13 @@ function bindMobileControls() {
         overlay.classList.remove('visible');
         setNoScroll(false);
       }
-    });
-    hamburger.addEventListener('touchstart', (e) => {
-      if (!isMobile()) return;
-      e.stopPropagation();
-      const nowOpen = sidebar.classList.toggle('open');
-      if (nowOpen) overlay.classList.add('visible'); else overlay.classList.remove('visible');
-      setNoScroll(nowOpen);
-    });
+    };
+
+    // pointerdown triggers immediately on pointer (mouse/touch/stylus)
+    hamburger.addEventListener('pointerdown', toggleMenu, { passive: true });
+
+    // also keep click as fallback for older browsers; debounce prevents double toggle
+    hamburger.addEventListener('click', toggleMenu);
   }
 
   // overlay closes menu
@@ -817,6 +818,7 @@ function bindMobileControls() {
       sidebar?.classList.remove('open');
       overlay.classList.remove('visible');
       setNoScroll(false);
+      if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
     });
   }
 
@@ -829,6 +831,7 @@ function bindMobileControls() {
           sidebar?.classList.remove('open');
           overlay?.classList.remove('visible');
           setNoScroll(false);
+          if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
         }, 160);
       }
     });
@@ -840,7 +843,6 @@ function bindMobileControls() {
     updateRightPanel(opblock);
     codePanel.classList.remove('minimized');
     codePanel.classList.add('open_mobile');
-    // close menu and overlay
     sidebar?.classList.remove('open');
     overlay?.classList.remove('visible');
     setNoScroll(false);
@@ -859,7 +861,7 @@ function bindMobileControls() {
 
   if (swaggerRoot) {
     swaggerRoot.addEventListener('click', handleSwaggerCodeClick);
-    swaggerRoot.addEventListener('touchstart', handleSwaggerCodeClick);
+    swaggerRoot.addEventListener('touchstart', handleSwaggerCodeClick, { passive: true });
   }
 
   // clicking minimized handle expands it
@@ -874,7 +876,7 @@ function bindMobileControls() {
           codePanel.classList.add('open_mobile');
         }
       }
-    });
+    }, { passive: true });
   }
 
   // panel close -> minimize
@@ -899,9 +901,10 @@ function bindMobileControls() {
       codePanel.classList.remove('open_mobile');
       codePanel.classList.add('minimized');
     }
+    if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
   }
   document.addEventListener('click', handleDocumentInteraction);
-  document.addEventListener('touchstart', handleDocumentInteraction);
+  document.addEventListener('touchstart', handleDocumentInteraction, { passive: true });
 
   // ESC closes/minimizes
   document.addEventListener('keydown', (e) => {
@@ -913,6 +916,7 @@ function bindMobileControls() {
         codePanel.classList.remove('open_mobile');
         codePanel.classList.add('minimized');
       }
+      if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
     }
   });
 }
@@ -989,7 +993,7 @@ function observeSwagger() {
       cp.classList.remove('open_mobile');
     }
 
-    // show mobile topbar if small screen
+    // ensure mobile topbar visible if needed
     const mt = document.getElementById('mobile-topbar');
     if (window.innerWidth <= 1200 && mt) mt.style.display = 'flex';
 
