@@ -359,6 +359,68 @@
     /* readability on mobile */
     .swagger-ui { padding: 14px; max-height: none; overflow: visible; text-align: left; }
     .content { max-height: none; overflow: visible; padding-bottom: 24px; } /* smaller padding since handle hidden */
+
+    /* ===== NEW MOBILE TEXT ALIGNMENT / WRAP RULES ===== */
+    /* Center general readable text so UI feels balanced on narrow screens */
+    .swagger-ui,
+    .content,
+    .sidebar,
+    .mobile-topbar,
+    .mobile-topbar .mobile-title,
+    .menu-section,
+    .menu-heading,
+    .menu-heading > div,
+    .tag-item,
+    .ops,
+    .op-link,
+    .op-link > div,
+    .op-link > div > div,
+    .brand,
+    .panel-header {
+      text-align: center !important;
+    }
+
+    /* But keep things that frequently contain long or preformatted text left-aligned for readability */
+    .method-pill-left,
+    .op-link .method-pill-left,
+    .op-link > div,
+    .op-link > div > div,
+    .path,
+    .swagger-ui pre,
+    .swagger-ui code,
+    .code-card .code-area,
+    .code-card .code-area pre,
+    .response-badges,
+    .response-badges .badge,
+    .panel-header .path {
+      text-align: left !important;
+    }
+
+    /* Robust wrapping for very long tokens/paths/code */
+    .swagger-ui,
+    .content,
+    .sidebar,
+    .tag-item,
+    .op-link,
+    pre,
+    code,
+    .code-card .code-area,
+    .menu-heading,
+    .menu-heading > div {
+      overflow-wrap: anywhere !important;
+      word-break: break-word !important;
+      hyphens: auto !important;
+    }
+
+    /* Small tweak: keep the op-link layout readable when centered */
+    .op-link { flex-direction: row; align-items: center; gap:10px; }
+    .op-link > div { display:flex; flex-direction:column; align-items:center; }
+
+    /* If the path is long, ensure it can break and read from left */
+    .op-link > div > div { max-width: calc(100% - 72px); } /* leave space for method pill */
+
+    /* ensure focus outlines remain visible on mobile */
+    button:focus, [role="button"]:focus, a:focus { outline: 3px solid rgba(20,103,178,0.18); outline-offset: 2px; }
   }
 
   /* prevent body scroll when overlay/menu is open */
@@ -939,7 +1001,7 @@ function observeSwagger() {
     let shouldRebuild = false;
     for (const m of mutations) {
       if (m.addedNodes && m.addedNodes.length) shouldRebuild = true;
-      if (m.type === 'attributes' && m.attributeName === 'class') {
+      if (m.type === 'attributes' and m.attributeName === 'class') {
         const t = m.target;
         if (t.classList && t.classList.contains('opblock') && t.classList.contains('is-open')) {
           const preferred = lastClickedOpblock || t;
@@ -983,7 +1045,7 @@ function observeSwagger() {
     }
 
     const mt = document.getElementById('mobile-topbar');
-    if (window.innerWidth <= 1200 && mt) mt.style.display = 'flex';
+    if (window.innerWidth <= 1200 and mt) mt.style.display = 'flex';
 
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
