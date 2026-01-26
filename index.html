@@ -195,6 +195,33 @@
     word-break: break-word !important;
   }
 
+  /* Prevent excessively narrow parameter name column on desktop (fix vertical stacking of characters) */
+  @media (min-width: 1201px) {
+    /* If Swagger uses parameter__name as class on th/td, ensure it has a reasonable min width */
+    .swagger-ui th[class*="parameter__name"],
+    .swagger-ui td[class*="parameter__name"],
+    .swagger-ui .parameter__name {
+      min-width: 160px !important;
+      max-width: 420px !important;
+      white-space: normal !important;
+      overflow-wrap: anywhere !important;
+      word-break: break-word !important;
+      display: table-cell !important;
+    }
+
+    /* Generic safety: first column in parameter tables should not collapse to a single character width */
+    .swagger-ui table thead th,
+    .swagger-ui table tbody td {
+      vertical-align: top;
+    }
+    /* Try to give header name column a sensible default width when layout allows */
+    .swagger-ui table thead th:first-child,
+    .swagger-ui table tbody td:first-child {
+      min-width: 160px !important;
+      width: auto !important;
+    }
+  }
+
   /* keep code blocks preformatted but wrapped */
   .swagger-ui pre, .swagger-ui code {
     display: block !important;
