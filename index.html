@@ -162,14 +162,17 @@
     min-width: 0; /* ensure flex children can shrink properly */
   }
 
-  /* readable text rules */
-  .swagger-ui h1, .swagger-ui h2, .swagger-ui h3, .swagger-ui h4, .swagger-ui p, .swagger-ui .markdown,
-  .swagger-ui li, .swagger-ui span, .swagger-ui a, .swagger-ui strong, .swagger-ui em {
-    display: inline !important;
+  /* readable text rules - corrected to preserve block and inline semantics */
+  .swagger-ui h1, .swagger-ui h2, .swagger-ui h3, .swagger-ui h4, .swagger-ui p, .swagger-ui .markdown, .swagger-ui li {
+    display: block !important;
     white-space: normal !important;
     overflow-wrap: break-word !important;
     word-break: normal !important;
     hyphens: auto !important;
+  }
+  .swagger-ui span, .swagger-ui a, .swagger-ui strong, .swagger-ui em {
+    display: inline !important;
+    white-space: normal !important;
   }
 
   /* keep code blocks preformatted but wrapped */
@@ -323,7 +326,7 @@
 
     /* minimized code-panel handle: fixed bottom-right (footer area)
        NOTE: user requested to hide the visible icon. We set .minimized to display:none to hide it,
-       while preserving JS logic: panel still opens when user taps code inside the docs. */
+       while preserving JS logic: panel still opens when user taps a code block. */
     .code-panel { display: none; }
 
     /* hide the visible handle by default on mobile */
@@ -443,6 +446,7 @@
    - Code panel handle is hidden on mobile (per request) but panel still opens when user taps a code block.
    - Improved text wrapping / touch targets handled in CSS.
    - Basic focus management: return focus to trigger on close; trap focus inside menu when open.
+   - Fixed copy button and expand/collapse controls.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
@@ -541,7 +545,7 @@ function buildSidebar() {
       const btn = document.createElement('button');
       btn.className = 'op-link';
       btn.type = 'button';
-      btn.innerHTML = `<div class="method-pill-left method-${method.toLowerCase()}">${escapeHtml(method)}</div>
+      btn.innerHTML = `<div class="method-pill-left method-${escapeHtml(method.toLowerCase())}">${escapeHtml(method)}</div>
                        <div style="display:flex;flex-direction:column;align-items:flex-start;">
                          <div style="font-size:13px;color:#0b1220;">${escapeHtml(path)}</div>
                        </div>`;
@@ -607,12 +611,7 @@ function wireSearch() {
   });
 }
 
-/* All remaining functions (extractResponseExamples, updateRightPanel, trapFocus, bindMobileControls, etc.)
-   are the same as in the provided code; they were preserved above and remain unchanged here for clarity.
-   For brevity, those functions are not repeated again in full. The working file includes them as implemented
-   in the previous revision. */
-
-function findResponsesWrapper(opblockEl){ /* preserved */ 
+function findResponsesWrapper(opblockEl){
   if (!opblockEl) return null;
   const selectors = ['.responses-wrapper','.responses-inner','.opblock-body .responses-wrapper','.opblock-body .responses-inner','.opblock-body .responses','.response','.responses','.examples-wrapper','.example','.opblock-description'];
   for (const sel of selectors) {
@@ -628,7 +627,7 @@ function findResponsesWrapper(opblockEl){ /* preserved */
   }
   return null;
 }
-function extractResponseExamples(opblock){ /* preserved */ 
+function extractResponseExamples(opblock){
   const examples = [];
   const responseNodes = Array.from(opblock.querySelectorAll('.responses-wrapper .response, .response'));
   for (const node of responseNodes) {
@@ -958,6 +957,78 @@ function observeSwagger() {
   mo.observe(uiRoot, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 }
 
+/* Copy / Expand / Collapse controls implementation */
+function setupPanelControls() {
+  const copyBtn = document.getElementById('response-copy');
+  const expandBtn = document.getElementById('response-expand');
+  const collapseBtn = document.getElementById('response-collapse');
+  const codeAreaEl = document.getElementById('response-code-area');
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      const codeNode = codeAreaEl?.querySelector('pre code');
+      const text = codeNode ? codeNode.textContent || codeNode.innerText : '';
+      if (!text) return;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+        }
+        const original = copyBtn.textContent;
+        copyBtn.textContent = 'Copied';
+        setTimeout(() => {
+          copyBtn.textContent = original;
+        }, 1400);
+      } catch (err) {
+        const original = copyBtn.textContent;
+        copyBtn.textContent = 'Error';
+        setTimeout(() => {
+          copyBtn.textContent = original;
+        }, 1400);
+      }
+    });
+  }
+
+  function expandAll() {
+    const opblocks = $qsa('.opblock');
+    opblocks.forEach(ob => {
+      if (!ob.classList.contains('is-open')) {
+        const summary = ob.querySelector('.opblock-summary');
+        if (summary) summary.click();
+      }
+    });
+    // update panel for current open opblock after a short delay
+    setTimeout(() => {
+      const open = document.querySelector('.opblock.is-open');
+      if (open) {
+        lastClickedOpblock = open;
+        updateRightPanel(open);
+      }
+    }, 300);
+  }
+  function collapseAll() {
+    const opblocks = $qsa('.opblock');
+    opblocks.forEach(ob => {
+      if (ob.classList.contains('is-open')) {
+        const summary = ob.querySelector('.opblock-summary');
+        if (summary) summary.click();
+      }
+    });
+    setTimeout(() => {
+      updateRightPanel(null);
+    }, 220);
+  }
+
+  if (expandBtn) expandBtn.addEventListener('click', expandAll);
+  if (collapseBtn) collapseBtn.addEventListener('click', collapseAll);
+}
+
 /* Init */
 (async function init() {
   try {
@@ -971,6 +1042,7 @@ function observeSwagger() {
     bindGlobalOpClicks();
     observeSwagger();
     bindMobileControls();
+    setupPanelControls();
 
     const cp = document.getElementById('code-panel');
     if (window.innerWidth <= 1200 && cp) {
