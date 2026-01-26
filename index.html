@@ -162,11 +162,11 @@
     min-width: 0; /* ensure flex children can shrink properly */
   }
 
-  /* readable text rules - corrected to preserve block and inline semantics */
+  /* readable text rules - desktop defaults */
   .swagger-ui h1, .swagger-ui h2, .swagger-ui h3, .swagger-ui h4, .swagger-ui p, .swagger-ui .markdown, .swagger-ui li {
     display: block !important;
     white-space: normal !important;
-    overflow-wrap: break-word !important;
+    overflow-wrap: normal !important;
     word-break: normal !important;
     hyphens: auto !important;
   }
@@ -235,7 +235,19 @@
     gap:10px;
     color: #fff;
   }
-  .panel-header .try { background: rgba(255,255,255,0.05); color: #dff6f2; padding: 4px 8px; border-radius:4px; font-weight:700; font-size:12px; text-transform:lowercase; }
+  .panel-header .try {
+    background: rgba(255,255,255,0.03);
+    color: #dff6f2;
+    padding: 6px 10px;
+    border-radius:6px;
+    font-weight:700;
+    font-size:12px;
+    text-transform:lowercase;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.03);
+    min-width:44px;
+    text-align:center;
+  }
   .panel-header .method-pill { padding:6px 10px; border-radius:6px; font-weight:800; font-size:12px; color:#fff; }
   .panel-header .path { color:#e6fbf4; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -483,7 +495,7 @@
   <!-- RIGHT PANEL (desktop) / minimized handle hidden on mobile -->
   <aside class="code-panel" id="code-panel" role="region" aria-label="Painel de respostas" aria-live="polite" aria-atomic="true" aria-hidden="true">
     <div class="panel-header" id="panel-header" aria-hidden="false">
-      <div class="try">try</div>
+      <button id="panel-try" class="try" aria-label="Try it out">try</button>
       <div id="code-method" class="method-pill default">OP</div>
       <div id="code-path" class="path">/caminho/exemplo</div>
       <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
@@ -517,12 +529,9 @@
 
 <script>
 /* ===== Behavior JS (improvements prioritized for mobile: Sprint 1) =====
-   - Immediate hamburger open on pointerdown (no press-and-hold).
-   - Overlay + no-scroll while menu open.
-   - Code panel handle is hidden on mobile (per request) but panel still opens when user taps a code block.
-   - Improved text wrapping / touch targets handled in CSS.
-   - Basic focus management: return focus to trigger on close; trap focus inside menu when open.
-   - Fixed copy button and expand/collapse controls.
+   - Add "Try it out" button behavior in right panel.
+   - Preserve desktop typography and avoid vertical word-breaks.
+   - Mobile wrapping tweaks retained for small screens.
 */
 
 const SWAGGER_URL = "https://camargofe.github.io/LwcDocumentacaoAPI/pix.yaml";
@@ -551,7 +560,7 @@ function waitForSwaggerReady(timeout = 15000) {
   });
 }
 
-/* Sidebar builder - same logic as before but ensures labels wrap properly */
+/* Sidebar builder */
 function removeZeroCounts() {
   const menu = document.getElementById('sidebar-menu');
   if (!menu) return;
@@ -1079,7 +1088,6 @@ function setupPanelControls() {
         if (summary) summary.click();
       }
     });
-    // update panel for current open opblock after a short delay
     setTimeout(() => {
       const open = document.querySelector('.opblock.is-open');
       if (open) {
@@ -1105,6 +1113,44 @@ function setupPanelControls() {
   if (collapseBtn) collapseBtn.addEventListener('click', collapseAll);
 }
 
+/* Try it out integration */
+function triggerTryItOutForOpblock(opblock) {
+  if (!opblock) return;
+  let tryBtn = opblock.querySelector('button.try-out__btn, button.try-out, button[class*="try-out"], button[aria-label="Try it out"], button[title="Try it out"]');
+  if (!tryBtn) {
+    // fallback: find button whose text contains "try" (case-insensitive)
+    const btns = Array.from(opblock.querySelectorAll('button'));
+    tryBtn = btns.find(b => /\btry\b/i.test((b.innerText||'').trim()));
+  }
+  if (tryBtn) {
+    tryBtn.click();
+    return true;
+  }
+  return false;
+}
+
+function bindTryControl() {
+  const panelTry = document.getElementById('panel-try');
+  if (!panelTry) return;
+  panelTry.addEventListener('click', (e) => {
+    e.preventDefault();
+    const op = lastClickedOpblock || document.querySelector('.opblock.is-open');
+    if (!op) {
+      // if none open, try to open the first opblock then trigger try
+      const first = document.querySelector('.opblock .opblock-summary');
+      if (first) {
+        first.click();
+        setTimeout(() => {
+          const opNow = document.querySelector('.opblock.is-open') || first.closest('.opblock');
+          if (opNow) triggerTryItOutForOpblock(opNow);
+        }, 200);
+      }
+      return;
+    }
+    triggerTryItOutForOpblock(op);
+  });
+}
+
 /* Init */
 (async function init() {
   try {
@@ -1119,6 +1165,7 @@ function setupPanelControls() {
     observeSwagger();
     bindMobileControls();
     setupPanelControls();
+    bindTryControl();
 
     const cp = document.getElementById('code-panel');
     if (window.innerWidth <= 1200 && cp) {
